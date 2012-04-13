@@ -6,7 +6,7 @@ XENCONF=/etc/xen
 XENLOG=/var/log/xen
 XENTOOLLOG=/var/log/xen-tools
 
-NAME="vps18"
+NAME="vps19"
 VCPU="1"
 VRAM="2048"
 SWAP="2048"
@@ -18,7 +18,7 @@ OS="ubuntu"
 #OS="debian"
 #IPADDRESS="119.254.32.170"
 #GATEWAY="119.254.32.161"
-IPADDRESS="119.254.35.111"
+IPADDRESS="119.254.35.106"
 GATEWAY="119.254.35.97"
 NETMASK="255.255.254.0"
 
@@ -30,10 +30,10 @@ genXenMac() {
 
 cat >$XENCONF/$NAME <<-__END__
 bootloader = "/usr/bin/pygrub"
-vcpus = $VCPU
-maxmem = $VRAM
-memory = $VRAM
-name = $NAME
+vcpus = "$VCPU"
+maxmem = "$VRAM"
+memory = "$VRAM"
+name = "$NAME"
 vif = [ "vifname=$NAME,mac=`genXenMac`,ip=$IPADDRESS,bridge=xenbr0" ]
 disk = [ "file:$XENHOME/$NAME.img,sda1,w","file:$XENSWAP/$NAME.swp,sda2,w" ]
 root = "/dev/sda1"
