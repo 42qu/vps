@@ -1,11 +1,12 @@
 #!/bin/bash
 
-OS="ubuntu"
-#OS="centos"
+#OS="ubuntu"
+OS="centos"
 #OS="gentoo"
 #OS="debian"
-IMG="ubuntu01.img"
-IPADDRESS="119.254.32.175"
+#IMG="ubuntu01.img"
+IMG="centos01.img"
+IPADDRESS="119.254.32.163"
 GATEWAY="119.254.32.161"
 NETMASK="255.255.254.0"
 
