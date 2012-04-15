@@ -2,14 +2,20 @@
 # -*- coding: utf-8 -*-
 
 import sys
-
-from misc import _call_cmd
+import random
+import string
+import os
 import tempfile
-import subprocess
 import time
 import re
-import os
 
+def call_cmd (cmd):
+    res = os.system (cmd)
+    if res != 0:
+        raise Exception ("%s exit with %d" % (cmd, res))
+
+def gen_password (length=10):
+    return "".join ([ random.choice(string.hexdigits) for i in xrange (0, length) ])
 
 def check_loop (img_path):
     "return loop device name matching img_path. return None when not found"
@@ -31,24 +37,26 @@ def setup_loop (img_path):
     if lo_dev:
         raise Exception ("img has already been mounted as %s" % (lo_dev))
 
-    _call_cmd ("losetup -f %s" % (img_path))
+    call_cmd ("losetup -f %s" % (img_path))
     lo_dev = check_loop (img_path)
     assert lo_dev
     return lo_dev
 
 def teardown_loop (lo_dev):
-    _call_cmd ("losetup -d %s" % (lo_dev))
+    call_cmd ("losetup -d %s" % (lo_dev))
 
-def mount_loop (img_path):
+
+def mount_loop_tmp (img_path, readonly=False):
     """ create temporary mount point and mount loop file """
     tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
-    lo_dev = setup_loop (img_path)
-    _call_cmd ("mount %s %s" % (lo_dev, tmp_mount))
-    return (lo_dev, tmp_mount)
+    if readonly:
+        call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
+    else:
+        call_cmd ("mount %s %s -o loop" % (img_path, tmp_mount))
+    return tmp_mount
 
-def umount_loop (lo_dev, tmp_mount):
+def umount_tmp (tmp_mount):
     """ umount loop file and delete temporary mount point """
-    _call_cmd ("umount %s" % (tmp_mount))
-    teardown_loop (lo_dev)
+    call_cmd ("umount %s" % (tmp_mount))
     os.rmdir (tmp_mount)
 

@@ -77,7 +77,7 @@ def do_vm_config (vm_root_path, vm_name=None, vm_ip=None, vm_netmask=None, vm_ga
             os.unlink (user_data)
             os.unlink (user_script_dest)
     finally:
-        img_ops.umount_loop (lo_dev, tmp_mount)
+        common.umount_loop (tmp_mount)
 
 
 def main ():
