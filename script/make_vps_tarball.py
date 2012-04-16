@@ -24,19 +24,19 @@ def main():
         print "%s not exists" % (img_path)
         os._exit (1)
     if os.path.exists (tarball_path):
-        answer = input ('%s exits, override ? [y/n]' % (tarball_path))
+        answer = raw_input ('%s exists, override ? [y/n]' % (tarball_path))
         if answer not in ['y', 'Y']:
             print "aborted"
             os._exit (0)
         os.unlink (tarball_path)
     cwd = os.getcwd ()
-    mount_point = common.mount_loop_tmp (img_path, readonly=True)
+    mount_point = vps_common.mount_loop_tmp (img_path, readonly=True)
     os.chdir (mount_point)
     try:
         call_cmd ("tar zcf %s ." % (tarball_path))
     finally:
         os.chdir (cwd)
-    common.umount_tmp (mount_point)
+    vps_common.umount_tmp (mount_point)
     
 if "__main__" == __name__:
     main()
