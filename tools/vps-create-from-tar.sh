@@ -13,7 +13,8 @@ SWAP="1024"
 DISK="5G"
 
 OS="ubuntu"
-#OS="centos"
+#OS="centos5"
+#OS="centos6"
 #OS="gentoo"
 #OS="debian"
 #IPADDRESS="119.254.32.170"
@@ -78,6 +79,21 @@ TYPE=Ethernet
 IPADDR=$IPADDRESS
 GATEWAY=$GATEWAY
 NETMASK=$NETMASK
+__END__
+elif [ $OS == "centos6" ]
+then
+cat >/mnt/etc/sysconfig/network-scripts/ifcfg-eth0 <<-__END__
+DEVICE="eth0"
+BOOTPROTO="static"
+DNS1="8.8.8.8"
+GATEWAY="$GATEWAY"
+IPADDR="$IPADDRESS"
+IPV6INIT="no"
+MTU="1500"
+NETMASK="$NETMASK"
+NM_CONTROLLED="yes"
+ONBOOT="yes"
+TYPE="Ethernet"
 __END__
 elif [ $OS == "gentoo" ]
 then
