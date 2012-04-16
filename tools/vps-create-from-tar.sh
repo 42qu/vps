@@ -15,8 +15,9 @@ DISK="5G"
 OS="ubuntu"
 #OS="centos5"
 #OS="centos6"
-#OS="gentoo"
 #OS="debian"
+#OS="gentoo"
+#OS="arch"
 #IPADDRESS="119.254.32.170"
 #GATEWAY="119.254.32.161"
 IPADDRESS="119.254.35.107"
@@ -118,6 +119,30 @@ then
 cat >/mnt/etc/conf.d/net <<-__END__
 config_eth0="$IPADDRESS netmask $NETMASK"
 routes_eth0="default via $GATEWAY"
+__END__
+elif [ $OS == "arch" ]
+then
+cat >/mnt/etc/rc.conf <<-__END__
+config_eth0="$IPADDRESS netmask $NETMASK"
+routes_eth0="default via $GATEWAY"
+
+LOCALE="en_US.utf8"
+HARDWARECLOCK="UTC"
+USEDIRECTISA="no"
+TIMEZONE="America/New_York"
+KEYMAP="us"
+CONSOLEFONT=
+CONSOLEMAP=
+USECOLOR="yes"
+MOD_AUTOLOAD="yes"
+MODULES=()
+HOSTNAME="arch"
+USELVM="no"
+INTERFACES=(eth0)
+eth0="eth0 $IPADDRESS netmask $NETMASK"
+gateway="default gw $GATEWAY"
+ROUTES=(gateway)
+DAEMONS=(syslog-ng network crond sshd)
 __END__
 fi
 
