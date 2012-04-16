@@ -29,6 +29,24 @@ genXenMac() {
     echo $S$E
 }
 
+if [ $OS == "centos6" ]
+then
+cat >$XENCONF/$NAME <<-__END__
+bootloader = "/usr/bin/pygrub"
+vcpus = "$VCPU"
+maxmem = "$VRAM"
+memory = "$VRAM"
+name = "$NAME"
+vif = [ "vifname=$NAME,mac=`genXenMac`,ip=$IPADDRESS,rate=500KB/s,bridge=xenbr0" ]
+disk = [ "file:$XENHOME/$NAME.img,xvda1,w","file:$XENSWAP/$NAME.swp,xvdb1,w" ]
+#root = "/dev/sda1"
+#extra = "fastboot"
+on_shutdown = "destroy"
+on_poweroff = "destroy"
+on_reboot = "restart"
+on_crash = "restart"
+__END__
+else
 cat >$XENCONF/$NAME <<-__END__
 bootloader = "/usr/bin/pygrub"
 vcpus = "$VCPU"
@@ -44,8 +62,8 @@ on_poweroff = "destroy"
 on_reboot = "restart"
 on_crash = "restart"
 __END__
+fi
 
-#cp $XENHOME/$OS"00".img $XENHOME/$NAME.img
 dd if=/dev/zero of=$XENHOME/$NAME.img bs=1 count=1 seek=$DISK
 mkfs.ext3 $XENHOME/$NAME.img
 mount -o loop $XENHOME/$NAME.img /mnt
