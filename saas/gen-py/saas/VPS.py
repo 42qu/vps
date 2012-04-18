@@ -18,38 +18,38 @@ except:
 
 
 class Iface:
-  def to_do(self, pc):
+  def to_do(self, host_id):
     """
     Parameters:
-     - pc
+     - host_id
     """
     pass
 
-  def info(self, id):
+  def info(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
     pass
 
-  def opened(self, id):
+  def opened(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
     pass
 
-  def closed(self, id):
+  def closed(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
     pass
 
-  def restart(self, id):
+  def restart(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
     pass
 
@@ -61,18 +61,18 @@ class Client(Iface):
       self._oprot = oprot
     self._seqid = 0
 
-  def to_do(self, pc):
+  def to_do(self, host_id):
     """
     Parameters:
-     - pc
+     - host_id
     """
-    self.send_to_do(pc)
+    self.send_to_do(host_id)
     return self.recv_to_do()
 
-  def send_to_do(self, pc):
+  def send_to_do(self, host_id):
     self._oprot.writeMessageBegin('to_do', TMessageType.CALL, self._seqid)
     args = to_do_args()
-    args.pc = pc
+    args.host_id = host_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -91,18 +91,18 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "to_do failed: unknown result");
 
-  def info(self, id):
+  def info(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
-    self.send_info(id)
+    self.send_info(vps_id)
     return self.recv_info()
 
-  def send_info(self, id):
+  def send_info(self, vps_id):
     self._oprot.writeMessageBegin('info', TMessageType.CALL, self._seqid)
     args = info_args()
-    args.id = id
+    args.vps_id = vps_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -121,18 +121,18 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "info failed: unknown result");
 
-  def opened(self, id):
+  def opened(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
-    self.send_opened(id)
+    self.send_opened(vps_id)
     self.recv_opened()
 
-  def send_opened(self, id):
+  def send_opened(self, vps_id):
     self._oprot.writeMessageBegin('opened', TMessageType.CALL, self._seqid)
     args = opened_args()
-    args.id = id
+    args.vps_id = vps_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -149,18 +149,18 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
-  def closed(self, id):
+  def closed(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
-    self.send_closed(id)
+    self.send_closed(vps_id)
     self.recv_closed()
 
-  def send_closed(self, id):
+  def send_closed(self, vps_id):
     self._oprot.writeMessageBegin('closed', TMessageType.CALL, self._seqid)
     args = closed_args()
-    args.id = id
+    args.vps_id = vps_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -177,18 +177,18 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
-  def restart(self, id):
+  def restart(self, vps_id):
     """
     Parameters:
-     - id
+     - vps_id
     """
-    self.send_restart(id)
+    self.send_restart(vps_id)
     self.recv_restart()
 
-  def send_restart(self, id):
+  def send_restart(self, vps_id):
     self._oprot.writeMessageBegin('restart', TMessageType.CALL, self._seqid)
     args = restart_args()
-    args.id = id
+    args.vps_id = vps_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -236,7 +236,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = to_do_result()
-    result.success = self._handler.to_do(args.pc)
+    result.success = self._handler.to_do(args.host_id)
     oprot.writeMessageBegin("to_do", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -247,7 +247,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = info_result()
-    result.success = self._handler.info(args.id)
+    result.success = self._handler.info(args.vps_id)
     oprot.writeMessageBegin("info", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -258,7 +258,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = opened_result()
-    self._handler.opened(args.id)
+    self._handler.opened(args.vps_id)
     oprot.writeMessageBegin("opened", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -269,7 +269,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = closed_result()
-    self._handler.closed(args.id)
+    self._handler.closed(args.vps_id)
     oprot.writeMessageBegin("closed", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -280,7 +280,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = restart_result()
-    self._handler.restart(args.id)
+    self._handler.restart(args.vps_id)
     oprot.writeMessageBegin("restart", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -292,16 +292,16 @@ class Processor(Iface, TProcessor):
 class to_do_args:
   """
   Attributes:
-   - pc
+   - host_id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'pc', None, None, ), # 1
+    (1, TType.I32, 'host_id', None, None, ), # 1
   )
 
-  def __init__(self, pc=None,):
-    self.pc = pc
+  def __init__(self, host_id=None,):
+    self.host_id = host_id
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -314,7 +314,7 @@ class to_do_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.pc = iprot.readI32();
+          self.host_id = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -327,9 +327,9 @@ class to_do_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('to_do_args')
-    if self.pc is not None:
-      oprot.writeFieldBegin('pc', TType.I32, 1)
-      oprot.writeI32(self.pc)
+    if self.host_id is not None:
+      oprot.writeFieldBegin('host_id', TType.I32, 1)
+      oprot.writeI32(self.host_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -412,16 +412,16 @@ class to_do_result:
 class info_args:
   """
   Attributes:
-   - id
+   - vps_id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
+    (1, TType.I32, 'vps_id', None, None, ), # 1
   )
 
-  def __init__(self, id=None,):
-    self.id = id
+  def __init__(self, vps_id=None,):
+    self.vps_id = vps_id
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -434,7 +434,7 @@ class info_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.id = iprot.readI32();
+          self.vps_id = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -447,9 +447,9 @@ class info_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('info_args')
-    if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 1)
-      oprot.writeI32(self.id)
+    if self.vps_id is not None:
+      oprot.writeFieldBegin('vps_id', TType.I32, 1)
+      oprot.writeI32(self.vps_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -532,16 +532,16 @@ class info_result:
 class opened_args:
   """
   Attributes:
-   - id
+   - vps_id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
+    (1, TType.I32, 'vps_id', None, None, ), # 1
   )
 
-  def __init__(self, id=None,):
-    self.id = id
+  def __init__(self, vps_id=None,):
+    self.vps_id = vps_id
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -554,7 +554,7 @@ class opened_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.id = iprot.readI32();
+          self.vps_id = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -567,9 +567,9 @@ class opened_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('opened_args')
-    if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 1)
-      oprot.writeI32(self.id)
+    if self.vps_id is not None:
+      oprot.writeFieldBegin('vps_id', TType.I32, 1)
+      oprot.writeI32(self.vps_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -634,16 +634,16 @@ class opened_result:
 class closed_args:
   """
   Attributes:
-   - id
+   - vps_id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
+    (1, TType.I32, 'vps_id', None, None, ), # 1
   )
 
-  def __init__(self, id=None,):
-    self.id = id
+  def __init__(self, vps_id=None,):
+    self.vps_id = vps_id
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -656,7 +656,7 @@ class closed_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.id = iprot.readI32();
+          self.vps_id = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -669,9 +669,9 @@ class closed_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('closed_args')
-    if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 1)
-      oprot.writeI32(self.id)
+    if self.vps_id is not None:
+      oprot.writeFieldBegin('vps_id', TType.I32, 1)
+      oprot.writeI32(self.vps_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -736,16 +736,16 @@ class closed_result:
 class restart_args:
   """
   Attributes:
-   - id
+   - vps_id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
+    (1, TType.I32, 'vps_id', None, None, ), # 1
   )
 
-  def __init__(self, id=None,):
-    self.id = id
+  def __init__(self, vps_id=None,):
+    self.vps_id = vps_id
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -758,7 +758,7 @@ class restart_args:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.id = iprot.readI32();
+          self.vps_id = iprot.readI32();
         else:
           iprot.skip(ftype)
       else:
@@ -771,9 +771,9 @@ class restart_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('restart_args')
-    if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 1)
-      oprot.writeI32(self.id)
+    if self.vps_id is not None:
+      oprot.writeFieldBegin('vps_id', TType.I32, 1)
+      oprot.writeI32(self.vps_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

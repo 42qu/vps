@@ -30,13 +30,13 @@ struct Todo {
 service VPS {
 
 
-   Todo  to_do       ( 1:i32 pc  ),
+   Todo  to_do       ( 1:i32 host_id  ),
 
-   Vps  info         ( 1:i32 id ),
+   Vps  info         ( 1:i32 vps_id ),
  
-   void opened       ( 1:i32 id ),
-   void closed       ( 1:i32 id ),
-   void restart      ( 1:i32 id ),
+   void opened       ( 1:i32 vps_id ),
+   void closed       ( 1:i32 vps_id ),
+   void restart      ( 1:i32 vps_id ),
 
 
 }

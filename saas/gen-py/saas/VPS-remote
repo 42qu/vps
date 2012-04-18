@@ -23,11 +23,11 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  Todo to_do(i32 pc)'
-  print '  Vps info(i32 id)'
-  print '  void opened(i32 id)'
-  print '  void closed(i32 id)'
-  print '  void restart(i32 id)'
+  print '  Todo to_do(i32 host_id)'
+  print '  Vps info(i32 vps_id)'
+  print '  void opened(i32 vps_id)'
+  print '  void closed(i32 vps_id)'
+  print '  void restart(i32 vps_id)'
   print ''
   sys.exit(0)
 
