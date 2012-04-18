@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #coding:utf-8
-
+import _env
 
 from zthrift.client import client
 
