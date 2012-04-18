@@ -4,7 +4,7 @@ from saas.ttypes import Action
 
 class Handler(object):
     def to_do(self, pc):
-        pass
+        return (Action.OPEN, 0)
 
     def info(self, id):
         pass

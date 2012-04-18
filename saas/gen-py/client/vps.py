@@ -2,11 +2,15 @@
 
 from saas.ttypes import Action
 from time import sleep
+from 
+
 
 def handler(client):
     while True:
+        action, id = client.to_do()
+        if action:
+            print action , id
         sleep(10)
-        print 1
 
 
 if __name__ == "__main__":
