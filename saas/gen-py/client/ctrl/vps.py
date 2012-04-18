@@ -4,23 +4,23 @@ from saas.ttypes import Action
 from time import sleep
 from config import HOST_ID
 
-ACTION = {}
-def action(id):
+_ROUTE = {}
+def route(id):
     def _(func):
-        ACTION[id] = func
+        _ROUTE[id] = func
         return func
     return _
 
 
-@action(Action.OPEN)
+@route(Action.OPEN)
 def _open(client, id):
     print "open", id
 
-@action(Action.CLOSE)
+@route(Action.CLOSE)
 def _close(client, id):
     print "close", id
 
-@action(Action.RESTART)
+@route(Action.RESTART)
 def _restart(client, id):
     print "restart", id
 
