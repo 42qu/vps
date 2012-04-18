@@ -24,10 +24,10 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print ''
   print 'Functions:'
   print '  Vps info(i32 id)'
-  print '  i32 to_open(i32 pc)'
+  print '  Todo to_do(i32 pc, bool block)'
   print '  void opened(i32 id)'
-  print '  i32 to_close(i32 pc)'
   print '  void closed(i32 id)'
+  print '  void restart(i32 id)'
   print '  i32 netflow(i32 id, i64 bytes)'
   print ''
   sys.exit(0)
@@ -86,11 +86,11 @@ if cmd == 'info':
     sys.exit(1)
   pp.pprint(client.info(eval(args[0]),))
 
-elif cmd == 'to_open':
-  if len(args) != 1:
-    print 'to_open requires 1 args'
+elif cmd == 'to_do':
+  if len(args) != 2:
+    print 'to_do requires 2 args'
     sys.exit(1)
-  pp.pprint(client.to_open(eval(args[0]),))
+  pp.pprint(client.to_do(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'opened':
   if len(args) != 1:
@@ -98,17 +98,17 @@ elif cmd == 'opened':
     sys.exit(1)
   pp.pprint(client.opened(eval(args[0]),))
 
-elif cmd == 'to_close':
-  if len(args) != 1:
-    print 'to_close requires 1 args'
-    sys.exit(1)
-  pp.pprint(client.to_close(eval(args[0]),))
-
 elif cmd == 'closed':
   if len(args) != 1:
     print 'closed requires 1 args'
     sys.exit(1)
   pp.pprint(client.closed(eval(args[0]),))
+
+elif cmd == 'restart':
+  if len(args) != 1:
+    print 'restart requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.restart(eval(args[0]),))
 
 elif cmd == 'netflow':
   if len(args) != 2:

@@ -2,6 +2,7 @@ namespace py vps
 
 typedef i32 Ip 
 
+
 struct Vps {
    1 : i32 id                        ,
    2 : optional Ip ipv4              ,
@@ -15,15 +16,26 @@ struct Vps {
   10 : i16 hd                        ,                       //单位G
 }
 
+enum Action{
+  OPEN    = 1,
+  CLOSE   = 2,
+  RESTART = 3,
+}
+
+struct Todo {
+    1: Action action,
+    2: i32    id
+}
+
 service VpsCenter {
 
    Vps  info         ( 1:i32 id ), 
 
-   i32  to_open      ( 1:i32 pc ),
-   void opened       ( 1:i32 id ),
+   Todo  to_do       ( 1:i32 pc , 2:bool block = false ),
 
-   i32  to_close     ( 1:i32 pc ),
+   void opened       ( 1:i32 id ),
    void closed       ( 1:i32 id ),
+   void restart      ( 1:i32 id ),
 
    i32  netflow      ( 1:i32 id , 2:i64 bytes),              //汇报流量 
 

@@ -25,10 +25,11 @@ class Iface:
     """
     pass
 
-  def to_open(self, pc):
+  def to_do(self, pc, block):
     """
     Parameters:
      - pc
+     - block
     """
     pass
 
@@ -39,14 +40,14 @@ class Iface:
     """
     pass
 
-  def to_close(self, pc):
+  def closed(self, id):
     """
     Parameters:
-     - pc
+     - id
     """
     pass
 
-  def closed(self, id):
+  def restart(self, id):
     """
     Parameters:
      - id
@@ -99,35 +100,37 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "info failed: unknown result");
 
-  def to_open(self, pc):
+  def to_do(self, pc, block):
     """
     Parameters:
      - pc
+     - block
     """
-    self.send_to_open(pc)
-    return self.recv_to_open()
+    self.send_to_do(pc, block)
+    return self.recv_to_do()
 
-  def send_to_open(self, pc):
-    self._oprot.writeMessageBegin('to_open', TMessageType.CALL, self._seqid)
-    args = to_open_args()
+  def send_to_do(self, pc, block):
+    self._oprot.writeMessageBegin('to_do', TMessageType.CALL, self._seqid)
+    args = to_do_args()
     args.pc = pc
+    args.block = block
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_to_open(self, ):
+  def recv_to_do(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = to_open_result()
+    result = to_do_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.success is not None:
       return result.success
-    raise TApplicationException(TApplicationException.MISSING_RESULT, "to_open failed: unknown result");
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "to_do failed: unknown result");
 
   def opened(self, id):
     """
@@ -157,36 +160,6 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
-  def to_close(self, pc):
-    """
-    Parameters:
-     - pc
-    """
-    self.send_to_close(pc)
-    return self.recv_to_close()
-
-  def send_to_close(self, pc):
-    self._oprot.writeMessageBegin('to_close', TMessageType.CALL, self._seqid)
-    args = to_close_args()
-    args.pc = pc
-    args.write(self._oprot)
-    self._oprot.writeMessageEnd()
-    self._oprot.trans.flush()
-
-  def recv_to_close(self, ):
-    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
-    if mtype == TMessageType.EXCEPTION:
-      x = TApplicationException()
-      x.read(self._iprot)
-      self._iprot.readMessageEnd()
-      raise x
-    result = to_close_result()
-    result.read(self._iprot)
-    self._iprot.readMessageEnd()
-    if result.success is not None:
-      return result.success
-    raise TApplicationException(TApplicationException.MISSING_RESULT, "to_close failed: unknown result");
-
   def closed(self, id):
     """
     Parameters:
@@ -211,6 +184,34 @@ class Client(Iface):
       self._iprot.readMessageEnd()
       raise x
     result = closed_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    return
+
+  def restart(self, id):
+    """
+    Parameters:
+     - id
+    """
+    self.send_restart(id)
+    self.recv_restart()
+
+  def send_restart(self, id):
+    self._oprot.writeMessageBegin('restart', TMessageType.CALL, self._seqid)
+    args = restart_args()
+    args.id = id
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_restart(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = restart_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     return
@@ -253,10 +254,10 @@ class Processor(Iface, TProcessor):
     self._handler = handler
     self._processMap = {}
     self._processMap["info"] = Processor.process_info
-    self._processMap["to_open"] = Processor.process_to_open
+    self._processMap["to_do"] = Processor.process_to_do
     self._processMap["opened"] = Processor.process_opened
-    self._processMap["to_close"] = Processor.process_to_close
     self._processMap["closed"] = Processor.process_closed
+    self._processMap["restart"] = Processor.process_restart
     self._processMap["netflow"] = Processor.process_netflow
 
   def process(self, iprot, oprot):
@@ -285,13 +286,13 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_to_open(self, seqid, iprot, oprot):
-    args = to_open_args()
+  def process_to_do(self, seqid, iprot, oprot):
+    args = to_do_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = to_open_result()
-    result.success = self._handler.to_open(args.pc)
-    oprot.writeMessageBegin("to_open", TMessageType.REPLY, seqid)
+    result = to_do_result()
+    result.success = self._handler.to_do(args.pc, args.block)
+    oprot.writeMessageBegin("to_do", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -307,17 +308,6 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_to_close(self, seqid, iprot, oprot):
-    args = to_close_args()
-    args.read(iprot)
-    iprot.readMessageEnd()
-    result = to_close_result()
-    result.success = self._handler.to_close(args.pc)
-    oprot.writeMessageBegin("to_close", TMessageType.REPLY, seqid)
-    result.write(oprot)
-    oprot.writeMessageEnd()
-    oprot.trans.flush()
-
   def process_closed(self, seqid, iprot, oprot):
     args = closed_args()
     args.read(iprot)
@@ -325,6 +315,17 @@ class Processor(Iface, TProcessor):
     result = closed_result()
     self._handler.closed(args.id)
     oprot.writeMessageBegin("closed", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_restart(self, seqid, iprot, oprot):
+    args = restart_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = restart_result()
+    self._handler.restart(args.id)
+    oprot.writeMessageBegin("restart", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -463,19 +464,22 @@ class info_result:
   def __ne__(self, other):
     return not (self == other)
 
-class to_open_args:
+class to_do_args:
   """
   Attributes:
    - pc
+   - block
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'pc', None, None, ), # 1
+    (2, TType.BOOL, 'block', None, False, ), # 2
   )
 
-  def __init__(self, pc=None,):
+  def __init__(self, pc=None, block=thrift_spec[2][4],):
     self.pc = pc
+    self.block = block
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -491,6 +495,11 @@ class to_open_args:
           self.pc = iprot.readI32();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.BOOL:
+          self.block = iprot.readBool();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -500,10 +509,14 @@ class to_open_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('to_open_args')
+    oprot.writeStructBegin('to_do_args')
     if self.pc is not None:
       oprot.writeFieldBegin('pc', TType.I32, 1)
       oprot.writeI32(self.pc)
+      oprot.writeFieldEnd()
+    if self.block is not None:
+      oprot.writeFieldBegin('block', TType.BOOL, 2)
+      oprot.writeBool(self.block)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -523,14 +536,14 @@ class to_open_args:
   def __ne__(self, other):
     return not (self == other)
 
-class to_open_result:
+class to_do_result:
   """
   Attributes:
    - success
   """
 
   thrift_spec = (
-    (0, TType.I32, 'success', None, None, ), # 0
+    (0, TType.STRUCT, 'success', (Todo, Todo.thrift_spec), None, ), # 0
   )
 
   def __init__(self, success=None,):
@@ -546,8 +559,9 @@ class to_open_result:
       if ftype == TType.STOP:
         break
       if fid == 0:
-        if ftype == TType.I32:
-          self.success = iprot.readI32();
+        if ftype == TType.STRUCT:
+          self.success = Todo()
+          self.success.read(iprot)
         else:
           iprot.skip(ftype)
       else:
@@ -559,10 +573,10 @@ class to_open_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('to_open_result')
+    oprot.writeStructBegin('to_do_result')
     if self.success is not None:
-      oprot.writeFieldBegin('success', TType.I32, 0)
-      oprot.writeI32(self.success)
+      oprot.writeFieldBegin('success', TType.STRUCT, 0)
+      self.success.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -684,125 +698,6 @@ class opened_result:
   def __ne__(self, other):
     return not (self == other)
 
-class to_close_args:
-  """
-  Attributes:
-   - pc
-  """
-
-  thrift_spec = (
-    None, # 0
-    (1, TType.I32, 'pc', None, None, ), # 1
-  )
-
-  def __init__(self, pc=None,):
-    self.pc = pc
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 1:
-        if ftype == TType.I32:
-          self.pc = iprot.readI32();
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('to_close_args')
-    if self.pc is not None:
-      oprot.writeFieldBegin('pc', TType.I32, 1)
-      oprot.writeI32(self.pc)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    return
-
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
-class to_close_result:
-  """
-  Attributes:
-   - success
-  """
-
-  thrift_spec = (
-    (0, TType.I32, 'success', None, None, ), # 0
-  )
-
-  def __init__(self, success=None,):
-    self.success = success
-
-  def read(self, iprot):
-    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
-      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
-      return
-    iprot.readStructBegin()
-    while True:
-      (fname, ftype, fid) = iprot.readFieldBegin()
-      if ftype == TType.STOP:
-        break
-      if fid == 0:
-        if ftype == TType.I32:
-          self.success = iprot.readI32();
-        else:
-          iprot.skip(ftype)
-      else:
-        iprot.skip(ftype)
-      iprot.readFieldEnd()
-    iprot.readStructEnd()
-
-  def write(self, oprot):
-    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
-      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
-      return
-    oprot.writeStructBegin('to_close_result')
-    if self.success is not None:
-      oprot.writeFieldBegin('success', TType.I32, 0)
-      oprot.writeI32(self.success)
-      oprot.writeFieldEnd()
-    oprot.writeFieldStop()
-    oprot.writeStructEnd()
-
-  def validate(self):
-    return
-
-
-  def __repr__(self):
-    L = ['%s=%r' % (key, value)
-      for key, value in self.__dict__.iteritems()]
-    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
-
-  def __eq__(self, other):
-    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
-
-  def __ne__(self, other):
-    return not (self == other)
-
 class closed_args:
   """
   Attributes:
@@ -887,6 +782,108 @@ class closed_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('closed_result')
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class restart_args:
+  """
+  Attributes:
+   - id
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'id', None, None, ), # 1
+  )
+
+  def __init__(self, id=None,):
+    self.id = id
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('restart_args')
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I32, 1)
+      oprot.writeI32(self.id)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class restart_result:
+
+  thrift_spec = (
+  )
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('restart_result')
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 

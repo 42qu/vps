@@ -16,6 +16,23 @@ except:
   fastbinary = None
 
 
+class Action:
+  OPEN = 1
+  CLOSE = 2
+  RESTART = 3
+
+  _VALUES_TO_NAMES = {
+    1: "OPEN",
+    2: "CLOSE",
+    3: "RESTART",
+  }
+
+  _NAMES_TO_VALUES = {
+    "OPEN": 1,
+    "CLOSE": 2,
+    "RESTART": 3,
+  }
+
 
 class Vps:
   """
@@ -166,6 +183,78 @@ class Vps:
     if self.hd is not None:
       oprot.writeFieldBegin('hd', TType.I16, 10)
       oprot.writeI16(self.hd)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Todo:
+  """
+  Attributes:
+   - action
+   - id
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I32, 'action', None, None, ), # 1
+    (2, TType.I32, 'id', None, None, ), # 2
+  )
+
+  def __init__(self, action=None, id=None,):
+    self.action = action
+    self.id = id
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I32:
+          self.action = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Todo')
+    if self.action is not None:
+      oprot.writeFieldBegin('action', TType.I32, 1)
+      oprot.writeI32(self.action)
+      oprot.writeFieldEnd()
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I32, 2)
+      oprot.writeI32(self.id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
