@@ -4,7 +4,7 @@ from saas.ttypes import Action, Todo
 
 class Handler(object):
     def todo(self, host_id):
-        return Todo(Action.NONE, 0)
+        return Todo(Action.OPEN, 0)
 
     def info(self, vps_id):
         pass

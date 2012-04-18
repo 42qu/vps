@@ -14,15 +14,15 @@ def action(id):
 
 @action(Action.OPEN)
 def _open(client, id):
-    print id
+    print "open", id
 
 @action(Action.CLOSE)
 def _close(client, id):
-    print id
+    print "close", id
 
 @action(Action.RESTART)
-def _close(client, id):
-    print id
+def _restart(client, id):
+    print "restart", id
 
 
 
@@ -33,7 +33,7 @@ def handler(client):
         if action:
             func = ACTION.get(todo.action, 0)
             if func:
-                func(client, id)
+                func(client, todo.id)
         sleep(10)
 
 
