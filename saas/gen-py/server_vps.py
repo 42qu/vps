@@ -3,7 +3,7 @@
 from zthrift.server import server
 
 from saas import VPS
-from client.vps import Handler
+from server.vps import Handler
 
 print 'serving ...'
 server(VPS, Handler)
