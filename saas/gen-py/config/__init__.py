@@ -1,14 +1,20 @@
 import _env
+from os.path import dirname, normpath, abspath, join
+PREFIX = dirname(dirname(abspath(__file__)))
+import sys
+sys.path.append(PREFIX)
 
-import default
 import getpass
 import socket
-from jsdict import JsDict
+from zkit.jsdict import JsDict
 
-default.load(
+
+import _load 
+_load.load(
     JsDict(locals()),
+    'default',
     'host.%s' % socket.gethostname(),
-    'user.%s' % getpass.getuser(),
+#    'user.%s' % getpass.getuser(),
 )
 
 
