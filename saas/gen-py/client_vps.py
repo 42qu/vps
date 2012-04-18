@@ -1,63 +1,32 @@
 #!/usr/bin/env python
 #coding:utf-8
 
-from config import SSL_KEY_PEM, SAAS_PORT 
-
-from tutorial import Calculator
-from tutorial.ttypes import *
+from config import SSL_KEY_PEM, SAAS_PORT, SAAS_HOST
 
 from thrift import Thrift
 from thrift.transport import TSSLSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
-try:
-
-    # Make socket
-    transport = TSocket.TSocket('localhost', 9090)
-
-    # Buffering is critical. Raw sockets are very slow
-    transport = TTransport.TBufferedTransport(transport)
-
-    # Wrap in a protocol
-    protocol = TBinaryProtocol.TBinaryProtocol(transport)
-
-    # Create a client to use the protocol encoder
-    client = Calculator.Client(protocol)
-
-    # Connect!
-    transport.open()
-
-    client.ping()
-    print 'ping()'
-
-    sum = client.add(1, 1)
-    print '1+1=%d' % (sum)
-
-    work = Work()
-
-    work.op = Operation.DIVIDE
-    work.num1 = 1
-    work.num2 = 0
-
+def client(saas, handler):
     try:
-        quotient = client.calculate(1, work)
-        print 'Whoa? You know how to divide by zero?'
-    except InvalidOperation, io:
-        print 'InvalidOperation: %r' % io
+        # Make socket
+        transport = TSSLSocket.TSSLSocket(SAAS_HOST, SAAS_PORT, ca_certs=SSL_KEY_PEM)
 
-    work.op = Operation.SUBTRACT
-    work.num1 = 15
-    work.num2 = 10
+        # Buffering is critical. Raw sockets are very slow
+        transport = TTransport.TBufferedTransport(transport)
 
-    diff = client.calculate(1, work)
-    print '15-10=%d' % (diff)
+        # Wrap in a protocol
+        protocol = TBinaryProtocol.TBinaryProtocol(transport)
+        client = saas.Client(protocol)
 
-    log = client.getStruct(1)
-    print 'Check log: %s' % (log.value)
+        # Connect!
+        transport.open()
+        handler(client)
+        transport.close()
 
-    # Close!
-    transport.close()
 
-except Thrift.TException, tx:
-    print '%s' % (tx.message)
+    except Thrift.TException, tx:
+        print '%s' % (tx.message)
+
+
