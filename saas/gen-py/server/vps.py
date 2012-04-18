@@ -3,19 +3,19 @@
 from saas.ttypes import Action
 
 class Handler(object):
-    def to_do(self, pc):
-        return (Action.OPEN, 0)
+    def to_do(self, host_id):
+        return (Action.NONE, 0)
 
-    def info(self, id):
+    def info(self, vps_id):
         pass
 
-    def opened(self, id):
+    def opened(self, vps_id):
         pass
 
-    def closed(self, id):
+    def closed(self, vps_id):
         pass
 
-    def restart(self, id):
+    def restart(self, vps_id):
         pass
 
 if __name__ == "__main__":

@@ -12,7 +12,7 @@ import _load
 import re
 
 HOSTNAME = socket.gethostname()
-HOST_ID  = re.search("\d+",HOSTNAME).group()
+HOST_ID  = int(re.search("\d+",HOSTNAME).group())
  
 _load.load(
     JsDict(locals()),

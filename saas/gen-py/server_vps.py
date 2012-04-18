@@ -6,7 +6,7 @@ from saas import VPS
 from server.vps import Handler
 
 print 'serving ...'
-server(VPS, Handler)
+server(VPS, Handler())
 print 'done'
 
 
