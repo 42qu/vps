@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 #coding:utf-8
 
-from config import SSL_KEY_PEM 
+from config import SSL_KEY_PEM, SAAS_PORT 
 
 from tutorial import Calculator
 from tutorial.ttypes import *
 
 from thrift import Thrift
-from thrift.transport import TSocket
+from thrift.transport import TSSLSocket
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 
