@@ -1,18 +1,16 @@
+#!/usr/bin/env python
 #coding:utf-8
 
-from saas.ttypes import Action
-from time import sleep
-from config import HOST_ID
 
-def handler(client):
-    while True:
-        todo = client.todo(HOST_ID)
-        if todo.action:
-            pass 
-        print todo.action , todo.id
-        sleep(10)
+from zthrift.client import client
 
+from saas import VPS
+from client.vps import handler
+
+def main():
+    print 'client runing ...'
+    client(VPS, handler)
+    print 'done'
 
 if __name__ == "__main__":
-    pass
-
+    main()
