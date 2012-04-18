@@ -1,8 +1,4 @@
 import _env
-from os.path import dirname, normpath, abspath, join
-PREFIX = dirname(dirname(abspath(__file__)))
-import sys
-sys.path.append(PREFIX)
 
 import getpass
 import socket
