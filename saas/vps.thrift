@@ -1,4 +1,4 @@
-namespace py vps
+namespace py saas 
 
 typedef i32 Ip 
 
@@ -27,7 +27,7 @@ struct Todo {
     2: i32    id
 }
 
-service SaasVps {
+service VPS {
 
    Vps  info         ( 1:i32 id ), 
 
