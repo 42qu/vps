@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #coding:utf-8
 
-import _env
+from config import SSL_KEY_PEM 
 
 #!/usr/bin/env python
 
