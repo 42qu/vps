@@ -8,7 +8,7 @@ from saas import VPS
 from client.vps import handler
 
 def main():
-    print 'cliening ...'
+    print 'client runing ...'
     client(VPS, handler)
     print 'done'
 
