@@ -4,7 +4,7 @@
 
 def prepare(o):
     from os.path import join, dirname
-    from config import PREFIX
+    from _env import PREFIX
     
     o.SSL_KEY_PEM = join(dirname(PREFIX),'private/key.pem')
     o.SAAS_PORT = 50042
