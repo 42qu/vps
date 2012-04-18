@@ -1,1 +1,1 @@
-thrift --gen py vps.thrift 
+thrift --gen py saas.thrift 
