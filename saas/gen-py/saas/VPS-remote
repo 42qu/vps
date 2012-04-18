@@ -23,7 +23,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  Todo to_do(i32 host_id)'
+  print '  Todo todo(i32 host_id)'
   print '  Vps info(i32 vps_id)'
   print '  void opened(i32 vps_id)'
   print '  void closed(i32 vps_id)'
@@ -79,11 +79,11 @@ protocol = TBinaryProtocol.TBinaryProtocol(transport)
 client = VPS.Client(protocol)
 transport.open()
 
-if cmd == 'to_do':
+if cmd == 'todo':
   if len(args) != 1:
-    print 'to_do requires 1 args'
+    print 'todo requires 1 args'
     sys.exit(1)
-  pp.pprint(client.to_do(eval(args[0]),))
+  pp.pprint(client.todo(eval(args[0]),))
 
 elif cmd == 'info':
   if len(args) != 1:

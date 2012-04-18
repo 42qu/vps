@@ -31,7 +31,7 @@ struct Todo {
 service VPS {
 
 
-   Todo  to_do       ( 1:i32 host_id  ),
+   Todo  todo       ( 1:i32 host_id  ),
 
    Vps  info         ( 1:i32 vps_id ),
  

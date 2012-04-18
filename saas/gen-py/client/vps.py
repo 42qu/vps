@@ -6,9 +6,10 @@ from config import HOST_ID
 
 def handler(client):
     while True:
-        action, id = client.to_do(HOST_ID)
-        if action:
-            print action , id
+        todo = client.todo(HOST_ID)
+        if todo.action:
+            pass 
+        print todo.action , to.id
         sleep(10)
 
 

@@ -18,7 +18,7 @@ except:
 
 
 class Iface:
-  def to_do(self, host_id):
+  def todo(self, host_id):
     """
     Parameters:
      - host_id
@@ -61,35 +61,35 @@ class Client(Iface):
       self._oprot = oprot
     self._seqid = 0
 
-  def to_do(self, host_id):
+  def todo(self, host_id):
     """
     Parameters:
      - host_id
     """
-    self.send_to_do(host_id)
-    return self.recv_to_do()
+    self.send_todo(host_id)
+    return self.recv_todo()
 
-  def send_to_do(self, host_id):
-    self._oprot.writeMessageBegin('to_do', TMessageType.CALL, self._seqid)
-    args = to_do_args()
+  def send_todo(self, host_id):
+    self._oprot.writeMessageBegin('todo', TMessageType.CALL, self._seqid)
+    args = todo_args()
     args.host_id = host_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_to_do(self, ):
+  def recv_todo(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = to_do_result()
+    result = todo_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.success is not None:
       return result.success
-    raise TApplicationException(TApplicationException.MISSING_RESULT, "to_do failed: unknown result");
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "todo failed: unknown result");
 
   def info(self, vps_id):
     """
@@ -210,7 +210,7 @@ class Processor(Iface, TProcessor):
   def __init__(self, handler):
     self._handler = handler
     self._processMap = {}
-    self._processMap["to_do"] = Processor.process_to_do
+    self._processMap["todo"] = Processor.process_todo
     self._processMap["info"] = Processor.process_info
     self._processMap["opened"] = Processor.process_opened
     self._processMap["closed"] = Processor.process_closed
@@ -231,13 +231,13 @@ class Processor(Iface, TProcessor):
       self._processMap[name](self, seqid, iprot, oprot)
     return True
 
-  def process_to_do(self, seqid, iprot, oprot):
-    args = to_do_args()
+  def process_todo(self, seqid, iprot, oprot):
+    args = todo_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = to_do_result()
-    result.success = self._handler.to_do(args.host_id)
-    oprot.writeMessageBegin("to_do", TMessageType.REPLY, seqid)
+    result = todo_result()
+    result.success = self._handler.todo(args.host_id)
+    oprot.writeMessageBegin("todo", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -289,7 +289,7 @@ class Processor(Iface, TProcessor):
 
 # HELPER FUNCTIONS AND STRUCTURES
 
-class to_do_args:
+class todo_args:
   """
   Attributes:
    - host_id
@@ -326,7 +326,7 @@ class to_do_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('to_do_args')
+    oprot.writeStructBegin('todo_args')
     if self.host_id is not None:
       oprot.writeFieldBegin('host_id', TType.I32, 1)
       oprot.writeI32(self.host_id)
@@ -349,7 +349,7 @@ class to_do_args:
   def __ne__(self, other):
     return not (self == other)
 
-class to_do_result:
+class todo_result:
   """
   Attributes:
    - success
@@ -386,7 +386,7 @@ class to_do_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('to_do_result')
+    oprot.writeStructBegin('todo_result')
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)
