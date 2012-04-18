@@ -21,7 +21,7 @@ push 貌似要用 ::
     git push origin master
 
 
-如熟悉Hg , 但是不太熟悉git的人 ,  可以配合hg-git插件, 用以下方式clone
+如熟悉Hg , 但是不太熟悉git的人 ,  可以配合hg-git插件, 用以下方式clone ::
 
     hg clone git+ssh://git@bitbucket.org:zsp042/private.git
 
