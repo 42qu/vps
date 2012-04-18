@@ -29,15 +29,15 @@ struct Todo {
 
 service VPS {
 
-   Vps  info         ( 1:i32 id ), 
 
-   Todo  to_do       ( 1:i32 pc , 2:bool block = false ),
+   Todo  to_do       ( 1:i32 pc  ),
 
+   Vps  info         ( 1:i32 id ),
+ 
    void opened       ( 1:i32 id ),
    void closed       ( 1:i32 id ),
    void restart      ( 1:i32 id ),
 
-   i32  netflow      ( 1:i32 id , 2:i64 bytes),              //汇报流量 
 
 }
 
