@@ -2,7 +2,6 @@
 
 from saas.ttypes import Action
 from time import sleep
-from 
 
 
 def handler(client):
