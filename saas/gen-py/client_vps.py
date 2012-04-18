@@ -7,7 +7,10 @@ from zthrift.client import client
 from saas import VPS
 from client.vps import handler
 
-print 'cliening ...'
-client(VPS, handler)
-print 'done'
+def main():
+    print 'cliening ...'
+    client(VPS, handler)
+    print 'done'
 
+if __name__ == "__main__":
+    main()
