@@ -17,6 +17,7 @@ struct Vps {
 }
 
 enum Action{
+  NONE    = 0,
   OPEN    = 1,
   CLOSE   = 2,
   RESTART = 3,
