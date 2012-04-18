@@ -1,4 +1,5 @@
 #!/usr/bin/env python
+import _env
 
 def main():
     from zthrift.server import server
