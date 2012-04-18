@@ -5,7 +5,7 @@ import _env
 from zthrift.client import client
 
 from saas import VPS
-from client.vps import handler
+from ctrl.vps import handler
 
 def main():
     print 'client runing ...'
@@ -14,3 +14,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

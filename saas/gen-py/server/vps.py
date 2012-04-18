@@ -4,7 +4,7 @@ import _env
 def main():
     from zthrift.server import server
     from saas import VPS
-    from server.vps import Handler
+    from ctrl.vps import Handler
 
     print 'server runing ...'
     server(VPS, Handler())
