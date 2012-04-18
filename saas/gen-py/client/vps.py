@@ -4,7 +4,7 @@ from saas.ttypes import Action
 from time import sleep
 
 def handler(client):
-    while Ture:
+    while True:
         sleep(10)
         print 1
 
