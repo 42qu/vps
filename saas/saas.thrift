@@ -4,7 +4,6 @@ typedef i32 Ip
 
 
 struct Vps {
-   0 : i32 host_id                   ,                       //如pc1.42qu.us
    1 : i32 id                        ,
    2 : optional Ip ipv4              ,
    3 : optional Ip ipv4_netmask      ,
@@ -14,6 +13,7 @@ struct Vps {
    7 : i16 hd                        ,                       //单位G
    8 : i32 ram                       ,                       //单位M
    9 : i16 cpu                       ,                       //几个core
+  10 : i32 host_id                   ,                       //如pc1.42qu.us
 }
 
 enum Action{
@@ -24,8 +24,8 @@ enum Action{
 }
 
 struct Todo {
-    0: Action action,
-    1: i32    id
+    1: Action action,
+    2: i32    id
 }
 
 service VPS {
