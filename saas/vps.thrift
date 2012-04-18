@@ -27,7 +27,7 @@ struct Todo {
     2: i32    id
 }
 
-service VpsCenter {
+service SaasVps {
 
    Vps  info         ( 1:i32 id ), 
 
