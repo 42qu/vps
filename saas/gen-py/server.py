@@ -10,13 +10,12 @@ from saas.ttypes import Action
 from shared.ttypes import SharedStruct
 
 from thrift.transport import TSSLSocket
-# __init__(self, host=None, port=9090, certfile='cert.pem', unix_socket=None)
  
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
-class CalculatorHandler:
+class CalculatorHandler(object):
     def __init__(self):
         self.log = {}
 
@@ -65,6 +64,7 @@ class CalculatorHandler:
 
 handler = CalculatorHandler()
 processor = Calculator.Processor(handler)
+transport = TSocket.TSSLSocket(port=SAAS_PORT, certfile=SSL_KEY_PEM)
 transport = TSocket.TServerSocket(9090)
 tfactory = TTransport.TBufferedTransportFactory()
 pfactory = TBinaryProtocol.TBinaryProtocolFactory()

@@ -7,4 +7,5 @@ PREFIX = dirname(dirname(abspath(__file__)))
 SSL_KEY_PEM = join(dirname(PREFIX),'private/key.pem')
 
 SAAS_PORT = 50042
- 
+
+from socket import gethostname
