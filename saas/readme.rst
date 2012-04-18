@@ -26,3 +26,9 @@ push 貌似要用 ::
     hg clone git+ssh://git@bitbucket.org:zsp042/private.git
 
 
+相关链接
+====================================
+
+Thrift教程 http://book.42qu.com/thrift.html
+
+端口登记 http://42qu.us/oPxJ
