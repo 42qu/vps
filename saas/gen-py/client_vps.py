@@ -2,6 +2,15 @@
 #coding:utf-8
 
 
-from zkit.reloader.reload_server import auto_reload
-from client_vps import main
-auto_reload(main)
+from zthrift.client import client
+
+from saas import VPS
+from client.vps import handler
+
+def main():
+    print 'cliening ...'
+    client(VPS, handler)
+    print 'done'
+
+if __name__ == "__main__":
+    main()
