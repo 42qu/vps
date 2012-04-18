@@ -4,77 +4,46 @@
 from config import SSL_KEY_PEM , SAAS_PORT
 
 
-from saas import VPS 
+from saas import VPS
 from saas.ttypes import Action
 
-from shared.ttypes import SharedStruct
 
-from thrift.transport import TSSLSocket
- 
+from thrift.transport.TSSLSocket import TSSLServerSocket as  TServerSocket
+
 from thrift.transport import TTransport
 from thrift.protocol import TBinaryProtocol
 from thrift.server import TServer
 
-class CalculatorHandler(object):
-    def __init__(self):
-        self.log = {}
+class Handler(object):
+    def to_do(self, pc):
+        pass
 
-    def ping(self):
-        print 'ping()'
+    def info(self, id):
+        pass
 
-    def add(self, n1, n2):
-        print 'add(%d,%d)' % (n1, n2)
-        return n1+n2
+    def opened(self, id):
+        pass
 
-    def calculate(self, logid, work):
-        print 'calculate(%d, %r)' % (logid, work)
+    def closed(self, id):
+        pass
 
-        if work.op == Operation.ADD:
-            val = work.num1 + work.num2
-        elif work.op == Operation.SUBTRACT:
-            val = work.num1 - work.num2
-        elif work.op == Operation.MULTIPLY:
-            val = work.num1 * work.num2
-        elif work.op == Operation.DIVIDE:
-            if work.num2 == 0:
-                x = InvalidOperation()
-                x.what = work.op
-                x.why = 'Cannot divide by 0'
-                raise x
-            val = work.num1 / work.num2
-        else:
-            x = InvalidOperation()
-            x.what = work.op
-            x.why = 'Invalid operation'
-            raise x
+    def restart(self, id):
+        pass
 
-        log = SharedStruct()
-        log.key = logid
-        log.value = '%d' % (val)
-        self.log[logid] = log
 
-        return val
+transport = TServerSocket(port=SAAS_PORT, certfile=SSL_KEY_PEM)
+tfactory  = TTransport.TBufferedTransportFactory()
+pfactory  = TBinaryProtocol.TBinaryProtocolFactory()
 
-    def getStruct(self, key):
-        print 'getStruct(%d)' % (key)
-        return self.log[key]
+handler   = Handler()
+processor = VPS.Processor(handler)
+server    = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
 
-    def zip(self):
-        print 'zip()'
+# server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
+# server = TServer.TThreadPoolServer(processor, transport, tfactory, pfactory)
 
-handler = CalculatorHandler()
-processor = Calculator.Processor(handler)
-transport = TSocket.TSSLSocket(port=SAAS_PORT, certfile=SSL_KEY_PEM)
-transport = TSocket.TServerSocket(9090)
-tfactory = TTransport.TBufferedTransportFactory()
-pfactory = TBinaryProtocol.TBinaryProtocolFactory()
-
-server = TServer.TSimpleServer(processor, transport, tfactory, pfactory)
-
-# You could do one of these for a multithreaded server
-#server = TServer.TThreadedServer(processor, transport, tfactory, pfactory)
-#server = TServer.TThreadPoolServer(processor, transport, tfactory, pfactory)
-
-print 'Starting the server...'
+print 'serving ...'
 server.serve()
-print 'done.'
+print 'done'
+
+
