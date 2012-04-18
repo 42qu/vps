@@ -4,5 +4,5 @@ import getpass
 from socket import gethostname
 
 def prepare(o):
-    o.SITE_DOMAIN = '127.0.0.1' 
+    o.SAAS_HOST = '127.0.0.1' 
 
