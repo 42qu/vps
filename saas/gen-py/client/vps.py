@@ -9,7 +9,7 @@ def handler(client):
         todo = client.todo(HOST_ID)
         if todo.action:
             pass 
-        print todo.action , to.id
+        print todo.action , todo.id
         sleep(10)
 
 
