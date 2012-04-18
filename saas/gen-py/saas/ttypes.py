@@ -40,43 +40,30 @@ class Action:
 class Vps:
   """
   Attributes:
+   - host_id
    - id
    - ipv4
    - ipv4_netmask
    - ipv4_gateway
    - password
    - os
-   - pc
+   - hd
    - ram
    - cpu
-   - hd
   """
 
-  thrift_spec = (
-    None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
-    (2, TType.I32, 'ipv4', None, None, ), # 2
-    (3, TType.I32, 'ipv4_netmask', None, None, ), # 3
-    (4, TType.I32, 'ipv4_gateway', None, None, ), # 4
-    (5, TType.STRING, 'password', None, None, ), # 5
-    (6, TType.I32, 'os', None, None, ), # 6
-    (7, TType.I32, 'pc', None, None, ), # 7
-    (8, TType.I32, 'ram', None, None, ), # 8
-    (9, TType.I16, 'cpu', None, None, ), # 9
-    (10, TType.I16, 'hd', None, None, ), # 10
-  )
-
-  def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, pc=None, ram=None, cpu=None, hd=None,):
+  thrift_spec = None
+  def __init__(self, host_id=None, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None,):
+    self.host_id = host_id
     self.id = id
     self.ipv4 = ipv4
     self.ipv4_netmask = ipv4_netmask
     self.ipv4_gateway = ipv4_gateway
     self.password = password
     self.os = os
-    self.pc = pc
+    self.hd = hd
     self.ram = ram
     self.cpu = cpu
-    self.hd = hd
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -87,7 +74,12 @@ class Vps:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
-      if fid == 1:
+      if fid == -1:
+        if ftype == TType.I32:
+          self.host_id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 1:
         if ftype == TType.I32:
           self.id = iprot.readI32();
         else:
@@ -118,8 +110,8 @@ class Vps:
         else:
           iprot.skip(ftype)
       elif fid == 7:
-        if ftype == TType.I32:
-          self.pc = iprot.readI32();
+        if ftype == TType.I16:
+          self.hd = iprot.readI16();
         else:
           iprot.skip(ftype)
       elif fid == 8:
@@ -132,11 +124,6 @@ class Vps:
           self.cpu = iprot.readI16();
         else:
           iprot.skip(ftype)
-      elif fid == 10:
-        if ftype == TType.I16:
-          self.hd = iprot.readI16();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -147,6 +134,10 @@ class Vps:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('Vps')
+    if self.host_id is not None:
+      oprot.writeFieldBegin('host_id', TType.I32, -1)
+      oprot.writeI32(self.host_id)
+      oprot.writeFieldEnd()
     if self.id is not None:
       oprot.writeFieldBegin('id', TType.I32, 1)
       oprot.writeI32(self.id)
@@ -171,9 +162,9 @@ class Vps:
       oprot.writeFieldBegin('os', TType.I32, 6)
       oprot.writeI32(self.os)
       oprot.writeFieldEnd()
-    if self.pc is not None:
-      oprot.writeFieldBegin('pc', TType.I32, 7)
-      oprot.writeI32(self.pc)
+    if self.hd is not None:
+      oprot.writeFieldBegin('hd', TType.I16, 7)
+      oprot.writeI16(self.hd)
       oprot.writeFieldEnd()
     if self.ram is not None:
       oprot.writeFieldBegin('ram', TType.I32, 8)
@@ -182,10 +173,6 @@ class Vps:
     if self.cpu is not None:
       oprot.writeFieldBegin('cpu', TType.I16, 9)
       oprot.writeI16(self.cpu)
-      oprot.writeFieldEnd()
-    if self.hd is not None:
-      oprot.writeFieldBegin('hd', TType.I16, 10)
-      oprot.writeI16(self.hd)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -212,12 +199,7 @@ class Todo:
    - id
   """
 
-  thrift_spec = (
-    None, # 0
-    (1, TType.I32, 'action', None, None, ), # 1
-    (2, TType.I32, 'id', None, None, ), # 2
-  )
-
+  thrift_spec = None
   def __init__(self, action=None, id=None,):
     self.action = action
     self.id = id
@@ -231,12 +213,12 @@ class Todo:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
-      if fid == 1:
+      if fid == -1:
         if ftype == TType.I32:
           self.action = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 1:
         if ftype == TType.I32:
           self.id = iprot.readI32();
         else:
@@ -252,11 +234,11 @@ class Todo:
       return
     oprot.writeStructBegin('Todo')
     if self.action is not None:
-      oprot.writeFieldBegin('action', TType.I32, 1)
+      oprot.writeFieldBegin('action', TType.I32, -1)
       oprot.writeI32(self.action)
       oprot.writeFieldEnd()
     if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 2)
+      oprot.writeFieldBegin('id', TType.I32, 1)
       oprot.writeI32(self.id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
