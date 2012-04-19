@@ -214,11 +214,11 @@ class Task:
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'cmd', None, None, ), # 1
+    (1, TType.I32, 'cmd', None,     0, ), # 1
     (2, TType.I32, 'id', None, None, ), # 2
   )
 
-  def __init__(self, cmd=None, id=None,):
+  def __init__(self, cmd=thrift_spec[1][4], id=None,):
     self.cmd = cmd
     self.id = id
 

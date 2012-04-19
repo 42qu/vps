@@ -24,8 +24,8 @@ enum Cmd{
 }
 
 struct Task {
-    1: Cmd cmd,
-    2: i32    id
+    1:          Cmd   cmd = 0,
+    2: optional i32   id
 }
 
 service VPS {
