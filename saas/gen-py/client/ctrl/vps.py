@@ -12,6 +12,7 @@ from client.model.vps import vps_open
 @route(Cmd.OPEN)
 def _open(client, id):
     vps = client.vps(id)
+    print vps
     vps_open(vps)
 
 @route(Cmd.CLOSE)
