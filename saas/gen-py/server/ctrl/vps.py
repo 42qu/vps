@@ -9,14 +9,8 @@ class Handler(object):
     def info(self, vps_id):
         pass
 
-    def opened(self, vps_id):
-        pass
-
-    def closed(self, vps_id):
-        pass
-
-    def restart(self, vps_id):
-        pass
+    def done(self, todo):
+        print "done", todo.action , todo.id
 
 if __name__ == "__main__":
     pass

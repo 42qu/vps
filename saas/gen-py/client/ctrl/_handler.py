@@ -16,6 +16,6 @@ class Handler(object):
                 func = route.get(todo.action)
                 if func:
                     func(client, todo.id)
-
+                    client.done(todo)
             sleep(5)
 
