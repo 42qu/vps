@@ -32,10 +32,10 @@ push 貌似要用 ::
     saas/saas.thrift
 
 启动线上服务器 (应该用 daemontools http://cr.yp.to/daemontools.html 之类的工具保证进程死掉以后自动重开) ::
-    gen-py/server/vps.py 
+    gen-py/server/bin/vps.py 
 
 启动开发服务器(当有文件改动的时候会自动重启) ::
-    gen-py/server/vps.dev.py     
+    gen-py/server/bin/vps.dev.py     
 
 主程序::
     gen-py/server/ctrl/vps.py
