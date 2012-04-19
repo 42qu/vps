@@ -25,9 +25,10 @@ class Iface:
     """
     pass
 
-  def done(self, todo):
+  def done(self, host_id, todo):
     """
     Parameters:
+     - host_id
      - todo
     """
     pass
@@ -77,17 +78,19 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "todo failed: unknown result");
 
-  def done(self, todo):
+  def done(self, host_id, todo):
     """
     Parameters:
+     - host_id
      - todo
     """
-    self.send_done(todo)
+    self.send_done(host_id, todo)
     self.recv_done()
 
-  def send_done(self, todo):
+  def send_done(self, host_id, todo):
     self._oprot.writeMessageBegin('done', TMessageType.CALL, self._seqid)
     args = done_args()
+    args.host_id = host_id
     args.todo = todo
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
@@ -175,7 +178,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = done_result()
-    self._handler.done(args.todo)
+    self._handler.done(args.host_id, args.todo)
     oprot.writeMessageBegin("done", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -318,15 +321,18 @@ class todo_result:
 class done_args:
   """
   Attributes:
+   - host_id
    - todo
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 1
+    (1, TType.I32, 'host_id', None, None, ), # 1
+    (2, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 2
   )
 
-  def __init__(self, todo=None,):
+  def __init__(self, host_id=None, todo=None,):
+    self.host_id = host_id
     self.todo = todo
 
   def read(self, iprot):
@@ -339,6 +345,11 @@ class done_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I32:
+          self.host_id = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.STRUCT:
           self.todo = Task()
           self.todo.read(iprot)
@@ -354,8 +365,12 @@ class done_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('done_args')
+    if self.host_id is not None:
+      oprot.writeFieldBegin('host_id', TType.I32, 1)
+      oprot.writeI32(self.host_id)
+      oprot.writeFieldEnd()
     if self.todo is not None:
-      oprot.writeFieldBegin('todo', TType.STRUCT, 1)
+      oprot.writeFieldBegin('todo', TType.STRUCT, 2)
       self.todo.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

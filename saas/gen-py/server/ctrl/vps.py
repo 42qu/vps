@@ -10,7 +10,7 @@ class Handler(object):
     def vps(self, vps_id):
         pass
 
-    def done(self, task):
+    def done(self, host_id, task):
         task_done(task)
 
 if __name__ == "__main__":
