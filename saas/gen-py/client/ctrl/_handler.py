@@ -10,12 +10,12 @@ class Handler(object):
         host_id = self.host_id
 
         while True:
-            todo = client.todo(host_id)
-            cmd = todo.cmd
+            task = client.todo(host_id)
+            cmd = task.cmd
             if cmd:
-                func = route.get(todo.cmd)
+                func = route.get(cmd)
                 if func:
-                    func(client, todo.id)
-                    client.done(todo)
+                    func(client, task.id)
+                    client.done(host_id, task)
             sleep(5)
 

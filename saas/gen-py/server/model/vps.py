@@ -14,6 +14,8 @@ def task_dumps(cmd, id):
     return s.tostring()
 
 def _vps_saas_cmd_new(cmd , host_id , id):
+    if not cmd:
+        return
     r = task_dumps(cmd, id)
     key = REDIS_VPS_SAAS_CMD%host_id
     p = redis.pipeline()
@@ -34,10 +36,12 @@ def vps_saas_cmd_open(host_id, id):
     return _vps_saas_cmd_new(Cmd.OPEN, host_id, id)
 
 def task_done(host_id, task):
+    if not task.cmd:
+        return
     s = task_dumps(task.cmd, task.id)
-    redis.lrem(REDIS_VPS_SAAS_CMD%s)
-    return s
+    redis.lrem(REDIS_VPS_SAAS_CMD%host_id, s)
 
 if __name__ == '__main__':
-    print task_by_host_id(2)
-
+    task = task_by_host_id(2)
+    print task_done(2, task)
+    print task
