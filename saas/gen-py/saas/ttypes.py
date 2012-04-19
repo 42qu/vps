@@ -54,16 +54,16 @@ class Vps:
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'id', None, None, ), # 1
-    (2, TType.I32, 'ipv4', None, None, ), # 2
-    (3, TType.I32, 'ipv4_netmask', None, None, ), # 3
-    (4, TType.I32, 'ipv4_gateway', None, None, ), # 4
+    (1, TType.I64, 'id', None, None, ), # 1
+    (2, TType.I64, 'ipv4', None, None, ), # 2
+    (3, TType.I64, 'ipv4_netmask', None, None, ), # 3
+    (4, TType.I64, 'ipv4_gateway', None, None, ), # 4
     (5, TType.STRING, 'password', None, None, ), # 5
-    (6, TType.I32, 'os', None, None, ), # 6
+    (6, TType.I64, 'os', None, None, ), # 6
     (7, TType.I16, 'hd', None, None, ), # 7
-    (8, TType.I32, 'ram', None, None, ), # 8
+    (8, TType.I64, 'ram', None, None, ), # 8
     (9, TType.I16, 'cpu', None, None, ), # 9
-    (10, TType.I32, 'host_id', None, None, ), # 10
+    (10, TType.I64, 'host_id', None, None, ), # 10
   )
 
   def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None, host_id=None,):
@@ -88,23 +88,23 @@ class Vps:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.I32:
-          self.id = iprot.readI32();
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.I32:
-          self.ipv4 = iprot.readI32();
+        if ftype == TType.I64:
+          self.ipv4 = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 3:
-        if ftype == TType.I32:
-          self.ipv4_netmask = iprot.readI32();
+        if ftype == TType.I64:
+          self.ipv4_netmask = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 4:
-        if ftype == TType.I32:
-          self.ipv4_gateway = iprot.readI32();
+        if ftype == TType.I64:
+          self.ipv4_gateway = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 5:
@@ -113,8 +113,8 @@ class Vps:
         else:
           iprot.skip(ftype)
       elif fid == 6:
-        if ftype == TType.I32:
-          self.os = iprot.readI32();
+        if ftype == TType.I64:
+          self.os = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 7:
@@ -123,8 +123,8 @@ class Vps:
         else:
           iprot.skip(ftype)
       elif fid == 8:
-        if ftype == TType.I32:
-          self.ram = iprot.readI32();
+        if ftype == TType.I64:
+          self.ram = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 9:
@@ -133,8 +133,8 @@ class Vps:
         else:
           iprot.skip(ftype)
       elif fid == 10:
-        if ftype == TType.I32:
-          self.host_id = iprot.readI32();
+        if ftype == TType.I64:
+          self.host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -148,44 +148,44 @@ class Vps:
       return
     oprot.writeStructBegin('Vps')
     if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 1)
-      oprot.writeI32(self.id)
+      oprot.writeFieldBegin('id', TType.I64, 1)
+      oprot.writeI64(self.id)
       oprot.writeFieldEnd()
     if self.ipv4 is not None:
-      oprot.writeFieldBegin('ipv4', TType.I32, 2)
-      oprot.writeI32(self.ipv4)
+      oprot.writeFieldBegin('ipv4', TType.I64, 2)
+      oprot.writeI64(self.ipv4)
       oprot.writeFieldEnd()
     if self.ipv4_netmask is not None:
-      oprot.writeFieldBegin('ipv4_netmask', TType.I32, 3)
-      oprot.writeI32(self.ipv4_netmask)
+      oprot.writeFieldBegin('ipv4_netmask', TType.I64, 3)
+      oprot.writeI64(self.ipv4_netmask)
       oprot.writeFieldEnd()
     if self.ipv4_gateway is not None:
-      oprot.writeFieldBegin('ipv4_gateway', TType.I32, 4)
-      oprot.writeI32(self.ipv4_gateway)
+      oprot.writeFieldBegin('ipv4_gateway', TType.I64, 4)
+      oprot.writeI64(self.ipv4_gateway)
       oprot.writeFieldEnd()
     if self.password is not None:
       oprot.writeFieldBegin('password', TType.STRING, 5)
       oprot.writeString(self.password)
       oprot.writeFieldEnd()
     if self.os is not None:
-      oprot.writeFieldBegin('os', TType.I32, 6)
-      oprot.writeI32(self.os)
+      oprot.writeFieldBegin('os', TType.I64, 6)
+      oprot.writeI64(self.os)
       oprot.writeFieldEnd()
     if self.hd is not None:
       oprot.writeFieldBegin('hd', TType.I16, 7)
       oprot.writeI16(self.hd)
       oprot.writeFieldEnd()
     if self.ram is not None:
-      oprot.writeFieldBegin('ram', TType.I32, 8)
-      oprot.writeI32(self.ram)
+      oprot.writeFieldBegin('ram', TType.I64, 8)
+      oprot.writeI64(self.ram)
       oprot.writeFieldEnd()
     if self.cpu is not None:
       oprot.writeFieldBegin('cpu', TType.I16, 9)
       oprot.writeI16(self.cpu)
       oprot.writeFieldEnd()
     if self.host_id is not None:
-      oprot.writeFieldBegin('host_id', TType.I32, 10)
-      oprot.writeI32(self.host_id)
+      oprot.writeFieldBegin('host_id', TType.I64, 10)
+      oprot.writeI64(self.host_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -215,7 +215,7 @@ class Task:
   thrift_spec = (
     None, # 0
     (1, TType.I32, 'cmd', None,     0, ), # 1
-    (2, TType.I32, 'id', None, None, ), # 2
+    (2, TType.I64, 'id', None, None, ), # 2
   )
 
   def __init__(self, cmd=thrift_spec[1][4], id=None,):
@@ -237,8 +237,8 @@ class Task:
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.I32:
-          self.id = iprot.readI32();
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -256,8 +256,8 @@ class Task:
       oprot.writeI32(self.cmd)
       oprot.writeFieldEnd()
     if self.id is not None:
-      oprot.writeFieldBegin('id', TType.I32, 2)
-      oprot.writeI32(self.id)
+      oprot.writeFieldBegin('id', TType.I64, 2)
+      oprot.writeI64(self.id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

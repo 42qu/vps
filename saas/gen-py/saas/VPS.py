@@ -206,7 +206,7 @@ class todo_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'host_id', None, None, ), # 1
+    (1, TType.I64, 'host_id', None, None, ), # 1
   )
 
   def __init__(self, host_id=None,):
@@ -222,8 +222,8 @@ class todo_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.I32:
-          self.host_id = iprot.readI32();
+        if ftype == TType.I64:
+          self.host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -237,8 +237,8 @@ class todo_args:
       return
     oprot.writeStructBegin('todo_args')
     if self.host_id is not None:
-      oprot.writeFieldBegin('host_id', TType.I32, 1)
-      oprot.writeI32(self.host_id)
+      oprot.writeFieldBegin('host_id', TType.I64, 1)
+      oprot.writeI64(self.host_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -327,7 +327,7 @@ class done_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'host_id', None, None, ), # 1
+    (1, TType.I64, 'host_id', None, None, ), # 1
     (2, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 2
   )
 
@@ -345,8 +345,8 @@ class done_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.I32:
-          self.host_id = iprot.readI32();
+        if ftype == TType.I64:
+          self.host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
@@ -366,8 +366,8 @@ class done_args:
       return
     oprot.writeStructBegin('done_args')
     if self.host_id is not None:
-      oprot.writeFieldBegin('host_id', TType.I32, 1)
-      oprot.writeI32(self.host_id)
+      oprot.writeFieldBegin('host_id', TType.I64, 1)
+      oprot.writeI64(self.host_id)
       oprot.writeFieldEnd()
     if self.todo is not None:
       oprot.writeFieldBegin('todo', TType.STRUCT, 2)
@@ -441,7 +441,7 @@ class vps_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'vps_id', None, None, ), # 1
+    (1, TType.I64, 'vps_id', None, None, ), # 1
   )
 
   def __init__(self, vps_id=None,):
@@ -457,8 +457,8 @@ class vps_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.I32:
-          self.vps_id = iprot.readI32();
+        if ftype == TType.I64:
+          self.vps_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -472,8 +472,8 @@ class vps_args:
       return
     oprot.writeStructBegin('vps_args')
     if self.vps_id is not None:
-      oprot.writeFieldBegin('vps_id', TType.I32, 1)
-      oprot.writeI32(self.vps_id)
+      oprot.writeFieldBegin('vps_id', TType.I64, 1)
+      oprot.writeI64(self.vps_id)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
