@@ -30,9 +30,12 @@ def task_by_host_id(host_id):
         return Task(*s)
     return Task()
 
-
 def vps_saas_cmd_open(host_id, id):
     return _vps_saas_cmd_new(Cmd.OPEN, host_id, id)
+
+def task_done(task):
+    s = task_dumps(task.cmd, task.id)
+    return s
 
 if __name__ == '__main__':
     print task_by_host_id(2)
