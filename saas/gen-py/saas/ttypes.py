@@ -16,7 +16,7 @@ except:
   fastbinary = None
 
 
-class Action:
+class Cmd:
   NONE = 0
   OPEN = 1
   CLOSE = 2
@@ -205,21 +205,21 @@ class Vps:
   def __ne__(self, other):
     return not (self == other)
 
-class Todo:
+class Task:
   """
   Attributes:
-   - action
+   - cmd
    - id
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I32, 'action', None, None, ), # 1
+    (1, TType.I32, 'cmd', None, None, ), # 1
     (2, TType.I32, 'id', None, None, ), # 2
   )
 
-  def __init__(self, action=None, id=None,):
-    self.action = action
+  def __init__(self, cmd=None, id=None,):
+    self.cmd = cmd
     self.id = id
 
   def read(self, iprot):
@@ -233,7 +233,7 @@ class Todo:
         break
       if fid == 1:
         if ftype == TType.I32:
-          self.action = iprot.readI32();
+          self.cmd = iprot.readI32();
         else:
           iprot.skip(ftype)
       elif fid == 2:
@@ -250,10 +250,10 @@ class Todo:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('Todo')
-    if self.action is not None:
-      oprot.writeFieldBegin('action', TType.I32, 1)
-      oprot.writeI32(self.action)
+    oprot.writeStructBegin('Task')
+    if self.cmd is not None:
+      oprot.writeFieldBegin('cmd', TType.I32, 1)
+      oprot.writeI32(self.cmd)
       oprot.writeFieldEnd()
     if self.id is not None:
       oprot.writeFieldBegin('id', TType.I32, 2)

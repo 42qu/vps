@@ -97,7 +97,7 @@ address $ADDRESS
 gateway $GATEWAY
 netmask $NETMASK
 __END__
-elif [ $OS == "centos" ] || [ $OS == "fedora" ]
+elif [ $OS == "centos5" ] || [ $OS == "fedora" ]
 then
 cat >/mnt/etc/sysconfig/network-scripts/ifcfg-eth0 <<-__END__
 DEVICE=eth0

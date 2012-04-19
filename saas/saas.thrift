@@ -16,28 +16,26 @@ struct Vps {
   10 : i32 host_id                   ,                       //如pc1.42qu.us
 }
 
-enum Action{
+enum Cmd{
   NONE    = 0,
   OPEN    = 1,
   CLOSE   = 2,
   RESTART = 3,
 }
 
-struct Todo {
-    1: Action action,
+struct Task {
+    1: Cmd cmd,
     2: i32    id
 }
 
 service VPS {
 
+   Task  todo        ( 1:i32  host_id  ),
+   void  done        ( 1:Task todo     ),
 
-   Todo  todo        ( 1:i32 host_id  ),
-   void  done        ( 1:Todo todo  ),
-
-   Vps   info        ( 1:i32 vps_id ),
- 
-
+   Vps   vps         ( 1:i32  vps_id   ),
 
 }
+
 
 

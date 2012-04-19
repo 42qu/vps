@@ -11,9 +11,9 @@ class Handler(object):
 
         while True:
             todo = client.todo(host_id)
-            action = todo.action
-            if action:
-                func = route.get(todo.action)
+            cmd = todo.cmd
+            if cmd:
+                func = route.get(todo.cmd)
                 if func:
                     func(client, todo.id)
                     client.done(todo)

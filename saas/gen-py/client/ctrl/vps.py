@@ -1,22 +1,22 @@
 #coding:utf-8
 
 from config import HOST_ID
-from saas.ttypes import Action
+from saas.ttypes import Cmd
 from _route import route 
 from _handler import Handler
 
 
 
 
-@route(Action.OPEN)
+@route(Cmd.OPEN)
 def _open(client, id):
     print "open", id
 
-@route(Action.CLOSE)
+@route(Cmd.CLOSE)
 def _close(client, id):
     print "close", id
 
-@route(Action.RESTART)
+@route(Cmd.RESTART)
 def _restart(client, id):
     print "restart", id
 

@@ -32,7 +32,7 @@ class Iface:
     """
     pass
 
-  def info(self, vps_id):
+  def vps(self, vps_id):
     """
     Parameters:
      - vps_id
@@ -105,35 +105,35 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
-  def info(self, vps_id):
+  def vps(self, vps_id):
     """
     Parameters:
      - vps_id
     """
-    self.send_info(vps_id)
-    return self.recv_info()
+    self.send_vps(vps_id)
+    return self.recv_vps()
 
-  def send_info(self, vps_id):
-    self._oprot.writeMessageBegin('info', TMessageType.CALL, self._seqid)
-    args = info_args()
+  def send_vps(self, vps_id):
+    self._oprot.writeMessageBegin('vps', TMessageType.CALL, self._seqid)
+    args = vps_args()
     args.vps_id = vps_id
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
 
-  def recv_info(self, ):
+  def recv_vps(self, ):
     (fname, mtype, rseqid) = self._iprot.readMessageBegin()
     if mtype == TMessageType.EXCEPTION:
       x = TApplicationException()
       x.read(self._iprot)
       self._iprot.readMessageEnd()
       raise x
-    result = info_result()
+    result = vps_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
     if result.success is not None:
       return result.success
-    raise TApplicationException(TApplicationException.MISSING_RESULT, "info failed: unknown result");
+    raise TApplicationException(TApplicationException.MISSING_RESULT, "vps failed: unknown result");
 
 
 class Processor(Iface, TProcessor):
@@ -142,7 +142,7 @@ class Processor(Iface, TProcessor):
     self._processMap = {}
     self._processMap["todo"] = Processor.process_todo
     self._processMap["done"] = Processor.process_done
-    self._processMap["info"] = Processor.process_info
+    self._processMap["vps"] = Processor.process_vps
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -181,13 +181,13 @@ class Processor(Iface, TProcessor):
     oprot.writeMessageEnd()
     oprot.trans.flush()
 
-  def process_info(self, seqid, iprot, oprot):
-    args = info_args()
+  def process_vps(self, seqid, iprot, oprot):
+    args = vps_args()
     args.read(iprot)
     iprot.readMessageEnd()
-    result = info_result()
-    result.success = self._handler.info(args.vps_id)
-    oprot.writeMessageBegin("info", TMessageType.REPLY, seqid)
+    result = vps_result()
+    result.success = self._handler.vps(args.vps_id)
+    oprot.writeMessageBegin("vps", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -262,7 +262,7 @@ class todo_result:
   """
 
   thrift_spec = (
-    (0, TType.STRUCT, 'success', (Todo, Todo.thrift_spec), None, ), # 0
+    (0, TType.STRUCT, 'success', (Task, Task.thrift_spec), None, ), # 0
   )
 
   def __init__(self, success=None,):
@@ -279,7 +279,7 @@ class todo_result:
         break
       if fid == 0:
         if ftype == TType.STRUCT:
-          self.success = Todo()
+          self.success = Task()
           self.success.read(iprot)
         else:
           iprot.skip(ftype)
@@ -323,7 +323,7 @@ class done_args:
 
   thrift_spec = (
     None, # 0
-    (1, TType.STRUCT, 'todo', (Todo, Todo.thrift_spec), None, ), # 1
+    (1, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 1
   )
 
   def __init__(self, todo=None,):
@@ -340,7 +340,7 @@ class done_args:
         break
       if fid == 1:
         if ftype == TType.STRUCT:
-          self.todo = Todo()
+          self.todo = Task()
           self.todo.read(iprot)
         else:
           iprot.skip(ftype)
@@ -418,7 +418,7 @@ class done_result:
   def __ne__(self, other):
     return not (self == other)
 
-class info_args:
+class vps_args:
   """
   Attributes:
    - vps_id
@@ -455,7 +455,7 @@ class info_args:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('info_args')
+    oprot.writeStructBegin('vps_args')
     if self.vps_id is not None:
       oprot.writeFieldBegin('vps_id', TType.I32, 1)
       oprot.writeI32(self.vps_id)
@@ -478,7 +478,7 @@ class info_args:
   def __ne__(self, other):
     return not (self == other)
 
-class info_result:
+class vps_result:
   """
   Attributes:
    - success
@@ -515,7 +515,7 @@ class info_result:
     if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
-    oprot.writeStructBegin('info_result')
+    oprot.writeStructBegin('vps_result')
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)

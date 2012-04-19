@@ -23,9 +23,9 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  Todo todo(i32 host_id)'
-  print '  void done(Todo todo)'
-  print '  Vps info(i32 vps_id)'
+  print '  Task todo(i32 host_id)'
+  print '  void done(Task todo)'
+  print '  Vps vps(i32 vps_id)'
   print ''
   sys.exit(0)
 
@@ -89,11 +89,11 @@ elif cmd == 'done':
     sys.exit(1)
   pp.pprint(client.done(eval(args[0]),))
 
-elif cmd == 'info':
+elif cmd == 'vps':
   if len(args) != 1:
-    print 'info requires 1 args'
+    print 'vps requires 1 args'
     sys.exit(1)
-  pp.pprint(client.info(eval(args[0]),))
+  pp.pprint(client.vps(eval(args[0]),))
 
 else:
   print 'Unrecognized method %s' % cmd
