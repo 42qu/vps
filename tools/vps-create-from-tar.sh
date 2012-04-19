@@ -12,7 +12,8 @@ VRAM="2048"
 SWAP="2048"
 DISK="50G"
 
-OS="ubuntu"
+OS="null"
+#OS="ubuntu"
 #OS="centos5"
 #OS="centos6"
 #OS="debian"
@@ -20,7 +21,7 @@ OS="ubuntu"
 #OS="arch"
 #ADDRESS="119.254.32.170"
 #GATEWAY="119.254.32.161"
-ADDRESS="119.254.35.107"
+ADDRESS="119.254.35.108"
 GATEWAY="119.254.35.97"
 NETMASK="255.255.254.0"
 
@@ -29,6 +30,21 @@ genXenMac() {
     E=`(date; cat /proc/interrupts) | md5sum | sed -r 's/^(.{6}).*$/\1/; s/([0-9a-f]{2})/\1:/g; s/:$//;'`
     echo $S$E
 }
+
+freeram=`xentop -i 1 | grep 'free' | awk '{print $23}' | awk 'sub(".$", "")'`
+freeram=$((freeram/1024))
+askram=$((VRAM+16))
+if [ $askram -gt $freeram ]
+then
+	echo "no free ram available"
+	exit 1;
+fi
+
+if [ $OS == "null" ]
+then
+	echo "no os available"
+	exit 1;
+fi
 
 if [ $OS == "centos6" ]
 then
