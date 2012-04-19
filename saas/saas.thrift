@@ -31,7 +31,7 @@ struct Task {
 service VPS {
 
    Task  todo        ( 1:i32  host_id  ),
-   void  done        ( 1:Task todo     ),
+   void  done        ( 1:i32  host_id , 2:Task todo ),
 
    Vps   vps         ( 1:i32  vps_id   ),
 

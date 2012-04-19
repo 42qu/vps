@@ -24,7 +24,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print ''
   print 'Functions:'
   print '  Task todo(i32 host_id)'
-  print '  void done(Task todo)'
+  print '  void done(i32 host_id, Task todo)'
   print '  Vps vps(i32 vps_id)'
   print ''
   sys.exit(0)
@@ -84,10 +84,10 @@ if cmd == 'todo':
   pp.pprint(client.todo(eval(args[0]),))
 
 elif cmd == 'done':
-  if len(args) != 1:
-    print 'done requires 1 args'
+  if len(args) != 2:
+    print 'done requires 2 args'
     sys.exit(1)
-  pp.pprint(client.done(eval(args[0]),))
+  pp.pprint(client.done(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'vps':
   if len(args) != 1:
