@@ -24,10 +24,8 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print ''
   print 'Functions:'
   print '  Todo todo(i32 host_id)'
+  print '  void done(Todo todo)'
   print '  Vps info(i32 vps_id)'
-  print '  void opened(i32 vps_id)'
-  print '  void closed(i32 vps_id)'
-  print '  void restart(i32 vps_id)'
   print ''
   sys.exit(0)
 
@@ -85,29 +83,17 @@ if cmd == 'todo':
     sys.exit(1)
   pp.pprint(client.todo(eval(args[0]),))
 
+elif cmd == 'done':
+  if len(args) != 1:
+    print 'done requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.done(eval(args[0]),))
+
 elif cmd == 'info':
   if len(args) != 1:
     print 'info requires 1 args'
     sys.exit(1)
   pp.pprint(client.info(eval(args[0]),))
-
-elif cmd == 'opened':
-  if len(args) != 1:
-    print 'opened requires 1 args'
-    sys.exit(1)
-  pp.pprint(client.opened(eval(args[0]),))
-
-elif cmd == 'closed':
-  if len(args) != 1:
-    print 'closed requires 1 args'
-    sys.exit(1)
-  pp.pprint(client.closed(eval(args[0]),))
-
-elif cmd == 'restart':
-  if len(args) != 1:
-    print 'restart requires 1 args'
-    sys.exit(1)
-  pp.pprint(client.restart(eval(args[0]),))
 
 else:
   print 'Unrecognized method %s' % cmd
