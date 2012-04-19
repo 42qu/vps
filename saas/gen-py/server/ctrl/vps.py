@@ -1,8 +1,8 @@
 #coding:utf-8
 import _env
-from saas.ttypes import Cmd, Task
+from saas.ttypes import Cmd, Task, Vps
 from server.model.vps import task_by_host_id, task_done 
-from model.vps import VpsOne
+from model.vps_sell import VpsOne
 
 class Handler(object):
     def todo(self, host_id):
@@ -13,8 +13,27 @@ class Handler(object):
         task_done(task)
 
     def vps(self, vps_id):
-        pass
+        vps = VpsOne.mc_get(vps_id)
+        if not vps:
+            return Vps()
+
+        ip = vps.ip_autobind()
+
+        return Vps(
+            id = vps.id,
+            ipv4 = ip.ip,
+            ipv4_netmask = ip.netmask,
+            ipv4_gateway = ip.gateway,
+            password = vps.password,
+            os = vps.os,
+            hd = vps.hd,
+            ram = vps.ram,
+            cpu = vps.cpu,
+            host_id = 2, #TODO
+            #host_id = vps.host_id
+        )
 
 if __name__ == "__main__":
     pass
-    print handler.done(2)
+    handler = Handler()
+    print handler.vps(28)
