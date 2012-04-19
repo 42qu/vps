@@ -1,7 +1,6 @@
 #coding:utf-8
 import _env
 import sys
-print sys.path
 from model._db import redis
 from saas.ttypes import  Task , Cmd
 from array import array
