@@ -6,8 +6,7 @@ from saas.ttypes import  Task , Cmd
 from array import array
 from model.vps_sell import vps_one_list_by_vps_order, VpsOrder, VPS_STATE_PAY
 
-REDIS_VPS_SAAS_CMD = 'VpsSaasCmd:%s'         
-REDIS_VPS_SAAS_CMD_META = "VpsSaasCmdIn:%s"
+REDIS_VPS_SAAS_CMD = 'VpsSaasCmd:%s'
 
 def task_dumps(cmd, id):
     s = array('I')
@@ -15,11 +14,11 @@ def task_dumps(cmd, id):
     s.append(id)
     return s.tostring()
 
-def _vps_saas_cmd_new(cmd , host_id , id, key=REDIS_VPS_SAAS_CMD):
+def _vps_saas_cmd_new(cmd , host_id , id):
     if not cmd:
         return
     r = task_dumps(cmd, id)
-    key = key%host_id
+    key = REDIS_VPS_SAAS_CMD%host_id
     p = redis.pipeline()
     p.lrem(key, r)
     p.rpush(key, r)
@@ -30,24 +29,8 @@ def task_loads(t):
     s.fromstring(t)
     return Task(*s)
 
-def _task_meta(task , host_id):
-    cmd = task.cmd
-    id = task.id
-    if cmd == Cmd.OPEN:
-        order = VpsOrder.get(id)
-        if order:
-            for i in vps_one_list_by_vps_order(order):
-                if i.state == VPS_STATE_PAY:
-                    _vps_saas_cmd_new(cmd, host_id, i.id) 
 
 def task_by_host_id(host_id):
-    while True:
-        t = redis.lpop(REDIS_VPS_SAAS_CMD_META%host_id)
-        if not t:
-            break
-        task = task_loads(t)
-        _task_meta(task, host_id)
-
     key = REDIS_VPS_SAAS_CMD%host_id
     t = redis.rpoplpush(key , key)
     if t:
@@ -55,7 +38,7 @@ def task_by_host_id(host_id):
     return Task()
 
 def vps_saas_cmd_open(host_id, id):
-    return _vps_saas_cmd_new(Cmd.OPEN, host_id, id, REDIS_VPS_SAAS_CMD_META)
+    return _vps_saas_cmd_new(Cmd.OPEN, host_id, id)
 
 def task_done(host_id, task):
     if not task.cmd:
