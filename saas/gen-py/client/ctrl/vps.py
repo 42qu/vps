@@ -10,7 +10,7 @@ from _handler import Handler
 
 @route(Cmd.OPEN)
 def _open(client, id):
-    print "open", id
+    print client.vps(id)
 
 @route(Cmd.CLOSE)
 def _close(client, id):

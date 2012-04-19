@@ -10,6 +10,13 @@ def prepare(o):
     o.SAAS_PORT = 50042
 
     o.SAAS_HOST = "saas-vps.42qu.us"
+    import socket
+    HOSTNAME = socket.gethostname()
+    import re
+    HOST_ID  = re.search("\d+",HOSTNAME)
+    if HOST_ID: 
+        HOST_ID = int(HOST_ID.group())
+    o.HOST_ID = HOST_ID
 
     return o
 

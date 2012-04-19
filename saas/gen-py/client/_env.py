@@ -1,1 +1,1 @@
-../config/_env.py
+../conf/_env.py
