@@ -68,15 +68,15 @@ or run a monitoring process in Python (``paster serve --reload`` does
 this).
 
 Use the ``watch_file(filename)`` function to cause a reload/restart for
-other other non-Python files (e.g., configuration files).  If you have
+other other non-Python files (e.g., confuration files).  If you have
 a dynamic set of files that grows over time you can use something like::
 
-    def watch_config_files():
+    def watch_conf_files():
         return CONFIG_FILE_CACHE.keys()
-    paste.reloader.add_file_callback(watch_config_files)
+    paste.reloader.add_file_callback(watch_conf_files)
 
 Then every time the reloader polls files it will call
-``watch_config_files`` and check all the filenames it returns.
+``watch_conf_files`` and check all the filenames it returns.
 """
 
 import os

@@ -1,6 +1,6 @@
 #coding:utf-8
 
-from config import HOST_ID
+from conf import HOST_ID
 from saas.ttypes import Cmd
 from _route import route 
 from _handler import Handler

@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from config import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
+from conf import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
 
 from thrift import Thrift
 from thrift.transport import TTransport

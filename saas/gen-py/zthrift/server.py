@@ -1,5 +1,5 @@
 #coding:utf-8
-from config import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
+from conf import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
 
 
 from thrift.transport import TTransport

@@ -9,5 +9,5 @@ sys.path.append(dirname(dirname(dirname(abspath(__file__)))))
 from zkit.algorithm.unique import unique
 sys.path = unique(sys.path)
 
-import config
-config.DISABLE_LOCAL_CACHED = True
+import conf
+conf.DISABLE_LOCAL_CACHED = True
