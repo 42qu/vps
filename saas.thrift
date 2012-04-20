@@ -28,10 +28,16 @@ struct Task {
     2: optional i64   id
 }
 
+exception SaasException {
+  1: i32 state          ,
+  2: string message     ,
+  3: Task todo          ,
+}
+
 service VPS {
 
    Task  todo        ( 1:i64  host_id  ),
-   void  done        ( 1:i64  host_id , 2:Task todo ),
+   void  done        ( 1:i64  host_id , 2:Task todo ) throws (1:SaasException saas_exception),
 
    Vps   vps         ( 1:i64  vps_id   ),
 

@@ -106,6 +106,8 @@ class Client(Iface):
     result = done_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
+    if result.saas_exception is not None:
+      raise result.saas_exception
     return
 
   def vps(self, vps_id):
@@ -178,7 +180,10 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = done_result()
-    self._handler.done(args.host_id, args.todo)
+    try:
+      self._handler.done(args.host_id, args.todo)
+    except SaasException, saas_exception:
+      result.saas_exception = saas_exception
     oprot.writeMessageBegin("done", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -392,9 +397,18 @@ class done_args:
     return not (self == other)
 
 class done_result:
+  """
+  Attributes:
+   - saas_exception
+  """
 
   thrift_spec = (
+    None, # 0
+    (1, TType.STRUCT, 'saas_exception', (SaasException, SaasException.thrift_spec), None, ), # 1
   )
+
+  def __init__(self, saas_exception=None,):
+    self.saas_exception = saas_exception
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -405,6 +419,12 @@ class done_result:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
+      if fid == 1:
+        if ftype == TType.STRUCT:
+          self.saas_exception = SaasException()
+          self.saas_exception.read(iprot)
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -415,6 +435,10 @@ class done_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('done_result')
+    if self.saas_exception is not None:
+      oprot.writeFieldBegin('saas_exception', TType.STRUCT, 1)
+      self.saas_exception.write(oprot)
+      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
