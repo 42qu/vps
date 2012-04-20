@@ -52,8 +52,10 @@ def sync_img (vpsmountpoint, template_img_path):
     template_mount = mount_loop_tmp (template_img_path, readonly=True)
     if template_mount[-1] != '/':
         template_mount += "/"
-    call_cmd ("rsync -a '%s' '%s'" % (template_mount, vpsmountpoint)) 
-    umount_tmp (template_mount)
+    try:
+        call_cmd ("rsync -a '%s' '%s'" % (template_mount, vpsmountpoint)) 
+    finally:
+        umount_tmp (template_mount)
 
 def unpack_tarball (vpsmountpoint, tarball_path):
     pwd = os.getcwd()
@@ -63,6 +65,8 @@ def unpack_tarball (vpsmountpoint, tarball_path):
             call_cmd ("tar zxf '%s'" % (tarball_path))
         elif re.match ('^.*\.(tar\.bz2|tbz2)$', tarball_path):
             call_cmd ("tar jxf '%s'" % (tarball_path))
+    finally:
+        os.chdir (pwd)
 
 
 
