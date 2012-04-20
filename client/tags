@@ -1,0 +1,166 @@
+!_TAG_FILE_FORMAT	2	/extended format; --format=1 will not append ;" to lines/
+!_TAG_FILE_SORTED	1	/0=unsorted, 1=sorted, 2=foldcase/
+!_TAG_PROGRAM_AUTHOR	Darren Hiebert	/dhiebert@users.sourceforge.net/
+!_TAG_PROGRAM_NAME	Exuberant Ctags	//
+!_TAG_PROGRAM_URL	http://ctags.sourceforge.net	/official site/
+!_TAG_PROGRAM_VERSION	5.8	//
+Cmd	vps.py	/^from saas.ttypes import Cmd$/;"	i
+Command	command.py	/^class Command (object):$/;"	c
+CommandException	command.py	/^class CommandException (Exception):$/;"	c
+CommandTimeoutException	command.py	/^class CommandTimeoutException (CommandException):$/;"	c
+HOST_ID	vps.py	/^from conf import HOST_ID$/;"	i
+Handler	vps.py	/^class Handler(object):$/;"	c
+ICMP_ECHO_REQUEST	fping.py	/^ICMP_ECHO_REQUEST = 8 # Seems to be the same on Solaris.$/;"	v
+Job	job_queue.py	/^class Job (object):$/;"	c
+JobQueue	job_queue.py	/^class JobQueue (object):$/;"	c
+Log	log.py	/^class Log (logging.Logger):$/;"	c
+MAXFD	command.py	/^    MAXFD = 256$/;"	v
+MAXFD	command.py	/^    MAXFD = os.sysconf('SC_OPEN_MAX')$/;"	v
+PIPE_BUFSIZE	command.py	/^    PIPE_BUFSIZE = 4096$/;"	v	class:Command
+PREFIX	_env.py	/^PREFIX = dirname(dirname(abspath(__file__)))$/;"	v
+RotatingFileHandler	log.py	/^from logging.handlers import RotatingFileHandler$/;"	i
+Route	vps.py	/^class Route(object):$/;"	c
+StringIO	command.py	/^import StringIO$/;"	i
+VPS	vps.py	/^from saas import VPS$/;"	i
+Vps	test/vps.py	/^    from saas.ttypes import Vps$/;"	i
+_	vps.py	/^        def _(func):$/;"	f	function:Route.__call__
+__call__	vps.py	/^    def __call__(self, client):$/;"	m	class:Handler	file:
+__call__	vps.py	/^    def __call__(self, id):$/;"	m	class:Route	file:
+__del__	log.py	/^    def __del__ (self):$/;"	m	class:Log	file:
+__file_handler	log.py	/^    __file_handler = None$/;"	v	class:Log
+__init__	command.py	/^    def __init__ (self, *args):$/;"	m	class:CommandTimeoutException
+__init__	command.py	/^    def __init__ (self, cmd, timeout=None, close_fds=False):$/;"	m	class:Command
+__init__	command.py	/^    def __init__ (self, command, msg, status=None):$/;"	m	class:CommandException
+__init__	job_queue.py	/^    def __init__ (self, logger=None):$/;"	m	class:JobQueue
+__init__	log.py	/^    def __init__ (self, filename = None, level = None, config = None, log_dir=None):$/;"	m	class:Log
+__init__	vps.py	/^    def __init__(self):$/;"	m	class:Route
+__init__	vps.py	/^    def __init__(self, route, host_id):$/;"	m	class:Handler
+__str__	command.py	/^    def __str__ (self):$/;"	m	class:CommandException	file:
+__str__	command.py	/^    def __str__ (self):$/;"	m	class:CommandTimeoutException	file:
+__str__	job_queue.py	/^    def __str__ (self):$/;"	m	class:JobQueue	file:
+_active_jobs	job_queue.py	/^    _active_jobs = None$/;"	v	class:JobQueue
+_add_pending	job_queue.py	/^    def _add_pending (self, job):$/;"	m	class:JobQueue
+_check_status	daemon.py	/^def _check_status (pid_file):$/;"	f
+_check_timeout	command.py	/^    def _check_timeout (self):$/;"	m	class:Command
+_cleanup	command.py	/^    def _cleanup (self):$/;"	m	class:Command
+_close_fd	command.py	/^    def _close_fd (self):$/;"	m	class:Command
+_env	test/vps.py	/^import _env$/;"	i
+_env	vps.py	/^import _env$/;"	i
+_err_stream	command.py	/^    _err_stream = None$/;"	v	class:Command
+_exitcode	command.py	/^    _exitcode = None # which returned by os.waitpid$/;"	v	class:Command
+_fork_service	daemon.py	/^def _fork_service (func, pid_file, log_func=None):$/;"	f
+_get_next_job	job_queue.py	/^    def _get_next_job (self):$/;"	m	class:JobQueue
+_input_buf	command.py	/^    _input_buf = ""$/;"	v	class:Command
+_last_ts	command.py	/^    _last_ts = None$/;"	v	class:Command
+_lock	job_queue.py	/^    _lock = None$/;"	v	class:JobQueue
+_logger	job_queue.py	/^    _logger = None$/;"	v	class:JobQueue
+_open	vps.py	/^    def _open(client, id):$/;"	f	function:main
+_out_stream	command.py	/^    _out_stream = None$/;"	v	class:Command
+_pending_jobs	job_queue.py	/^    _pending_jobs = None$/;"	v	class:JobQueue
+_pid	command.py	/^    _pid = None$/;"	v	class:Command
+_poll	command.py	/^    def _poll (self, timeout):$/;"	m	class:Command
+_proc_result	command.py	/^    def _proc_result (self):$/;"	m	class:Command
+_rdset	command.py	/^    _rdset = None$/;"	v	class:Command
+_res_code	command.py	/^    _res_code = None$/;"	v	class:Command
+_res_err	command.py	/^    _res_err = None$/;"	v	class:Command
+_res_out	command.py	/^    _res_out = None$/;"	v	class:Command
+_set_active	job_queue.py	/^    def _set_active (self):$/;"	m	class:Job
+_slept_jobs	job_queue.py	/^    _slept_jobs = None$/;"	v	class:JobQueue
+_start_ts	command.py	/^    _start_ts = None$/;"	v	class:Command
+_status	command.py	/^    _status = None # which is the process exit status$/;"	v	class:Command
+_stderr	command.py	/^    _stderr = None$/;"	v	class:Command
+_stdin	command.py	/^    _stdin = None$/;"	v	class:Command
+_stdout	command.py	/^    _stdout = None$/;"	v	class:Command
+_timeout	command.py	/^    _timeout = None$/;"	v	class:Command
+_wait_child	command.py	/^    def _wait_child (self, isblock): $/;"	m	class:Command
+_worker_thread	job_queue.py	/^    def _worker_thread (self):$/;"	m	class:JobQueue
+_workers	job_queue.py	/^    _workers = None$/;"	v	class:JobQueue
+_wrset	command.py	/^    _wrset = None$/;"	v	class:Command
+abspath	_env.py	/^from os.path import dirname, normpath, abspath, join$/;"	i
+activate_job	job_queue.py	/^    def activate_job (self, job):$/;"	m	class:JobQueue
+args	command.py	/^    args = None$/;"	v	class:Command
+check_alive	daemon.py	/^def check_alive (pid):$/;"	f
+checksum	fping.py	/^def checksum(source_string):$/;"	f
+client	vps.py	/^from zthrift.client import client$/;"	i
+cmd_line	command.py	/^    cmd_line = None$/;"	v	class:Command
+critical	log.py	/^    def critical (self, msg, bt_level = 0):$/;"	m	class:Log
+daemonize	daemon.py	/^def daemonize (func, pid_file, mon_pid_file, log_func=None):$/;"	f
+debug	log.py	/^    def debug (self, msg, bt_level = 0):$/;"	m	class:Log
+dirname	_env.py	/^from os.path import dirname, normpath, abspath, join$/;"	i
+do	job_queue.py	/^    def do (self):$/;"	m	class:Job
+errno	command.py	/^import errno$/;"	i
+errno	fping.py	/^import errno$/;"	i
+error	log.py	/^    def error (self, msg, bt_level = 0):$/;"	m	class:Log
+exception	log.py	/^    def exception (self, msg):$/;"	m	class:Log
+exception_ex	log.py	/^    def exception_ex (self, *args):$/;"	m	class:Log
+exception_one	log.py	/^    def exception_one (self, msg, bt_level = 0):$/;"	m	class:Log
+fcntl	command.py	/^import fcntl$/;"	i
+format_frame	log.py	/^    def format_frame (f):$/;"	m	class:Log
+format_frame	log.py	/^    format_frame = staticmethod (format_frame)$/;"	v	class:Log
+format_frame_ex	log.py	/^    def format_frame_ex (f):$/;"	m	class:Log
+format_frame_ex	log.py	/^    format_frame_ex = staticmethod (format_frame_ex)$/;"	v	class:Log
+fping	fping.py	/^def fping (dest_addrs, timeout):$/;"	f
+get	vps.py	/^    def get(self, id):$/;"	m	class:Route
+getLogger	log.py	/^def getLogger (name=None):$/;"	f
+get_exc_frames	log.py	/^    def get_exc_frames ():$/;"	m	class:Log
+get_exc_frames	log.py	/^    get_exc_frames = staticmethod (get_exc_frames)$/;"	v	class:Log
+get_jobs_count	job_queue.py	/^    def get_jobs_count (self):$/;"	m	class:JobQueue
+get_result	command.py	/^    def get_result (self):$/;"	m	class:Command
+get_slept_jobs	job_queue.py	/^    def get_slept_jobs (self):$/;"	m	class:JobQueue
+get_tag	job_queue.py	/^    def get_tag (self):$/;"	m	class:Job
+getopt	fping.py	/^    import getopt$/;"	i
+info	log.py	/^    def info (self, msg, bt_level = 0):$/;"	m	class:Log
+jobQ	job_queue.py	/^    jobQ = None$/;"	v	class:Job
+join	_env.py	/^from os.path import dirname, normpath, abspath, join$/;"	i
+log	log.py	/^    def log (self, level, msg, bt_level = 0):$/;"	m	class:Log
+log_level_map	log.py	/^    log_level_map = {$/;"	v	class:Log
+loggers	log.py	/^    loggers = {}$/;"	v	class:Log
+logging	log.py	/^import logging$/;"	i
+main	fping.py	/^def main ():$/;"	f
+main	vps.py	/^def main():$/;"	f
+normpath	_env.py	/^from os.path import dirname, normpath, abspath, join$/;"	i
+os	command.py	/^import os$/;"	i
+os	daemon.py	/^import os$/;"	i
+os	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+os	log.py	/^import os$/;"	i
+put_job	job_queue.py	/^    def put_job (self, job):$/;"	m	class:JobQueue
+random	job_queue.py	/^import random$/;"	i
+read_from	command.py	/^    def read_from (self):$/;"	m	class:Command
+read_from_ex	command.py	/^    def read_from_ex (self):$/;"	m	class:Command
+read_pid	daemon.py	/^def read_pid (pid_file):$/;"	f
+receive_one_ping	fping.py	/^def receive_one_ping(sock, ID):$/;"	f
+search_path	command.py	/^    def search_path (prog_name):$/;"	m	class:Command
+search_path	command.py	/^    search_path = staticmethod (search_path)$/;"	v	class:Command
+select	command.py	/^import select$/;"	i
+select	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+send_one_ping	fping.py	/^def send_one_ping(my_socket, dest_addr, ID):$/;"	f
+signal	command.py	/^import signal$/;"	i
+signal	daemon.py	/^import signal$/;"	i
+sleep	vps.py	/^from time import sleep$/;"	i
+socket	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+start	command.py	/^    def start (self):$/;"	m	class:Command
+start	daemon.py	/^def start (func, pid_file, mon_pid_file, log_func=None):$/;"	f
+start_worker	job_queue.py	/^    def start_worker (self, th_num):$/;"	m	class:JobQueue
+status	daemon.py	/^def status (pid_file, mon_pid_file):$/;"	f
+stop	daemon.py	/^def stop (sig, pid_file, mon_pid_file):$/;"	f
+stop	job_queue.py	/^    def stop (self):$/;"	m	class:JobQueue
+struct	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+sys	_env.py	/^import sys$/;"	i
+sys	daemon.py	/^import sys$/;"	i
+sys	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+sys	log.py	/^import sys$/;"	i
+threading	job_queue.py	/^import threading$/;"	i
+time	command.py	/^import time$/;"	i
+time	daemon.py	/^import time$/;"	i
+time	fping.py	/^import os, sys, socket, struct, select, time$/;"	i
+traceback	log.py	/^import traceback$/;"	i
+unique	_env.py	/^from zkit.algorithm.unique import unique$/;"	i
+usage	fping.py	/^def usage ():$/;"	f
+verbose_ping	fping.py	/^def verbose_ping(dest_addrs, timeout = 2):$/;"	f
+vps_open	test/vps.py	/^def vps_open(vps):$/;"	f
+wait	command.py	/^    def wait (self):$/;"	m	class:Command
+warn	log.py	/^    def warn (self, msg, bt_level = 0):$/;"	m	class:Log
+warning	log.py	/^    def warning (self, msg, bt_level = 0):$/;"	m	class:Log
+write_pid	daemon.py	/^def write_pid (pid_file, pid):$/;"	f
+write_to	command.py	/^    def write_to (self, input_str):$/;"	m	class:Command
+write_to_ex	command.py	/^    def write_to_ex (self, input_str):$/;"	m	class:Command
