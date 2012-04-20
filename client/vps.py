@@ -4,6 +4,7 @@ import _env
 
 from conf import HOST_ID
 
+from saas import VPS
 from zthrift.client import run_client
 from saas.ttypes import Cmd
 
@@ -60,7 +61,6 @@ def main():
 
     handler = Handler(route, HOST_ID)
     run_client(VPS, handler)
-    print 'done'
 
 if __name__ == "__main__":
     main()

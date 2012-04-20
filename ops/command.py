@@ -30,7 +30,10 @@ class CommandException (Exception):
         self.msg = msg
 
     def __str__ (self):
-        output = "CommandException: cmd='%s', %s" % (self.command, self.msg)
+        if self.status is not None:
+            output = "cmd '%s' exit %d, %s" % (self.command, self.status, self.msg)
+        else:
+            output = "cmd '%s', %s" % (self.command, self.msg)
         return output
 
 class CommandTimeoutException (CommandException):
@@ -39,7 +42,7 @@ class CommandTimeoutException (CommandException):
         CommandException.__init__ (self, *args)
 
     def __str__ (self):
-        output = "CommandTimeoutException: cmd='%s', %s" % (self.command, self.msg)
+        output = "cmd '%s' %s" % (self.command, self.msg)
         return output
 
 class Command (object):
@@ -297,20 +300,28 @@ class Command (object):
         self.start ()
         return self.wait ()
 
-    ####################static method##################
-    def search_path (prog_name):
-        """ search an executable in system's PATH, return the abs path """
-        path = os.environ.get ("PATH")
-        paths = []
-        if path:
-            paths = path.split (":")
-        if len (paths) == 0:
-            raise Exception ("PATH environment not exists")
-        for p in paths:
-            bin_path = os.path.join (p, prog_name)
-            if os.path.isfile (bin_path) and os.access (bin_path, os.X_OK):
-                return bin_path 
-        return None
-    search_path = staticmethod (search_path)
+##########
+
+def search_path (prog_name):
+    """ search an executable in system's PATH, return the abs path """
+    path = os.environ.get ("PATH")
+    paths = []
+    if path:
+        paths = path.split (":")
+    if len (paths) == 0:
+        raise Exception ("PATH environment not exists")
+    for p in paths:
+        bin_path = os.path.join (p, prog_name)
+        if os.path.isfile (bin_path) and os.access (bin_path, os.X_OK):
+            return bin_path 
+    return None
+
+def call_cmd (cmd):
+    c = Command (cmd)
+    status, out = c.read_from ()
+    if status == 0:
+        return out.strip ("\r\n")
+    raise CommandException (cmd, msg=out, status=status)
+
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
