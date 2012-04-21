@@ -9,7 +9,7 @@ import conf.vps_env as config
 from saas import VPS
 from saas.ttypes import Cmd
 from zthrift.client import get_client
-
+import zkit
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
@@ -69,7 +69,9 @@ class VPSMgr (object):
         vpsops = VPSOps (self.logger)
         try:
             xv.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, 
-                    ip=vps.ipv4, netmask=vps.ipv4_netmask, gateway=vps.ipv4_gateway,
+                    ip=zkit.int2ip (vps.ipv4), 
+                    netmask=zkit.int2ip (vps.ipv4_netmask), 
+                    gateway=zkit.int2ip (vps.ipv4_gateway),
                     root_pw=vps.password)
             vpsops.create_vps (xv)
             xv.start ()
