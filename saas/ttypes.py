@@ -282,6 +282,7 @@ class SaasException(TException):
   Attributes:
    - state
    - message
+   - host_id
    - todo
   """
 
@@ -289,12 +290,14 @@ class SaasException(TException):
     None, # 0
     (1, TType.I32, 'state', None, None, ), # 1
     (2, TType.STRING, 'message', None, None, ), # 2
-    (3, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 3
+    (3, TType.I64, 'host_id', None, None, ), # 3
+    (4, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 4
   )
 
-  def __init__(self, state=None, message=None, todo=None,):
+  def __init__(self, state=None, message=None, host_id=None, todo=None,):
     self.state = state
     self.message = message
+    self.host_id = host_id
     self.todo = todo
 
   def read(self, iprot):
@@ -317,6 +320,11 @@ class SaasException(TException):
         else:
           iprot.skip(ftype)
       elif fid == 3:
+        if ftype == TType.I64:
+          self.host_id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
         if ftype == TType.STRUCT:
           self.todo = Task()
           self.todo.read(iprot)
@@ -340,8 +348,12 @@ class SaasException(TException):
       oprot.writeFieldBegin('message', TType.STRING, 2)
       oprot.writeString(self.message)
       oprot.writeFieldEnd()
+    if self.host_id is not None:
+      oprot.writeFieldBegin('host_id', TType.I64, 3)
+      oprot.writeI64(self.host_id)
+      oprot.writeFieldEnd()
     if self.todo is not None:
-      oprot.writeFieldBegin('todo', TType.STRUCT, 3)
+      oprot.writeFieldBegin('todo', TType.STRUCT, 4)
       self.todo.write(oprot)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

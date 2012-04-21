@@ -31,7 +31,8 @@ struct Task {
 exception SaasException {
   1: i32 state          ,
   2: string message     ,
-  3: Task todo          ,
+  3: i64 host_id        ,
+  4: Task todo          ,
 }
 
 service VPS {
