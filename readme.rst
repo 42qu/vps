@@ -28,34 +28,39 @@ push 貌似要用 ::
 程序结构
 =============================================
 
-接口的定义文件 ::
-    saas/saas.thrift
+接口的定义文件 : saas.thrift
 
 启动线上服务器 (应该用 daemontools http://cr.yp.to/daemontools.html 之类的工具保证进程死掉以后自动重开) ::
-    gen-py/server/bin/vps.py 
+
+    server/bin/vps.py 
 
 启动开发服务器(当有文件改动的时候会自动重启) ::
-    gen-py/server/bin/vps.dev.py     
 
-主程序::
-    gen-py/server/ctrl/vps.py
+    server/bin/vps.dev.py     
 
-client的目录结构类似
+配置 :  conf/
+
+主程序 :    server/ctrl/vps.py
+
+VPS逻辑 :  ops/
+
+脚本 : tools/
 
 
 配置文件
 ============================================
 
-为了开发调试的方便
-
-每台机器可以有自己的配置选项
+为了开发调试的方便，每台机器可以有自己的配置选项
 
 参见::
 
-    saas/gen-py/config/host/e1.py
+    conf/host/e1.py    
 
 其中 e1.py 的 e1 为当前机器的名称
 
+conf/vps_env.py 环境配置
+
+conf/os_imsage.py  os类型和镜像配置
 
 
 相关链接
