@@ -2,8 +2,9 @@
 
 import sys
 import os
-import vps_common
-from vps_common import call_cmd
+import ops.vps_common as vps_common
+from lib.command import call_cmd
+
 
 def usage ():
     print """usage: \n%s [image_path] [os] [version] [arch]
@@ -36,7 +37,7 @@ def main():
         call_cmd ("tar zcf %s ." % (tarball_path))
     finally:
         os.chdir (cwd)
-    vps_common.umount_tmp (mount_point)
+        vps_common.umount_tmp (mount_point)
     
 if "__main__" == __name__:
     main()
