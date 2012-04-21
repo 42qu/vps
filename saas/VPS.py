@@ -25,11 +25,13 @@ class Iface:
     """
     pass
 
-  def done(self, host_id, todo):
+  def done(self, host_id, todo, state, message):
     """
     Parameters:
      - host_id
      - todo
+     - state
+     - message
     """
     pass
 
@@ -78,20 +80,24 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "todo failed: unknown result");
 
-  def done(self, host_id, todo):
+  def done(self, host_id, todo, state, message):
     """
     Parameters:
      - host_id
      - todo
+     - state
+     - message
     """
-    self.send_done(host_id, todo)
+    self.send_done(host_id, todo, state, message)
     self.recv_done()
 
-  def send_done(self, host_id, todo):
+  def send_done(self, host_id, todo, state, message):
     self._oprot.writeMessageBegin('done', TMessageType.CALL, self._seqid)
     args = done_args()
     args.host_id = host_id
     args.todo = todo
+    args.state = state
+    args.message = message
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -106,8 +112,6 @@ class Client(Iface):
     result = done_result()
     result.read(self._iprot)
     self._iprot.readMessageEnd()
-    if result.saas_exception is not None:
-      raise result.saas_exception
     return
 
   def vps(self, vps_id):
@@ -180,10 +184,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = done_result()
-    try:
-      self._handler.done(args.host_id, args.todo)
-    except SaasException, saas_exception:
-      result.saas_exception = saas_exception
+    self._handler.done(args.host_id, args.todo, args.state, args.message)
     oprot.writeMessageBegin("done", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -328,17 +329,23 @@ class done_args:
   Attributes:
    - host_id
    - todo
+   - state
+   - message
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'host_id', None, None, ), # 1
     (2, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 2
+    (3, TType.I32, 'state', None, 0, ), # 3
+    (4, TType.STRING, 'message', None, "", ), # 4
   )
 
-  def __init__(self, host_id=None, todo=None,):
+  def __init__(self, host_id=None, todo=None, state=thrift_spec[3][4], message=thrift_spec[4][4],):
     self.host_id = host_id
     self.todo = todo
+    self.state = state
+    self.message = message
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -360,6 +367,16 @@ class done_args:
           self.todo.read(iprot)
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I32:
+          self.state = iprot.readI32();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.STRING:
+          self.message = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -377,6 +394,14 @@ class done_args:
     if self.todo is not None:
       oprot.writeFieldBegin('todo', TType.STRUCT, 2)
       self.todo.write(oprot)
+      oprot.writeFieldEnd()
+    if self.state is not None:
+      oprot.writeFieldBegin('state', TType.I32, 3)
+      oprot.writeI32(self.state)
+      oprot.writeFieldEnd()
+    if self.message is not None:
+      oprot.writeFieldBegin('message', TType.STRING, 4)
+      oprot.writeString(self.message)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -397,18 +422,9 @@ class done_args:
     return not (self == other)
 
 class done_result:
-  """
-  Attributes:
-   - saas_exception
-  """
 
   thrift_spec = (
-    None, # 0
-    (1, TType.STRUCT, 'saas_exception', (SaasException, SaasException.thrift_spec), None, ), # 1
   )
-
-  def __init__(self, saas_exception=None,):
-    self.saas_exception = saas_exception
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -419,12 +435,6 @@ class done_result:
       (fname, ftype, fid) = iprot.readFieldBegin()
       if ftype == TType.STOP:
         break
-      if fid == 1:
-        if ftype == TType.STRUCT:
-          self.saas_exception = SaasException()
-          self.saas_exception.read(iprot)
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -435,10 +445,6 @@ class done_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('done_result')
-    if self.saas_exception is not None:
-      oprot.writeFieldBegin('saas_exception', TType.STRUCT, 1)
-      self.saas_exception.write(oprot)
-      oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
