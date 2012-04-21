@@ -3,65 +3,82 @@
 import re
 import os
 
-import config
+import _env
 from string import Template
-import vps.vps_common as vps_common
-from fping import ping
-assert config.xen_bridge
-assert config.vps_image_dir
-assert config.vps_swap_dir
-assert config.xen_config_dir
-assert config.xen_auto_dir
-assert config.mkfs_cmd
+import vps_common
+import os_image
+
+
+import conf.vps_env as vps_env
+assert vps_env.xen_bridge
+assert vps_env.vps_image_dir
+assert vps_env.vps_swap_dir
+assert vps_env.xen_config_dir
+assert vps_env.xen_auto_dir
+assert vps_env.mkfs_cmd
 
 
 
 class XenVPS (object):
 
+    name = None
+    img_path = None
+    swp_path = None
+    config_path = None
+    auto_config_path = None
+    xen_bridge = None
+    has_all_attr = False
+    vcpu = None
     mem_m = None
     disk_g = None
+    swp_g = None
     mac = None
     ip = None
     netmask = None
     gateway = None
+    template_image = None
+    os_type = None
+    os_version = None
+    root_pw = None
 
     def __init__ (self, _id):
         self.name = "vps%s" % str(_id)
-        self.img_path = os.path.join (config.vps_image_dir, self.name + ".img")
-        self.swp_path = os.path.join (config.vps_swap_dir, self.name + ".swp")
-        self.config_path = os.path.join (config.xen_config_dir, self.name)
-        self.auto_config_path = os.path.join (config.xen_auto_dir, self.name)
+        self.img_path = os.path.join (vps_env.vps_image_dir, self.name + ".img")
+        self.swp_path = os.path.join (vps_env.vps_swap_dir, self.name + ".swp")
+        self.config_path = os.path.join (vps_env.xen_config_dir, self.name)
+        self.auto_config_path = os.path.join (vps_env.xen_auto_dir, self.name)
+        self.xen_bridge = vps_env.xen_bridge
         self.has_all_attr = False
 
-    def setup (self, os_id, mem_m, disk_g, ip, netmask, gateway, mac=None, swap_g=None):
-        #TODO os_id
-        assert mem_m > 0 and disk_g > 0
+    def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
+        assert mem_m > 0 and disk_g > 0 and vcpu > 0
         assert ip and netmask is not None and gateway
         self.has_all_attr = True
+        self.vcpu = vcpu
         self.mem_m = mem_m
         self.disk_g = disk_g
-        if swap_g:
-            self.swap_g = swap_g
+        if swp_g:
+            self.swp_g = swp_g
         else:
             if self.mem_m >= 2000:
-                self.swap_g = 2
+                self.swp_g = 2
             else:
-                self.swap_g = 1
+                self.swp_g = 1
         self.mac = mac and vps_common.gen_mac ()
         self.ip = ip
         self.netmask = netmask
         self.gateway = gateway
+        self.root_pw = root_pw
+        self.template_image, self.os_type, self.os_version = os_image.find_os_image (os_id)
 
     def check_resource_avail (self):
         """ on error or space not available raise Exception """
         assert self.has_all_attr
-        #TODO
-        # check memory
-        #TODO
-        # check disk
-        #TODO
+        #TODO check memory
+        #TODO check disk
+
         # check ip available
-        if 0 == os.system ("ping -c1 -W2 %s >/dev/null" % (self.ip)):
+        if 0 == os.system ("ping -c2 -W2 %s >/dev/null" % (self.ip)):
             raise Exception ("ip %s is in use" % (self.ip))
         if os.path.exists (self.config_path):
             raise Exception ("%s already exists" % (self.config_path))
@@ -89,62 +106,22 @@ on_poweroff = "destroy"
 on_reboot = "restart"
 on_crash = "restart"
 """ )
-        xen_config = t.substitue (name=self.name, vcpu=str(vcpu), mem=str(self.mem_m), 
+        xen_config = t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
                 mac=str(self.mac), img_path=self.img_path, swp_path=self.swp_path,
-                bridge=config.xen_bridge)
+                bridge=self.xen_bridge)
         return xen_config
        
     def is_running (self):
-        raise NotImplemented ()
+        raise NotImplementedError ()
 
     def start (self):
-        raise NotImplemented ()
+        raise NotImplementedError ()
 
     def stop (self):
-        raise NotImplemented ()
+        raise NotImplementedError ()
 
-class VPSOps (object):
 
-    def __init__ (self, logger):
-        self.logger = logger
 
-    def create_vps (self, vps):
-
-        assert isinstance (vps, VPS, template_os):
-        assert vps.has_all_attr
-        try:
-            vps.check_resource_avail ()
-
-            self.logger.info ("begin to create image for vps %s" % (vps.name))
-            vps_common.create_raw_image (vps.img_path, vps.disk_g, config.mkfs_cmd)
-            self.logger.info ("image %s created" % (vps.img_path))
-            vps_common.create_raw_image (vps.swp_path, vps.swap_g, "mkswap")
-            self.logger.info ("swap image %s created" % (vps.swp_path))
-            vps_mountpoint = vps_common.mount_loop_tmp (vps.img_path)
-            self.logger.info ("mounted vps image %s" % (vps.img_path))
-            try:
-                if re.match (r'.*\.img$', template_os):
-                    vps_common.sync_img (vps_mountpoint, template_os)
-                else:
-                    vps_common.unpack_tarball (vps_mountpoint, template_os)
-                self.logger.info ("syned vps os to %s" % (vps.img_path))
-                # TODO init os according to os type
-            finally:
-                vps_common.umount_tmp (vps_mountpoint)
-            xen_config = vps.gen_xenpv_config ()
-            f = open (vps.config_path, 'w')
-            try:
-                f.write (xen_config)
-            finally:
-                f.close ()
-            self.logger.info ("%s created" % (vps.config_path))
-            #TODO make link to xen auto 
-        except Exception, e:
-            self.logger.exception (e)
-
-    def delete_vps (self, vps):
-        raise NotImplemented ()
-        
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

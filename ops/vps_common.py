@@ -8,8 +8,8 @@ import os
 import tempfile
 import time
 import re
-
-from command import call_cmd
+import _env
+from lib.command import call_cmd
 
 #def call_cmd (cmd):
 #    res = os.system (cmd)
