@@ -28,13 +28,15 @@ struct Task {
     2: optional i64   id
 }
 
+typedef i64 VpsId 
+
 service VPS {
 
-   Task  todo        ( 1:i64  host_id  ),
-   void  done        ( 1:i64  host_id , 2:Task todo , 3:i32 state=0, 4:string message=''), 
+   Task  todo            ( 1:i64  host_id  ),
+   void  done            ( 1:i64  host_id , 2:Task todo , 3:i32 state=0, 4:string message=''), 
 
-   Vps   vps         ( 1:i64  vps_id   ),
-
+   Vps   vps             ( 1:i64  vps_id   ),
+   void  netflow_save    ( 1:map<VpsId, list<i64>> netflow),
 }
 
 

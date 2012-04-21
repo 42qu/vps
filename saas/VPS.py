@@ -42,6 +42,13 @@ class Iface:
     """
     pass
 
+  def netflow_save(self, netflow):
+    """
+    Parameters:
+     - netflow
+    """
+    pass
+
 
 class Client(Iface):
   def __init__(self, iprot, oprot=None):
@@ -144,6 +151,34 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "vps failed: unknown result");
 
+  def netflow_save(self, netflow):
+    """
+    Parameters:
+     - netflow
+    """
+    self.send_netflow_save(netflow)
+    self.recv_netflow_save()
+
+  def send_netflow_save(self, netflow):
+    self._oprot.writeMessageBegin('netflow_save', TMessageType.CALL, self._seqid)
+    args = netflow_save_args()
+    args.netflow = netflow
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_netflow_save(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = netflow_save_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    return
+
 
 class Processor(Iface, TProcessor):
   def __init__(self, handler):
@@ -152,6 +187,7 @@ class Processor(Iface, TProcessor):
     self._processMap["todo"] = Processor.process_todo
     self._processMap["done"] = Processor.process_done
     self._processMap["vps"] = Processor.process_vps
+    self._processMap["netflow_save"] = Processor.process_netflow_save
 
   def process(self, iprot, oprot):
     (name, type, seqid) = iprot.readMessageBegin()
@@ -197,6 +233,17 @@ class Processor(Iface, TProcessor):
     result = vps_result()
     result.success = self._handler.vps(args.vps_id)
     oprot.writeMessageBegin("vps", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_netflow_save(self, seqid, iprot, oprot):
+    args = netflow_save_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = netflow_save_result()
+    self._handler.netflow_save(args.netflow)
+    oprot.writeMessageBegin("netflow_save", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -565,6 +612,126 @@ class vps_result:
       oprot.writeFieldBegin('success', TType.STRUCT, 0)
       self.success.write(oprot)
       oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class netflow_save_args:
+  """
+  Attributes:
+   - netflow
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.MAP, 'netflow', (TType.I64,None,TType.LIST,(TType.I64,None)), None, ), # 1
+  )
+
+  def __init__(self, netflow=None,):
+    self.netflow = netflow
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.MAP:
+          self.netflow = {}
+          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin() 
+          for _i4 in xrange(_size0):
+            _key5 = iprot.readI64();
+            _val6 = []
+            (_etype10, _size7) = iprot.readListBegin()
+            for _i11 in xrange(_size7):
+              _elem12 = iprot.readI64();
+              _val6.append(_elem12)
+            iprot.readListEnd()
+            self.netflow[_key5] = _val6
+          iprot.readMapEnd()
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('netflow_save_args')
+    if self.netflow is not None:
+      oprot.writeFieldBegin('netflow', TType.MAP, 1)
+      oprot.writeMapBegin(TType.I64, TType.LIST, len(self.netflow))
+      for kiter13,viter14 in self.netflow.items():
+        oprot.writeI64(kiter13)
+        oprot.writeListBegin(TType.I64, len(viter14))
+        for iter15 in viter14:
+          oprot.writeI64(iter15)
+        oprot.writeListEnd()
+      oprot.writeMapEnd()
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class netflow_save_result:
+
+  thrift_spec = (
+  )
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('netflow_save_result')
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
