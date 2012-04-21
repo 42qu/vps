@@ -1,1 +1,4 @@
 *.pyc
+tags
+Session.vim
+*.sw?
