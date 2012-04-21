@@ -51,6 +51,7 @@ class XenVPS (object):
         self.has_all_attr = False
 
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
+        """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
         assert ip and netmask is not None and gateway
         self.has_all_attr = True
@@ -86,8 +87,6 @@ class XenVPS (object):
             raise Exception ("%s already exists" % (self.img_path))
         if os.path.exists (self.swp_path):
             raise Exception ("%s already exists" % (self.swp_path))
-
-
 
     def gen_xenpv_config (self):
         assert self.has_all_attr

@@ -1,20 +1,24 @@
 #!/usr/bin/env python
 
+import re
 import os
 import _env
 from lib.command import call_cmd
 from vps import XenVPS
+import string
 
 def os_init (vps, vps_mountpoint):
     assert isinstance (vps, XenVPS)
     
     os_type = vps.os_type
-    if os_type == 'gentoo':
+    if os_type.find ('gentoo') == 0:
         gentoo_init (vps, vps_mountpoint)
-    elif os_type == 'redhat' or os_type == 'centos':
+    elif re.match (r'^(redhat|rhel|centos).*', os_type):
         redhat_init (vps, vps_mountpoint)
-    elif os_type == 'debian' or os_type == 'ubuntu':
+    elif re.match (r'^(debian|ubuntu).*$', os_type):
         debian_init (vps, vps_mountpoint)
+    elif os_type.find ('arch') == 0:
+        arch_init (vps, vps_mountpoint)
     else:
         raise NotImplementedError ()
     set_root_passwd (vps, vps_mountpoint)
@@ -32,7 +36,7 @@ echo 'root:%s' | /usr/sbin/chgpasswd
             f.write (sh_script)
         finally:
             f.close ()
-        call_cmd ("/bin/chroot %s /bin/sh /tmp/user_data")
+        call_cmd ("/bin/chroot %s /bin/sh /tmp/user_data" % (vps_mountpoint))
     finally:
         if os.path.exists (user_data):
             os.remove (user_data)
@@ -104,5 +108,32 @@ GATEWAY=%s
         f.close ()
     
 
+def arch_init (vps, vps_mountpoint):
+    rcconf = string.Template ("""
+LOCALE="en_US.utf8"
+HARDWARECLOCK="UTC"
+USEDIRECTISA="no"
+TIMEZONE="America/New_York"
+KEYMAP="us"
+CONSOLEFONT=
+CONSOLEMAP=
+USECOLOR="yes"
+MOD_AUTOLOAD="yes"
+MODULES=()
+HOSTNAME="arch"
+USELVM="no"
+interface=eth0
+address=$ADDRESS
+netmask=$NETMASK
+gateway=$GATEWAY
+DAEMONS=(syslog-ng network crond sshd)
+
+""").substitute (HOSTNAME=vps.name, ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
+    f = open (os.path.join (vps_mountpoint, "etc/rc.conf"))
+    try:
+        f.write (rcconf)
+    finally:
+        f.close ()
+    
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

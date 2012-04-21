@@ -2,6 +2,7 @@
 
 import sys
 import os
+import _env
 import ops.vps_common as vps_common
 from lib.command import call_cmd
 
