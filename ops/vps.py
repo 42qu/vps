@@ -9,14 +9,13 @@ import vps_common
 import os_image
 
 
-import conf.vps_env as vps_env
-assert vps_env.xen_bridge
-assert vps_env.vps_image_dir
-assert vps_env.vps_swap_dir
-assert vps_env.xen_config_dir
-assert vps_env.xen_auto_dir
-assert vps_env.mkfs_cmd
-
+import conf
+assert conf.xen_bridge
+assert conf.vps_image_dir
+assert conf.vps_swap_dir
+assert conf.xen_config_dir
+assert conf.xen_auto_dir
+assert conf.mkfs_cmd
 
 
 class XenVPS (object):
@@ -43,11 +42,11 @@ class XenVPS (object):
 
     def __init__ (self, _id):
         self.name = "vps%s" % str(_id)
-        self.img_path = os.path.join (vps_env.vps_image_dir, self.name + ".img")
-        self.swp_path = os.path.join (vps_env.vps_swap_dir, self.name + ".swp")
-        self.config_path = os.path.join (vps_env.xen_config_dir, self.name)
-        self.auto_config_path = os.path.join (vps_env.xen_auto_dir, self.name)
-        self.xen_bridge = vps_env.xen_bridge
+        self.img_path = os.path.join (conf.vps_image_dir, self.name + ".img")
+        self.swp_path = os.path.join (conf.vps_swap_dir, self.name + ".swp")
+        self.config_path = os.path.join (conf.xen_config_dir, self.name)
+        self.auto_config_path = os.path.join (conf.xen_auto_dir, self.name)
+        self.xen_bridge = conf.xen_bridge
         self.has_all_attr = False
 
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):

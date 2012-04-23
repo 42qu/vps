@@ -3,8 +3,9 @@ def load(self, *args):
     ]
     FINISH = [
     ]
+    print "loading :", args
 
-    def load(name):
+    def _load(name):
         try:
             mod = __import__(
                 name,
@@ -13,8 +14,8 @@ def load(self, *args):
                 [],
                 -1
             )
-        except ImportError:
-            #print 'NO CONFIG %s'%name
+        except ImportError, e:
+            print 'NO CONFIG %s'%name, e
             return
         for i in name.split('.')[1:]:
             mod = getattr(mod, i)
@@ -28,7 +29,7 @@ def load(self, *args):
         if finish:
             FINISH.append(finish)
     for i in args:
-        load(i)
+        _load(i)
     funclist = PREPARE+list(reversed(FINISH))
     for _ in funclist:
         _(self)

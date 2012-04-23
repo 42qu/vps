@@ -3,13 +3,13 @@
 
 import sys
 import os
+import conf
 from conf import HOST_ID
-import conf.vps_env as config
 
 from saas import VPS
 from saas.ttypes import Cmd
 from zthrift.client import get_client
-import zkit
+from zkit.ip import int2ip 
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
@@ -23,7 +23,7 @@ class VPSMgr (object):
     VERSION = 1
 
     def __init__ (self):
-        self.logger = Log ("vps_mgr", config=config)
+        self.logger = Log ("vps_mgr", config=conf)
         self.host_id = HOST_ID
         self.handler = {
             Cmd.OPEN: self.__class__.vps_open,
@@ -53,7 +53,7 @@ class VPSMgr (object):
             try:
                 h (self, task, vps)
             except Exception, e:
-                self.logger.exception ("uncaught exception: " + e)
+                self.logger.exception ("uncaught exception: " + str(e))
         else:
             self.logger.error ("unregconized cmd %s" % (str(task.cmd)))
             self.done_task (task, False, 'not implemented')
@@ -79,9 +79,9 @@ class VPSMgr (object):
         vpsops = VPSOps (self.logger)
         try:
             xv.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, 
-                    ip=zkit.int2ip (vps.ipv4), 
-                    netmask=zkit.int2ip (vps.ipv4_netmask), 
-                    gateway=zkit.int2ip (vps.ipv4_gateway),
+                    ip=int2ip (vps.ipv4), 
+                    netmask=int2ip (vps.ipv4_netmask), 
+                    gateway=int2ip (vps.ipv4_gateway),
                     root_pw=vps.password)
             vpsops.create_vps (xv)
             xv.start ()
@@ -139,13 +139,13 @@ def _run_once ():
     client.run_once()
 
 if __name__ == "__main__":
-    log_dir = config.log_dir
+    log_dir = conf.log_dir
     if not os.path.exists (log_dir):
         os.makedirs (log_dir, 0700)
-    run_dir = config.run_dir
+    run_dir = conf.run_dir
     if not os.path.exists (run_dir):
         os.makedirs (run_dir, 0700)
-    logger = Log ("vps_mgr", config=config)
+    logger = Log ("vps_mgr", config=conf)
     os.chdir (run_dir)
 
     pid_file = "vps_mgr.pid"

@@ -18,6 +18,23 @@ def prepare(o):
         HOST_ID = int(HOST_ID.group())
     o.HOST_ID = HOST_ID
 
+    # for log.py
+    o.log_dir = "/var/log/vps_mgr"
+    o.log_rotate_size = 20000
+    o.log_backup_count = 3
+    o.log_level = "DEBUG"
+    # for log.py
+
+    o.run_dir = "/var/run/vps_mgr"
+    o.tarball_dir = "/vps/tarball"
+    o.template_image_dir = "/vps/images"
+    o.vps_image_dir = "/vps"
+    o.vps_swap_dir = "/swp"
+    o.xen_config_dir = "/etc/xen"
+    o.xen_auto_dir = "/etc/xen/auto"
+    o.xen_bridge = "xenbr0"
+    o.mkfs_cmd = "mkfs.ext4"
+
     return o
 
 
