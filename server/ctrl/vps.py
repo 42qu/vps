@@ -10,7 +10,7 @@ class Handler(object):
 
 
     def done(self, host_id, todo, state, message):
-        task_done(host_id, task)
+        task_done(host_id, task, state, message)
 
     def vps(self, vps_id):
         vps = VpsOne.mc_get(vps_id)
