@@ -88,9 +88,8 @@ class VPSMgr (object):
                     gateway=int2ip (vps.ipv4_gateway),
                     root_pw=vps.password)
             vpsops.create_vps (xv)
-            xv.start ()
         except Exception, e:
-            self.logger.exception (e)
+            self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (task, False, str(e))
             return
         self.done_task (task, True)

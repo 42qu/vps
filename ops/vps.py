@@ -16,10 +16,14 @@ assert conf.vps_swap_dir
 assert conf.xen_config_dir
 assert conf.xen_auto_dir
 assert conf.mkfs_cmd
+import xen
+import time
 
 
 class XenVPS (object):
+    """ needs root to run xen command """
 
+    xen_inf = None
     name = None
     img_path = None
     swp_path = None
@@ -51,6 +55,12 @@ class XenVPS (object):
         self.auto_config_path = os.path.join (conf.xen_auto_dir, self.name)
         self.xen_bridge = conf.xen_bridge
         self.has_all_attr = False
+        if xen.XenXM.available ():
+            self.xen_inf = xen.XenXM
+        elif xen.XenXL.available ():
+            self.xen_inf = xen.XenXL
+        else:
+            raise Exception ("xen-tools is not available")
 
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
         """ on error will raise Exception """
@@ -77,9 +87,11 @@ class XenVPS (object):
     def check_resource_avail (self):
         """ on error or space not available raise Exception """
         assert self.has_all_attr
-        #TODO check memory
-        #TODO check disk
+        mem_free = self.xen_inf.mem_free ()
+        if self.mem_m > mem_free:
+            raise Exception ("xen free memory is not enough  (%dM left < %dM)" % (mem_free, self.mem_m))
 
+        #check disks not implemented, too complicate, expect error throw during vps creation
         # check ip available
         if 0 == os.system ("ping -c2 -W2 %s >/dev/null" % (self.ip)):
             raise Exception ("ip %s is in use" % (self.ip))
@@ -113,15 +125,49 @@ on_crash = "restart"
         return xen_config
        
     def is_running (self):
-        raise NotImplementedError ()
+        self.xen_inf.is_running (self.name)
+
+    def reboot (self):
+        if self.is_running ():
+            self.xen_inf.reboot (self.name)
+        else:
+            self.start ()
 
     def start (self):
-        raise NotImplementedError ()
+        if self.is_running ():
+            return
+        self.xen_inf.create (self.config_path)
 
     def stop (self):
-        raise NotImplementedError ()
+        if not self.is_running ():
+            return
+        self.xen_inf.shutdown (self.name)
 
+    def wait_until_reachable (self, timeout=20):
+        """ wait for the vps to be reachable and return True, or timeout returns False"""
+        start_ts = time.time ()
+        while True:
+            time.sleep (1)
+            if 0 == os.system ("ping -c1 -W1 %s>/dev/null" % (self.ip)):
+                return True
+            now = time.time ()
+            if now - start_ts > timeout:
+                return False
 
+    def create_autolink (self):
+        if os.path.exists(self.auto_config_path):
+            if os.path.islink (self.auto_config_path):
+                dest = os.readlink (self.auto_config_path)
+                if not os.path.isabs (dest):
+                    dest = os.path.join (os.path.dirname(self.auto_config_path), dest)
+                if dest == os.path.abspath(self.config_path):
+                    return
+                os.remove (self.auto_config_path)
+            else:
+                raise Exception ("a non link file %s is blocking link creation" % (self.auto_config_path))
+        os.symlink(self.config_path, self.auto_config_path)
+                
+            
 
 
 

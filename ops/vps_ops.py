@@ -25,7 +25,7 @@ class VPSOps (object):
             self.logger.info (message)
 
     def create_vps (self, vps):
-
+        """ on error raise Exception, the caller should log exception """
         assert isinstance (vps, XenVPS)
         assert vps.has_all_attr
         vps.check_resource_avail ()
@@ -45,7 +45,7 @@ class VPSOps (object):
                 vps_common.sync_img (vps_mountpoint, vps.template_image)
             else:
                 vps_common.unpack_tarball (vps_mountpoint, vps.template_image)
-            self.loginfo (vps, "syned vps os to %s" % (vps.img_path))
+            self.loginfo (vps, "synced vps os to %s" % (vps.img_path))
             
             self.loginfo (vps, "begin to init os")
             os_init (vps, vps_mountpoint)
@@ -58,8 +58,17 @@ class VPSOps (object):
             f.write (xen_config)
         finally:
             f.close ()
-        self.loginfo ("%s created" % (vps.config_path))
-        #TODO make link to xen auto 
+        self.loginfo (vps, "%s created, going to start it" % (vps.config_path))
+        vps.start ()
+        if not vps.wait_until_reachable (60):
+            raise Exception ("the vps seems not reachable")
+        self.loginfo (vps, "started and reachable")
+        try:
+            vps.create_autolink ()
+            self.loginfo (vps, "created link to xen auto")
+        except Exception, e: 
+            raise Exception ("vps started, but %s" % (e))
+
 
     def delete_vps (self, vps):
         raise NotImplementedError ()
