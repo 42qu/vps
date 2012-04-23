@@ -26,14 +26,28 @@ def prepare(o):
     # for log.py
 
     o.run_dir = "/var/run/vps_mgr"
-    o.tarball_dir = "/vps/tarball"
-    o.template_image_dir = "/vps/images"
+    o.os_image_dir = "/vps/images"
     o.vps_image_dir = "/vps"
     o.vps_swap_dir = "/swp"
     o.xen_config_dir = "/etc/xen"
     o.xen_auto_dir = "/etc/xen/auto"
     o.xen_bridge = "xenbr0"
-    o.mkfs_cmd = "mkfs.ext4"
+    o.mkfs_cmd = "/sbin/mkfs.ext4 -F"
+    o.os_image_dict = {
+        #    2: 'CentOS-6.2',
+        #    1: 'CentOS-5.8',
+        #    10002: 'Ubuntu-11.10',
+        #    10001: 'Ubuntu-10.04',
+        #    20001: 'Debian-6.0',
+        #    30001: 'Arch',
+            50001: {'os':'Gentoo', 'image':'gentoo_201202_amd64.tar.gz'},
+            50002: {'os':'Gentoo', 'image':'gentoo_template.img'},
+        #    60001: 'Fedora',
+        #   70001: 'OpenSUSE',
+        #    80001: 'Slackware',
+        #    90001: 'Scientific Linux',
+        #   100001: 'NetBSD',
+    }
 
     return o
 

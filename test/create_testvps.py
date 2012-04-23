@@ -2,12 +2,37 @@
 # -*- coding: utf-8 -*-
 
 import sys
+import os
 import _env
+import conf
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
+import ops.os_image as os_image
+import unittest
+from lib.log import Log
+
+class TestVPSCreate (unittest.TestCase):
+
+    def test_find_image (self):
+        image_path, os_type, version = os_image.find_os_image (50001)
+        self.assert_ (os.path.exists (image_path))
+
+    def test_vps1 (self):
+        logger = Log ("test", config=conf)
+        vpsops = VPSOps (logger)
+        vps = XenVPS (1)
+        vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+        print vps.gen_xenpv_config ()
+        vpsops.create_vps (vps)
+        
 
 def main():
+    runner = unittest.TextTestRunner ()
+#    runner.run (TestVPSCreate ("test_find_image"))
+    runner.run (TestVPSCreate ("test_vps1"))
 
+
+    
 
 
 

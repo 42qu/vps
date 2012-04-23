@@ -41,7 +41,10 @@ class XenVPS (object):
     root_pw = None
 
     def __init__ (self, _id):
-        self.name = "vps%s" % str(_id)
+        if _id < 10:
+            self.name = "vps0%d" % (_id) # to be compatible with current practice standard
+        else:
+            self.name = "vps%d" % str(_id)
         self.img_path = os.path.join (conf.vps_image_dir, self.name + ".img")
         self.swp_path = os.path.join (conf.vps_swap_dir, self.name + ".swp")
         self.config_path = os.path.join (conf.xen_config_dir, self.name)
@@ -52,7 +55,7 @@ class XenVPS (object):
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
-        assert ip and netmask is not None and gateway
+        assert ip and netmask is not None and gateway and isinstance (netmask, basestring)
         self.has_all_attr = True
         self.vcpu = vcpu
         self.mem_m = mem_m
@@ -64,7 +67,7 @@ class XenVPS (object):
                 self.swp_g = 2
             else:
                 self.swp_g = 1
-        self.mac = mac and vps_common.gen_mac ()
+        self.mac = mac or vps_common.gen_mac ()
         self.ip = ip
         self.netmask = netmask
         self.gateway = gateway
@@ -105,8 +108,8 @@ on_reboot = "restart"
 on_crash = "restart"
 """ )
         xen_config = t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
-                mac=str(self.mac), img_path=self.img_path, swp_path=self.swp_path,
-                bridge=self.xen_bridge)
+                img_path=self.img_path, swp_path=self.swp_path,
+                ip=self.ip, bridge=self.xen_bridge, mac=str(self.mac))
         return xen_config
        
     def is_running (self):

@@ -28,11 +28,15 @@ class VPSMgr (object):
         self.handler = {
             Cmd.OPEN: self.__class__.vps_open,
         }
+        self.last_task_id = {
+            Cmd.OPEN:0,
+            Cmd.RESTART:0,
+        }
         self.running = False
 
     def run_once (self):
-        task = None
         vps = None
+        
         try:
             trans, client = get_client (VPS)
             trans.open ()

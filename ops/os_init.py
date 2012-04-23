@@ -26,7 +26,7 @@ def os_init (vps, vps_mountpoint):
 
 def set_root_passwd (vps, vps_mountpoint):
     sh_script = """
-echo 'root:%s' | /usr/sbin/chgpasswd
+echo 'root:%s' | /usr/sbin/chpasswd
 """ % (vps.root_pw)
 
     user_data = os.path.join (vps_mountpoint, "tmp/user_data")
@@ -43,10 +43,10 @@ echo 'root:%s' | /usr/sbin/chgpasswd
     
 
 def gentoo_init (vps, vps_mountpoint):
-    vm_net_config_content = """
-config_eth0="%s netmask %d"
-routes_eth0="default via %s"
-""" % (vps.ip, vps.netmask, vps.gateway)
+    vm_net_config_content = string.Template ("""
+config_eth0="$ADDRESS netmask $NETMASK"
+routes_eth0="default via $GATEWAY"
+""").substitute (ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
     f = open (os.path.join (vps_mountpoint, "etc/conf.d/hostname"), "w+")
     try:
         f.write ('hostname="%s"\n' % (vps.name))
@@ -66,15 +66,15 @@ def debian_init (vps, vps_mountpoint):
     finally:
         f.close ()
 
-    vm_net_config_content = """
+    vm_net_config_content = string.Template("""
 auto lo
 iface lo inet loopback
 auto eth0
 iface eth0 inet static
-address %s
-netmask %s
-gateway %s
-""" % (vps.ip, vps.netmask, vps.gateway)
+address $ADDRESS
+netmask $NETMASK
+gateway $GATEWAY
+""").substitute (ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
     f = open (os.path.join (vps_mountpoint, "etc/network/interfaces"), "w+")
     try:
         f.write (vm_net_config_content)
@@ -92,15 +92,15 @@ HOSTNAME=%s
         f.write (network)
     finally:
         f.close ()
-    ifcfg_eth0 = """
+    ifcfg_eth0 = string.Template ("""
 DEVICE=eth0
 BOOTPROTO=none
 ONBOOT=yes
 TYPE=Ethernet
-IPADDR=%s
-NETMASK=%s
-GATEWAY=%s
-""" % (vps.ip, vps.netmask, vps.gateway)
+IPADDR=$ADDRESS
+NETMASK=$NETMASK
+GATEWAY=$GATEWAY
+""").substitute (ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
     f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-eth0"))
     try:
         f.write (ifcfg_eth0)
