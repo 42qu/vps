@@ -18,6 +18,7 @@ import lib.daemon as daemon
 import signal
 
 class VPSMgr (object):
+    """ all exception should catch and log in this class """
 
     VERSION = 1
 
@@ -25,7 +26,7 @@ class VPSMgr (object):
         self.logger = Log ("vps_mgr", config=config)
         self.host_id = HOST_ID
         self.handler = {
-            Cmd.OPEN: self.vps_open,
+            Cmd.OPEN: self.__class__.vps_open,
         }
         self.running = False
 
@@ -44,25 +45,34 @@ class VPSMgr (object):
                 trans.close ()
         except Exception, e:
             self.logger.exception (e)
+            return
         if not vps:
             return
         h = self.handler.get (task.cmd)
         if callable (h):
-            h (task, vps)
+            try:
+                h (self, task, vps)
+            except Exception, e:
+                self.logger.exception ("uncaught exception: " + e)
         else:
             self.logger.error ("unregconized cmd %s" % (str(task.cmd)))
+            self.done_task (task, False, 'not implemented')
             return
 
     def done_task (self, task, is_ok, msg=''):
         state = 0
         if not is_ok:
             state = 1  #TODO need confirm
-        trans, client = get_client (VPS)
-        trans.open ()
         try:
-            client.done (self.host_id, task, state, msg)
-        finally:
-            trans.close ()
+            trans, client = get_client (VPS)
+            trans.open ()
+            try:
+                client.done (self.host_id, task, state, msg)
+            finally:
+                trans.close ()
+        except Exception, e:
+            self.logger.exception (e)
+            
 
     def vps_open (self, task, vps): 
         xv = XenVPS (vps.id) 
@@ -75,10 +85,11 @@ class VPSMgr (object):
                     root_pw=vps.password)
             vpsops.create_vps (xv)
             xv.start ()
-            self.done_task (task, True)
         except Exception, e:
             self.logger.exception (e)
             self.done_task (task, False, str(e))
+            return
+        self.done_task (task, True)
             
     def loop (self):
         while self.running:
