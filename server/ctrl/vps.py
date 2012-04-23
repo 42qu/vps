@@ -9,7 +9,7 @@ class Handler(object):
         return task_by_host_id(host_id)
 
 
-    def done(self, host_id, task):
+    def done(self, host_id, todo, state, message):
         task_done(host_id, task)
 
     def vps(self, vps_id):
