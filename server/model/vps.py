@@ -29,12 +29,10 @@ def task_by_host_id(host_id, cmd):
 def vps_saas_cmd_open(host_id, id):
     return _vps_saas_cmd_new(Cmd.OPEN, host_id, id)
 
-def task_done(host_id, task, state, message):
-    cmd = task.cmd
+def task_done(host_id, cmd, id, state, message):
     if not cmd:
         return
-    s = task_dumps(cmd, task.id)
-    redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), s)
+    redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), id)
 
 if __name__ == '__main__':
     task = task_by_host_id(2)

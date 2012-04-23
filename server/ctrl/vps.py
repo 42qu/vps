@@ -1,6 +1,6 @@
 #coding:utf-8
 import _env
-from saas.ttypes import Cmd, Task, Vps
+from saas.ttypes import Cmd, Vps
 from server.model.vps import task_by_host_id, task_done
 from model.vps_sell import VpsOne
 
@@ -9,8 +9,8 @@ class Handler(object):
         return task_by_host_id(host_id, cmd)
 
 
-    def done(self, host_id, todo, state, message):
-        task_done(host_id, task, state, message)
+    def done(self, host_id, cmd, id, state, message):
+        task_done(host_id, cmd, id, state, message)
 
     def vps(self, vps_id):
         vps = VpsOne.mc_get(vps_id)

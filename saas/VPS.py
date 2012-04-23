@@ -26,11 +26,12 @@ class Iface:
     """
     pass
 
-  def done(self, host_id, todo, state, message):
+  def done(self, host_id, cmd, id, state, message):
     """
     Parameters:
      - host_id
-     - todo
+     - cmd
+     - id
      - state
      - message
     """
@@ -90,22 +91,24 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "todo failed: unknown result");
 
-  def done(self, host_id, todo, state, message):
+  def done(self, host_id, cmd, id, state, message):
     """
     Parameters:
      - host_id
-     - todo
+     - cmd
+     - id
      - state
      - message
     """
-    self.send_done(host_id, todo, state, message)
+    self.send_done(host_id, cmd, id, state, message)
     self.recv_done()
 
-  def send_done(self, host_id, todo, state, message):
+  def send_done(self, host_id, cmd, id, state, message):
     self._oprot.writeMessageBegin('done', TMessageType.CALL, self._seqid)
     args = done_args()
     args.host_id = host_id
-    args.todo = todo
+    args.cmd = cmd
+    args.id = id
     args.state = state
     args.message = message
     args.write(self._oprot)
@@ -223,7 +226,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = done_result()
-    self._handler.done(args.host_id, args.todo, args.state, args.message)
+    self._handler.done(args.host_id, args.cmd, args.id, args.state, args.message)
     oprot.writeMessageBegin("done", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -264,10 +267,10 @@ class todo_args:
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'host_id', None, None, ), # 1
-    (2, TType.I32, 'cmd', None,     0, ), # 2
+    (2, TType.I32, 'cmd', None, None, ), # 2
   )
 
-  def __init__(self, host_id=None, cmd=thrift_spec[2][4],):
+  def __init__(self, host_id=None, cmd=None,):
     self.host_id = host_id
     self.cmd = cmd
 
@@ -333,7 +336,7 @@ class todo_result:
   """
 
   thrift_spec = (
-    (0, TType.STRUCT, 'success', (Task, Task.thrift_spec), None, ), # 0
+    (0, TType.I64, 'success', None, None, ), # 0
   )
 
   def __init__(self, success=None,):
@@ -349,9 +352,8 @@ class todo_result:
       if ftype == TType.STOP:
         break
       if fid == 0:
-        if ftype == TType.STRUCT:
-          self.success = Task()
-          self.success.read(iprot)
+        if ftype == TType.I64:
+          self.success = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -365,8 +367,8 @@ class todo_result:
       return
     oprot.writeStructBegin('todo_result')
     if self.success is not None:
-      oprot.writeFieldBegin('success', TType.STRUCT, 0)
-      self.success.write(oprot)
+      oprot.writeFieldBegin('success', TType.I64, 0)
+      oprot.writeI64(self.success)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
@@ -390,7 +392,8 @@ class done_args:
   """
   Attributes:
    - host_id
-   - todo
+   - cmd
+   - id
    - state
    - message
   """
@@ -398,14 +401,16 @@ class done_args:
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'host_id', None, None, ), # 1
-    (2, TType.STRUCT, 'todo', (Task, Task.thrift_spec), None, ), # 2
-    (3, TType.I32, 'state', None, 0, ), # 3
-    (4, TType.STRING, 'message', None, "", ), # 4
+    (2, TType.I32, 'cmd', None, None, ), # 2
+    (3, TType.I64, 'id', None, None, ), # 3
+    (4, TType.I32, 'state', None, 0, ), # 4
+    (5, TType.STRING, 'message', None, "", ), # 5
   )
 
-  def __init__(self, host_id=None, todo=None, state=thrift_spec[3][4], message=thrift_spec[4][4],):
+  def __init__(self, host_id=None, cmd=None, id=None, state=thrift_spec[4][4], message=thrift_spec[5][4],):
     self.host_id = host_id
-    self.todo = todo
+    self.cmd = cmd
+    self.id = id
     self.state = state
     self.message = message
 
@@ -424,17 +429,21 @@ class done_args:
         else:
           iprot.skip(ftype)
       elif fid == 2:
-        if ftype == TType.STRUCT:
-          self.todo = Task()
-          self.todo.read(iprot)
+        if ftype == TType.I32:
+          self.cmd = iprot.readI32();
         else:
           iprot.skip(ftype)
       elif fid == 3:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
         if ftype == TType.I32:
           self.state = iprot.readI32();
         else:
           iprot.skip(ftype)
-      elif fid == 4:
+      elif fid == 5:
         if ftype == TType.STRING:
           self.message = iprot.readString();
         else:
@@ -453,16 +462,20 @@ class done_args:
       oprot.writeFieldBegin('host_id', TType.I64, 1)
       oprot.writeI64(self.host_id)
       oprot.writeFieldEnd()
-    if self.todo is not None:
-      oprot.writeFieldBegin('todo', TType.STRUCT, 2)
-      self.todo.write(oprot)
+    if self.cmd is not None:
+      oprot.writeFieldBegin('cmd', TType.I32, 2)
+      oprot.writeI32(self.cmd)
+      oprot.writeFieldEnd()
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I64, 3)
+      oprot.writeI64(self.id)
       oprot.writeFieldEnd()
     if self.state is not None:
-      oprot.writeFieldBegin('state', TType.I32, 3)
+      oprot.writeFieldBegin('state', TType.I32, 4)
       oprot.writeI32(self.state)
       oprot.writeFieldEnd()
     if self.message is not None:
-      oprot.writeFieldBegin('message', TType.STRING, 4)
+      oprot.writeFieldBegin('message', TType.STRING, 5)
       oprot.writeString(self.message)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
