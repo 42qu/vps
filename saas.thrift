@@ -32,7 +32,7 @@ typedef i64 VpsId
 
 service VPS {
 
-   Task  todo            ( 1:i64  host_id  ),
+   Task  todo            ( 1:i64  host_id , 2:Cmd cmd=0),
    void  done            ( 1:i64  host_id , 2:Task todo , 3:i32 state=0, 4:string message=''), 
 
    Vps   vps             ( 1:i64  vps_id   ),

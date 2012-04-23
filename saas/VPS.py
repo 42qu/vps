@@ -18,10 +18,11 @@ except:
 
 
 class Iface:
-  def todo(self, host_id):
+  def todo(self, host_id, cmd):
     """
     Parameters:
      - host_id
+     - cmd
     """
     pass
 
@@ -57,18 +58,20 @@ class Client(Iface):
       self._oprot = oprot
     self._seqid = 0
 
-  def todo(self, host_id):
+  def todo(self, host_id, cmd):
     """
     Parameters:
      - host_id
+     - cmd
     """
-    self.send_todo(host_id)
+    self.send_todo(host_id, cmd)
     return self.recv_todo()
 
-  def send_todo(self, host_id):
+  def send_todo(self, host_id, cmd):
     self._oprot.writeMessageBegin('todo', TMessageType.CALL, self._seqid)
     args = todo_args()
     args.host_id = host_id
+    args.cmd = cmd
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -209,7 +212,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = todo_result()
-    result.success = self._handler.todo(args.host_id)
+    result.success = self._handler.todo(args.host_id, args.cmd)
     oprot.writeMessageBegin("todo", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -255,15 +258,18 @@ class todo_args:
   """
   Attributes:
    - host_id
+   - cmd
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'host_id', None, None, ), # 1
+    (2, TType.I32, 'cmd', None,     0, ), # 2
   )
 
-  def __init__(self, host_id=None,):
+  def __init__(self, host_id=None, cmd=thrift_spec[2][4],):
     self.host_id = host_id
+    self.cmd = cmd
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -279,6 +285,11 @@ class todo_args:
           self.host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I32:
+          self.cmd = iprot.readI32();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -292,6 +303,10 @@ class todo_args:
     if self.host_id is not None:
       oprot.writeFieldBegin('host_id', TType.I64, 1)
       oprot.writeI64(self.host_id)
+      oprot.writeFieldEnd()
+    if self.cmd is not None:
+      oprot.writeFieldBegin('cmd', TType.I32, 2)
+      oprot.writeI32(self.cmd)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

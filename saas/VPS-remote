@@ -23,7 +23,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  Task todo(i64 host_id)'
+  print '  Task todo(i64 host_id, Cmd cmd)'
   print '  void done(i64 host_id, Task todo, i32 state, string message)'
   print '  Vps vps(i64 vps_id)'
   print '  void netflow_save( netflow)'
@@ -79,10 +79,10 @@ client = VPS.Client(protocol)
 transport.open()
 
 if cmd == 'todo':
-  if len(args) != 1:
-    print 'todo requires 1 args'
+  if len(args) != 2:
+    print 'todo requires 2 args'
     sys.exit(1)
-  pp.pprint(client.todo(eval(args[0]),))
+  pp.pprint(client.todo(eval(args[0]),eval(args[1]),))
 
 elif cmd == 'done':
   if len(args) != 4:
