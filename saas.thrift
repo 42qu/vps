@@ -23,17 +23,14 @@ enum Cmd{
   RESTART = 3,
 }
 
-struct Task {
-    1:          Cmd   cmd = 0,
-    2: optional i64   id
-}
 
 typedef i64 VpsId 
+typedef i64 Id
 
 service VPS {
 
-   Task  todo            ( 1:i64  host_id , 2:Cmd cmd=0),
-   void  done            ( 1:i64  host_id , 2:Task todo , 3:i32 state=0, 4:string message=''), 
+   Id    todo            ( 1:i64  host_id , 2:Cmd cmd),
+   void  done            ( 1:i64  host_id , 2:Cmd cmd, 3:Id id, 4:i32 state=0, 5:string message=''), 
 
    Vps   vps             ( 1:i64  vps_id   ),
    void  netflow_save    ( 1:map<VpsId, list<i64>> netflow),

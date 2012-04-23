@@ -5,8 +5,8 @@ from server.model.vps import task_by_host_id, task_done
 from model.vps_sell import VpsOne
 
 class Handler(object):
-    def todo(self, host_id):
-        return task_by_host_id(host_id)
+    def todo(self, host_id, cmd):
+        return task_by_host_id(host_id, cmd)
 
 
     def done(self, host_id, todo, state, message):
