@@ -9,7 +9,7 @@ import errno
 import signal
 
 # This module provides the function similar to subprocess, with optional timeout setting,
-# and it's indented to work with python 2.3 or above
+# and it's intended to work with python 2.3 or above
 
 try:
     MAXFD = os.sysconf('SC_OPEN_MAX')
