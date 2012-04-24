@@ -32,7 +32,9 @@ def vps_saas_cmd_open(host_id, id):
 def task_done(host_id, cmd, id, state, message):
     if not cmd:
         return
-    redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), id)
+    if redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), id):
+        pass
+        #TODO 删除存在的
 
 if __name__ == '__main__':
     task = task_by_host_id(2)
