@@ -1,4 +1,5 @@
 *.pyc
+private
 tags
 Session.vim
 *.sw?

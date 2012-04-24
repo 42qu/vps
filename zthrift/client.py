@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 
-from conf import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
+from conf import SAAS_PORT, SAAS_HOST
 
 from thrift import Thrift
 from thrift.transport import TTransport
@@ -10,9 +10,9 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TSSLSocket import TSSLSocket 
 
-def get_client (saas):
-#        sock = TSSLSocket(SAAS_HOST, SAAS_PORT, ca_certs=SSL_KEY_PEM)
-    sock = TSocket(SAAS_HOST, SAAS_PORT)
+def get_client (saas, host=SAAS_HOST):
+    sock = TSSLSocket(host, SAAS_PORT, ca_certs=None, validate=False)
+#    sock = TSocket(SAAS_HOST, SAAS_PORT)
     transport = TTransport.TBufferedTransport(sock)
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
     client = saas.Client(protocol)

@@ -11,7 +11,7 @@ from lib.log import Log
 import time
 from zkit.ip import int2ip 
 
-def vps_open_mock (self, task, vps):
+def vps_open_mock (self, vps):
     print "id", vps.id, "os", vps.os, "cpu", vps.cpu, "ram", vps.ram, "hd", vps.hd, \
         "ip", int2ip (vps.ipv4), "netmask", int2ip (vps.ipv4_netmask), "gateway", int2ip (vps.ipv4_gateway), \
         "pw", vps.password
