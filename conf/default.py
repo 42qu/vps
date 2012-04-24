@@ -6,7 +6,8 @@ def prepare(o):
     from os.path import join, dirname
     from _env import PREFIX
     
-    o.SSL_KEY_PEM = join(dirname(PREFIX),'private/key.pem')
+    o.SSL_KEY_PEM = join(dirname(PREFIX),'conf/private/key.pem')
+    o.SSL_CERT = join(dirname(PREFIX),'conf/private/cacert.pem')
     o.SAAS_PORT = 50042
 
     o.SAAS_HOST = "saas-vps.42qu.us"

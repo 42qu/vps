@@ -1,5 +1,5 @@
 #coding:utf-8
-from conf import SSL_KEY_PEM , SAAS_PORT, SAAS_HOST
+from conf import  SAAS_PORT, SAAS_HOST, SSL_CERT
 
 
 from thrift.transport import TTransport
@@ -10,11 +10,11 @@ from thrift.server import TServer
 def server(saas, handler):
     processor = saas.Processor(handler)
 
-#    from thrift.transport.TSSLSocket import TSSLServerSocket as  TServerSocket
-#    transport = TServerSocket(SAAS_HOST, port=SAAS_PORT, certfile=SSL_KEY_PEM)
+    from thrift.transport.TSSLSocket import TSSLServerSocket as  TServerSocket
+    transport = TServerSocket(SAAS_HOST, port=SAAS_PORT, certfile=SSL_CERT)
     
-    from thrift.transport import TSocket 
-    transport = TSocket.TServerSocket(SAAS_HOST, port=SAAS_PORT)
+#    from thrift.transport import TSocket 
+#    transport = TSocket.TServerSocket(SAAS_HOST, port=SAAS_PORT)
 
     tfactory  = TTransport.TBufferedTransportFactory()
     pfactory  = TBinaryProtocol.TBinaryProtocolFactory()
