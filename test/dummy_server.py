@@ -3,8 +3,13 @@
 import _env
 from saas.ttypes import Cmd, Vps
 import saas.VPS
-from zkit.ip import ip2int
+from zkit.ip import ip2int, int2ip
 import zthrift.server 
+from zthrift.client import get_client
+import unittest
+import threading
+import time
+import logging
 
 class DummyHandler (object):
     """ ignore the host_id, I'm just a test handler """
@@ -40,9 +45,14 @@ def get_queue_dict ():
     return queues
 
 def run_server (queue_dict):
-    return zthrift.server.server (saas.VPS, DummyHandler (queue_dict))
+#    server = zthrift.server.get_server_nonblock (saas.VPS, DummyHandler (queue_dict))
+#    return server.serve ()
+    return zthrift.server.server (saas.VPS, DummyHandler (queue_dict), allowed_ips=["127.0.0.1"])
+
 
 if __name__ == '__main__':
+
+    logging.basicConfig(level=logging.DEBUG)
     queue_dict = get_queue_dict ()
     th = threading.Thread(target=run_server, args=(queue_dict,))
     th.setDaemon(1)
@@ -58,7 +68,7 @@ if __name__ == '__main__':
             
     finally:
         transport.close ()
-
+#    unittest.main ()
 
 
 
