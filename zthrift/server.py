@@ -26,6 +26,7 @@ class MySSLServerSocket (TSSLServerSocket):
         plain_client, addr = self.handle.accept()
         if self.allowed_ips and addr[0] not in self.allowed_ips:
             logging.warn ("client %s is not allowed to connect" % (addr[0]))
+            plain_client.close ()
             return None
         try:
             client = ssl.wrap_socket(plain_client, certfile=self.certfile,

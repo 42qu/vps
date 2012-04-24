@@ -47,7 +47,8 @@ def get_queue_dict ():
 def run_server (queue_dict):
 #    server = zthrift.server.get_server_nonblock (saas.VPS, DummyHandler (queue_dict))
 #    return server.serve ()
-    return zthrift.server.server (saas.VPS, DummyHandler (queue_dict), allowed_ips=["127.0.0.1"])
+    zthrift.server.server (saas.VPS, DummyHandler (queue_dict), allowed_ips=["10.10.1.1"])
+    print "server exit ?"
 
 
 if __name__ == '__main__':
