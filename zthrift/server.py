@@ -18,6 +18,7 @@ class MySSLServerSocket (TSSLServerSocket):
     """ change to raise ssl exception """
 
     def __init__ (self, host=None, port=9090, certfile='cert.pem', unix_socket=None, allowed_ips=None):
+        assert allowed_ips is None or isinstance (allowed_ips, list)
         self.allowed_ips = allowed_ips
         TSSLServerSocket.__init__(self, host, port, certfile=certfile, unix_socket=unix_socket)
 
