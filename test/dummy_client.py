@@ -12,15 +12,13 @@ import time
 from zkit.ip import int2ip 
 
 def vps_open_mock (self, vps):
-    print "id", vps.id, "os", vps.os, "cpu", vps.cpu, "ram", vps.ram, "hd", vps.hd, \
-        "ip", int2ip (vps.ipv4), "netmask", int2ip (vps.ipv4_netmask), "gateway", int2ip (vps.ipv4_gateway), \
-        "pw", vps.password
+    print self.dumpy_vps_info (vps)
     if int (time.time ()) % 2:
         print "true"
-        self.done_task (task, True)
+        self.done_task (Cmd.OPEN, vps.id, True)
     else:
         print "false"
-        self.done_task (task, False)
+        self.done_task (Cmd.OPEN, vps.id, False)
 
 def main ():
     log_dir = conf.log_dir
@@ -29,11 +27,12 @@ def main ():
     run_dir = conf.run_dir
     if not os.path.exists (run_dir):
         os.makedirs (run_dir, 0700)
-    logger = Log ("vps_mgr", config=conf)
     os.chdir (run_dir)
     vps = VPSMgr ()
-    vps.handler[Cmd.OPEN] = vps_open_mock
-    vps.run_once ()
+    vps.handlers = dict ()
+    vps.handlers[Cmd.OPEN] = vps_open_mock
+    vps.start ()
+    vps.loop ()
 
     
 if "__main__" == __name__:

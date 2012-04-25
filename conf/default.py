@@ -11,6 +11,9 @@ def prepare(o):
     o.SAAS_PORT = 50042
 
     o.SAAS_HOST = "saas-vps.42qu.us"
+    O.ALLOWED_IPS = [
+        "119.254.32.166",
+            ]
     import socket
     HOSTNAME = socket.gethostname()
     import re
@@ -26,15 +29,15 @@ def prepare(o):
     o.log_level = "DEBUG"
     # for log.py
 
-    o.run_dir = "/var/run/vps_mgr"
-    o.os_image_dir = "/vps/images"
-    o.vps_image_dir = "/vps"
-    o.vps_swap_dir = "/swp"
-    o.xen_config_dir = "/etc/xen"
-    o.xen_auto_dir = "/etc/xen/auto"
-    o.xen_bridge = "xenbr0"
-    o.mkfs_cmd = "/sbin/mkfs.ext4 -F"
-    o.os_image_dict = {
+    o.RUN_DIR = "/var/run/vps_mgr"
+    o.OS_IMAGE_DIR = "/vps/images"
+    o.VPS_IMAGE_DIR = "/vps"
+    o.VPS_SWAP_DIR = "/swp"
+    o.XEN_CONFIG_DIR = "/etc/xen"
+    o.XEN_AUTO_DIR = "/etc/xen/auto"
+    o.XEN_BRIDGE = "xenbr0"
+    o.MKFS_CMD = "/sbin/mkfs.ext4 -F"
+    o.OS_IMAGE_DICT = {
         #    2: 'CentOS-6.2',
         #    1: 'CentOS-5.8',
         #    10002: 'Ubuntu-11.10',

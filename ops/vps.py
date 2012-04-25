@@ -10,12 +10,12 @@ import os_image
 
 
 import conf
-assert conf.xen_bridge
-assert conf.vps_image_dir
-assert conf.vps_swap_dir
-assert conf.xen_config_dir
-assert conf.xen_auto_dir
-assert conf.mkfs_cmd
+assert conf.XEN_BRIDGE
+assert conf.VPS_IMAGE_DIR
+assert conf.VPS_SWAP_DIR
+assert conf.XEN_CONFIG_DIR
+assert conf.XEN_AUTO_DIR
+assert conf.MKFS_CMD
 import xen
 import time
 
@@ -49,11 +49,11 @@ class XenVPS (object):
             self.name = "vps0%d" % (_id) # to be compatible with current practice standard
         else:
             self.name = "vps%d" % str(_id)
-        self.img_path = os.path.join (conf.vps_image_dir, self.name + ".img")
-        self.swp_path = os.path.join (conf.vps_swap_dir, self.name + ".swp")
-        self.config_path = os.path.join (conf.xen_config_dir, self.name)
-        self.auto_config_path = os.path.join (conf.xen_auto_dir, self.name)
-        self.xen_bridge = conf.xen_bridge
+        self.img_path = os.path.join (conf.VPS_IMAGE_DIR, self.name + ".img")
+        self.swp_path = os.path.join (conf.VPS_SWAP_DIR, self.name + ".swp")
+        self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
+        self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
+        self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         if xen.XenXM.available ():
             self.xen_inf = xen.XenXM

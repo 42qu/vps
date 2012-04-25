@@ -4,11 +4,10 @@ import os
 import _env
 
 import conf
-assert isinstance (conf.os_image_dict, dict)
-assert conf.os_image_dir
+assert isinstance (conf.OS_IMAGE_DICT, dict)
 
 def find_os_image (os_id):
-    v = conf.os_image_dict.get (os_id)
+    v = conf.OS_IMAGE_DICT.get (os_id)
     if not v or not isinstance (v, dict):
         raise Exception ("os_id=%s not supported" % str(os_id))
     image = v.get ("image")

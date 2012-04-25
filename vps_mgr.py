@@ -16,6 +16,7 @@ from lib.log import Log
 import time
 import lib.daemon as daemon
 import signal
+import threading
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -25,60 +26,74 @@ class VPSMgr (object):
     def __init__ (self):
         self.logger = Log ("vps_mgr", config=conf)
         self.host_id = HOST_ID
-        self.handler = {
+        self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
         }
-        self.last_task_id = {
-            Cmd.OPEN:0,
-            Cmd.RESTART:0,
-        }
+        self.workers = []
         self.running = False
 
-    def run_once (self):
-        vps = None
-        
+    def run_once (self, cmd):
+        vps_id = None
         try:
             trans, client = get_client (VPS)
             trans.open ()
             try:
-                task = client.todo (self.host_id)
-                cmd = task.cmd
-                if cmd:
-                    vps = client.vps (task.id)
+                vps_id = client.todo (self.host_id, cmd)
+                if vps_id > 0:
+                    vps = client.vps (vps_id)
             finally:
                 trans.close ()
         except Exception, e:
             self.logger.exception (e)
-            return
+            return False
         if not vps:
-            return
-        h = self.handler.get (task.cmd)
+            return False
+        h = self.handlers.get (cmd)
         if callable (h):
             try:
-                h (self, task, vps)
+                h (self, vps)
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
+                #TODO notify maintainments
+                return False
         else:
-            self.logger.error ("unregconized cmd %s" % (str(task.cmd)))
-            self.done_task (task, False, 'not implemented')
-            return
+            self.logger.warn ("no handler, cmd %s, vps: %s" % (str(cmd), self.dumpy_vps_info(vps)))
+            self.done_task (cmd, vps_id, False, "not implemented")
+            return False
 
-    def done_task (self, task, is_ok, msg=''):
+    def run_loop (self, cmd):
+        self.logger.info ("worker for %s started" % (str(cmd)))
+        while self.running:
+            try:
+                if self.run_once (cmd):
+                    continue
+            except Exception, e:
+                self.logger.exception ("uncaught exception: " + str(e))
+            time.sleep (1)
+        self.logger.info ("worker for %s stop" % (str(cmd)))
+
+    def done_task (self, cmd, vps_id, is_ok, msg=''):
         state = 0
         if not is_ok:
-            state = 1  #TODO need confirm
+            state = 1 
         try:
             trans, client = get_client (VPS)
             trans.open ()
             try:
-                client.done (self.host_id, task, state, msg)
+                client.done (self.host_id, cmd, vps_id, state, msg)
             finally:
                 trans.close ()
         except Exception, e:
             self.logger.exception (e)
-            
 
-    def vps_open (self, task, vps): 
+    @staticmethod
+    def dumpy_vps_info (vps):
+        return "id %d, state %d, os %d, cpu %d, ram %dM, hd %dG, ip %s, netmask %s, gateway %s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
+            int2ip (vps.ipv4), int2ip (vps.ipv4_netmask), int2ip (vps.ipv4_gateway)
+            )
+
+
+    def vps_open (self, vps): 
         xv = XenVPS (vps.id) 
         vpsops = VPSOps (self.logger)
         try:
@@ -90,20 +105,29 @@ class VPSMgr (object):
             vpsops.create_vps (xv)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
-            self.done_task (task, False, str(e))
+            self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
             return
-        self.done_task (task, True)
+        self.done_task (Cmd.OPEN, vps.id, True)
             
     def loop (self):
         while self.running:
-            self.run_once ()
-            time.sleep (2)
-        self.logger.info ("stopped")
+            time.sleep (1)
+        while self.workers:
+            th = self.workers.pop (0)
+            th.join ()
+        self.logger.info ("all stopped")
 
     def start (self):
         if self.running:
             return
-        self.logger.info ("start client")
+        for cmd in self.handlers.keys ():
+            th = threading.Thread (target=self.run_loop, args=(cmd, ))
+            try:
+                th.setDaemon (1)
+                th.start ()
+                self.workers.append (th)
+            except Exception, e:
+                self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmd), str(e)))
         self.running = True
 
     def stop (self):
@@ -116,7 +140,6 @@ class VPSMgr (object):
 def usage ():
     print "usage:\t%s star/stop/restart\t#manage forked daemon" % (sys.argv[0])
     print "\t%s run\t\t# run without daemon, for test purpose" % (sys.argv[0])
-    print "\t%s once\t\t# run without daemon, try to get task only once" % (sys.argv[0])
 
 
 stop_singal_flag = False
@@ -137,15 +160,11 @@ def _main():
     client.loop ()
 
 
-def _run_once ():
-    client = VPSMgr ()
-    client.run_once()
-
 if __name__ == "__main__":
     log_dir = conf.log_dir
     if not os.path.exists (log_dir):
         os.makedirs (log_dir, 0700)
-    run_dir = conf.run_dir
+    run_dir = conf.RUN_DIR
     if not os.path.exists (run_dir):
         os.makedirs (run_dir, 0700)
     logger = Log ("vps_mgr", config=conf)
@@ -179,8 +198,6 @@ if __name__ == "__main__":
             daemon.status (pid_file, mon_pid_file)
         elif action == "run":
             _main ()
-        elif action == "once":
-            _run_once ()
         else:
             usage ()
     else:

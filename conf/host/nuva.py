@@ -8,9 +8,10 @@ def prepare(o):
     o.HOST_ID = 2
     base_dir = dirname (dirname (dirname (__file__)))
     o.log_dir = os.path.join (base_dir, "log")
-    o.run_dir = os.path.join (base_dir, "run")
-    o.os_image_dir = "/mnt/data/vps/os_image/"
-    o.vps_image_dir = "/mnt/data/vps"
-    o.vps_swap_dir = "/mnt/data/swp/"
-    o.xen_bridge = "br0"
+
+    o.RUN_DIR = os.path.join (base_dir, "run")
+    o.OS_IMAGE_DIR = "/mnt/data/vps/os_image/"
+    o.VPS_IMAGE_DIR = "/mnt/data/vps"
+    o.VPS_SWAP_DIR = "/mnt/data/swp/"
+    o.XEN_BRIDGE = "br0"
 

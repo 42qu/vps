@@ -2,7 +2,7 @@
 
 import _env
 import conf
-assert conf.mkfs_cmd
+assert conf.MKFS_CMD
 
 import os
 import re
@@ -31,7 +31,7 @@ class VPSOps (object):
         vps.check_resource_avail ()
 
         self.loginfo (vps, "begin to create image")
-        vps_common.create_raw_image (vps.img_path, vps.disk_g, conf.mkfs_cmd)
+        vps_common.create_raw_image (vps.img_path, vps.disk_g, conf.MKFS_CMD)
         self.loginfo (vps, "image %s created" % (vps.img_path))
 
         vps_common.create_raw_image (vps.swp_path, vps.swp_g, "/sbin/mkswap")
