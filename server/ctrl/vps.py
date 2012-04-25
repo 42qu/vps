@@ -28,9 +28,9 @@ class Handler(object):
             os=vps.os,
             hd=vps.hd,
             ram=vps.ram,
-            cpu=vps.cpu,
-            host_id=2, #TODO
-            #host_id = vps.host_id
+            cpu     = vps.cpu,
+            host_id = 2, #TODO
+            state   = vps.state
         )
 
 if __name__ == '__main__':

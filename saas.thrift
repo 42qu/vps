@@ -14,6 +14,20 @@ struct Vps {
    8 : i64 ram                       ,                       //单位M
    9 : i16 cpu                       ,                       //几个core
   10 : i64 host_id                   ,                       //如pc1.42qu.us
+
+/*
+VPS_STATE_RM = 0
+VPS_STATE_PAY = 10
+VPS_STATE_RUN = 15
+VPS_STATE_CLOSE = 20
+
+VPS_STATE2CN = {
+    VPS_STATE_RM  : '已删除' ,
+    VPS_STATE_RUN : '运行中' ,
+    VPS_STATE_CLOSE : '被关闭' ,
+    VPS_STATE_PAY : '未开通' ,
+}
+*/
   11 : i16 state                     ,
 }
 
