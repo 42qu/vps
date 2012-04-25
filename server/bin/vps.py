@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import _env
+import conf
 
 def main():
     from zthrift.server import server
@@ -7,7 +8,7 @@ def main():
     from server.ctrl.vps import Handler
 
     print 'server runing ...'
-    server(VPS, Handler())
+    server(VPS, Handler(), allowed_ips=conf.ALLOWED_IPS)
     print 'done'
 
 if __name__ == "__main__":

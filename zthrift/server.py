@@ -1,5 +1,5 @@
 #coding:utf-8
-from conf import  SAAS_PORT, SAAS_HOST, SSL_CERT
+from conf import  SAAS_PORT, SSL_CERT
 
 import thrift
 from thrift.transport.TSocket import TSocket
