@@ -23,22 +23,27 @@ class MySSLServerSocket (TSSLServerSocket):
         TSSLServerSocket.__init__(self, host, port, certfile=certfile, unix_socket=unix_socket)
 
     def accept(self):
-        plain_client, addr = self.handle.accept()
-        if self.allowed_ips and addr[0] not in self.allowed_ips:
-            logging.warn ("client %s is not allowed to connect" % (addr[0]))
-            plain_client.close ()
-            return None
-        try:
-            client = ssl.wrap_socket(plain_client, certfile=self.certfile,
-                          server_side=True, ssl_version=self.SSL_VERSION)
-        except (ssl.SSLError), e:
-          # failed handshake/ssl wrap, close socket to client
-            plain_client.close()
-            logging.exception (e)
-            return None
-        result = TSocket()
-        result.setHandle(client)
-        return result
+        while True:
+            plain_client, addr = self.handle.accept()
+
+            if self.allowed_ips and addr[0] not in self.allowed_ips:
+                logging.warn ("client %s is not allowed to connect" % (addr[0]))
+                plain_client.close()
+                continue
+
+            try:
+                client = ssl.wrap_socket(plain_client, certfile=self.certfile,
+                              server_side=True, ssl_version=self.SSL_VERSION)
+            except (ssl.SSLError), e:
+              # failed handshake/ssl wrap, close socket to client
+                plain_client.close()
+                logging.exception (e)
+                continue
+
+            result = TSocket()
+            result.setHandle(client)
+            
+            return result
 
 
 def server(saas, handler, host=None, allowed_ips=None):
