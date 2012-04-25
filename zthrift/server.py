@@ -54,8 +54,10 @@ def server(saas, handler, host=None, allowed_ips=None):
     #tfactory  = TTransport.TBufferedTransportFactory()
     tfactory  = TTransport.TFramedTransportFactory()
     pfactory  = TBinaryProtocol.TBinaryProtocolFactory()
-    #server    = TServer.TSimpleServer(processor, sock, tfactory, pfactory)  # which cannot deal with exception correctly
-    server = TServer.TThreadedServer(processor, sock, tfactory, pfactory)
+
+
+    server    = TServer.TSimpleServer(processor, sock, tfactory, pfactory)  # which cannot deal with exception correctly
+    #server = TServer.TThreadedServer(processor, sock, tfactory, pfactory)
     #server = TServer.TThreadPoolServer(processor, sock, tfactory, pfactory) # which will hang and only be kill by signal 9
     server.serve()
 
