@@ -50,6 +50,7 @@ class Vps:
    - ram
    - cpu
    - host_id
+   - state
   """
 
   thrift_spec = (
@@ -64,9 +65,10 @@ class Vps:
     (8, TType.I64, 'ram', None, None, ), # 8
     (9, TType.I16, 'cpu', None, None, ), # 9
     (10, TType.I64, 'host_id', None, None, ), # 10
+    (11, TType.I16, 'state', None, None, ), # 11
   )
 
-  def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None, host_id=None,):
+  def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None, host_id=None, state=None,):
     self.id = id
     self.ipv4 = ipv4
     self.ipv4_netmask = ipv4_netmask
@@ -77,6 +79,7 @@ class Vps:
     self.ram = ram
     self.cpu = cpu
     self.host_id = host_id
+    self.state = state
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -137,6 +140,11 @@ class Vps:
           self.host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 11:
+        if ftype == TType.I16:
+          self.state = iprot.readI16();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -186,6 +194,10 @@ class Vps:
     if self.host_id is not None:
       oprot.writeFieldBegin('host_id', TType.I64, 10)
       oprot.writeI64(self.host_id)
+      oprot.writeFieldEnd()
+    if self.state is not None:
+      oprot.writeFieldBegin('state', TType.I16, 11)
+      oprot.writeI16(self.state)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
