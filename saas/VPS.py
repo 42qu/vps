@@ -44,10 +44,11 @@ class Iface:
     """
     pass
 
-  def netflow_save(self, netflow):
+  def netflow_save(self, netflow, timestamp):
     """
     Parameters:
      - netflow
+     - timestamp
     """
     pass
 
@@ -157,18 +158,20 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "vps failed: unknown result");
 
-  def netflow_save(self, netflow):
+  def netflow_save(self, netflow, timestamp):
     """
     Parameters:
      - netflow
+     - timestamp
     """
-    self.send_netflow_save(netflow)
+    self.send_netflow_save(netflow, timestamp)
     self.recv_netflow_save()
 
-  def send_netflow_save(self, netflow):
+  def send_netflow_save(self, netflow, timestamp):
     self._oprot.writeMessageBegin('netflow_save', TMessageType.CALL, self._seqid)
     args = netflow_save_args()
     args.netflow = netflow
+    args.timestamp = timestamp
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -248,7 +251,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = netflow_save_result()
-    self._handler.netflow_save(args.netflow)
+    self._handler.netflow_save(args.netflow, args.timestamp)
     oprot.writeMessageBegin("netflow_save", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -662,15 +665,18 @@ class netflow_save_args:
   """
   Attributes:
    - netflow
+   - timestamp
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.MAP, 'netflow', (TType.I64,None,TType.LIST,(TType.I64,None)), None, ), # 1
+    (1, TType.LIST, 'netflow', (TType.STRUCT,(NetFlow, NetFlow.thrift_spec)), None, ), # 1
+    (2, TType.I64, 'timestamp', None, None, ), # 2
   )
 
-  def __init__(self, netflow=None,):
+  def __init__(self, netflow=None, timestamp=None,):
     self.netflow = netflow
+    self.timestamp = timestamp
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -682,19 +688,19 @@ class netflow_save_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
-        if ftype == TType.MAP:
-          self.netflow = {}
-          (_ktype1, _vtype2, _size0 ) = iprot.readMapBegin() 
+        if ftype == TType.LIST:
+          self.netflow = []
+          (_etype3, _size0) = iprot.readListBegin()
           for _i4 in xrange(_size0):
-            _key5 = iprot.readI64();
-            _val6 = []
-            (_etype10, _size7) = iprot.readListBegin()
-            for _i11 in xrange(_size7):
-              _elem12 = iprot.readI64();
-              _val6.append(_elem12)
-            iprot.readListEnd()
-            self.netflow[_key5] = _val6
-          iprot.readMapEnd()
+            _elem5 = NetFlow()
+            _elem5.read(iprot)
+            self.netflow.append(_elem5)
+          iprot.readListEnd()
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.timestamp = iprot.readI64();
         else:
           iprot.skip(ftype)
       else:
@@ -708,15 +714,15 @@ class netflow_save_args:
       return
     oprot.writeStructBegin('netflow_save_args')
     if self.netflow is not None:
-      oprot.writeFieldBegin('netflow', TType.MAP, 1)
-      oprot.writeMapBegin(TType.I64, TType.LIST, len(self.netflow))
-      for kiter13,viter14 in self.netflow.items():
-        oprot.writeI64(kiter13)
-        oprot.writeListBegin(TType.I64, len(viter14))
-        for iter15 in viter14:
-          oprot.writeI64(iter15)
-        oprot.writeListEnd()
-      oprot.writeMapEnd()
+      oprot.writeFieldBegin('netflow', TType.LIST, 1)
+      oprot.writeListBegin(TType.STRUCT, len(self.netflow))
+      for iter6 in self.netflow:
+        iter6.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.timestamp is not None:
+      oprot.writeFieldBegin('timestamp', TType.I64, 2)
+      oprot.writeI64(self.timestamp)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

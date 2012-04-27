@@ -31,6 +31,12 @@ VPS_STATE2CN = {
   11 : i16 state                     ,
 }
 
+struct NetFlow {
+	1: i64 vps_id					,
+	2: i64 rx						,
+	3: i64 tx						,
+}
+
 enum Cmd{
   NONE    = 0,
   OPEN    = 1,
@@ -48,7 +54,7 @@ service VPS {
    void  done            ( 1:i64  host_id , 2:Cmd cmd, 3:Id id, 4:i32 state=0, 5:string message=''), 
 
    Vps   vps             ( 1:i64  vps_id   ),
-   void  netflow_save    ( 1:map<VpsId, list<i64>> netflow),
+   void  netflow_save    ( 1:list<NetFlow> netflow, 2:i64 timestamp),
 }
 
 

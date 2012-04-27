@@ -26,7 +26,7 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print '  Id todo(i64 host_id, Cmd cmd)'
   print '  void done(i64 host_id, Cmd cmd, Id id, i32 state, string message)'
   print '  Vps vps(i64 vps_id)'
-  print '  void netflow_save( netflow)'
+  print '  void netflow_save( netflow, i64 timestamp)'
   print ''
   sys.exit(0)
 
@@ -97,10 +97,10 @@ elif cmd == 'vps':
   pp.pprint(client.vps(eval(args[0]),))
 
 elif cmd == 'netflow_save':
-  if len(args) != 1:
-    print 'netflow_save requires 1 args'
+  if len(args) != 2:
+    print 'netflow_save requires 2 args'
     sys.exit(1)
-  pp.pprint(client.netflow_save(eval(args[0]),))
+  pp.pprint(client.netflow_save(eval(args[0]),eval(args[1]),))
 
 else:
   print 'Unrecognized method %s' % cmd
