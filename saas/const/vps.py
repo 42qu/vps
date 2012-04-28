@@ -3,6 +3,7 @@
 VPS_OS_DICT = {
     2: 'CentOS-6.2',
     1: 'CentOS-5.8',
+    10003: 'Ubuntu-12.04',
     10002: 'Ubuntu-11.10',
     10001: 'Ubuntu-10.04',
     20001: 'Debian-6.0',
