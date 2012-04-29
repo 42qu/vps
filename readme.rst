@@ -52,15 +52,21 @@ VPS逻辑 :  ops/
 
 为了开发调试的方便，每台机器可以有自己的配置选项
 
-参见::
+参见 :
 
-    conf/host/e1.py    
+    * conf/default.py  默认配置
 
-其中 e1.py 的 e1 为当前机器的名称
+    * conf/host/e1.py  其中 e1.py 的 e1 为当前机器的名称
 
-conf/vps_env.py 环境配置
 
-conf/os_imsage.py  os类型和镜像配置
+模块依赖
+=====================================
+
+client :
+
+    * paramiko
+    
+    * thrift (如果不需要生成代码，可以安装 http://pypi.python.org/pypi/thrift/1.0)
 
 
 相关链接
@@ -69,5 +75,3 @@ conf/os_imsage.py  os类型和镜像配置
 Thrift教程 http://book.42qu.com/thrift.html
 
 端口登记 http://book.42qu.com/42qu/saas.html 
-
-
