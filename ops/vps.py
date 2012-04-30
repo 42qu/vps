@@ -45,22 +45,14 @@ class XenVPS (object):
     root_pw = None
 
     def __init__ (self, _id):
-        if _id < 10:
-            self.name = "vps0%d" % (_id) # to be compatible with current practice standard
-        else:
-            self.name = "vps%d" % str(_id)
+        self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         self.img_path = os.path.join (conf.VPS_IMAGE_DIR, self.name + ".img")
         self.swp_path = os.path.join (conf.VPS_SWAP_DIR, self.name + ".swp")
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
-        if xen.XenXM.available ():
-            self.xen_inf = xen.XenXM
-        elif xen.XenXL.available ():
-            self.xen_inf = xen.XenXL
-        else:
-            raise Exception ("xen-tools is not available")
+        self.xen_inf = xen.get_xen_inf ()
 
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
         """ on error will raise Exception """
@@ -113,7 +105,7 @@ vcpus = "$vcpu"
 maxmem = "$mem"
 memory = "$mem"
 vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
-disk = [ "file:$img_path,sda1,w","file:$swp_path,sda2,w" ]
+disk = [ "file:$img_path,xvda1,w","file:$swp_path,xvda2,w" ]
 on_shutdown = "destroy"
 on_poweroff = "destroy"
 on_reboot = "restart"
@@ -125,7 +117,7 @@ on_crash = "restart"
         return xen_config
        
     def is_running (self):
-        self.xen_inf.is_running (self.name)
+        return self.xen_inf.is_running (self.name)
 
     def reboot (self):
         if self.is_running ():
@@ -139,9 +131,19 @@ on_crash = "restart"
         self.xen_inf.create (self.config_path)
 
     def stop (self):
+        """ shutdown a vps, because os needs time to shutdown, will wait for 60 sec until it's really not running"""
         if not self.is_running ():
             return
         self.xen_inf.shutdown (self.name)
+        start_ts = time.time ()
+        while True:
+            time.sleep (1)
+            if not self.is_running ():
+                return
+            now = time.time ()
+            if now - start_ts > 60:
+                raise Exception ("")
+
 
     def wait_until_reachable (self, timeout=20):
         """ wait for the vps to be reachable and return True, or timeout returns False"""

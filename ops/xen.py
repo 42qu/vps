@@ -4,7 +4,16 @@
 import sys
 import _env
 import os
-from lib.command import call_cmd, search_path, Command
+import re
+from lib.command import call_cmd, search_path, Command, CommandException
+
+def get_xen_inf ():
+    if XenXM.available():
+        return XenXM ()
+    elif XenXL.available ():
+        return XenXL ()
+    else:
+        raise Exception ("xm-tools not available")
 
 class IXen (object):
 
@@ -14,7 +23,7 @@ class IXen (object):
 
     @classmethod
     def is_running (cls, domain):
-        raise NotImplementedError ()
+        return cls.uptime (domain) and True or False
 
     @staticmethod
     def create (xen_config):
@@ -45,10 +54,6 @@ class XenXM (IXen):
         path = search_path ("xm")
         return path and True or False
 
-    @classmethod
-    def is_running (cls, domain):
-        return cls.uptime (domain)
-
     @staticmethod
     def create (xen_config):
         if not os.path.exists (xen_config):
@@ -66,21 +71,20 @@ class XenXM (IXen):
     @staticmethod
     def mem_free ():
         """ return mem free (MB) in Xen """
-        c = Command ("xm info | grep free_memory")
-        status, out = c.read_from ()
-        out = out.strip ("\r\n")
-        if status == 0:
-            return int(out.split (":")[1].strip ())
+        out = call_cmd ("xm info | grep free_memory")
+        return int(out.strip("\r\n").split (":")[1].strip ())
 
     @staticmethod
     def uptime (domain):
-        c = Command ("xm uptime %s | grep %s " % (domain, domain))
+        cmd = "xm uptime %s | grep %s " % (domain, domain)
+        c = Command (cmd)
         status, out = c.read_from ()
-        out = out.strip ("\r\n")
         if status == 0:
-            return out.split ("")[2]
-        return None
-
+            return out.split ()[2]
+        elif re.match (r"^.*Domain '.+?' does not exist.*$", out):
+            return None
+        else:
+            raise CommandException (cmd, msg=out, status=status)
 
 
 class XenXL (IXen):
@@ -89,11 +93,6 @@ class XenXL (IXen):
     def available ():
         path = search_path ("xl")
         return path and True or False
-
-    @classmethod
-    def is_running (cls, domain):
-        return cls.uptime (domain)
-
 
     @staticmethod
     def create (xen_config):
@@ -112,24 +111,33 @@ class XenXL (IXen):
     @staticmethod
     def mem_free ():
         """ return mem free (MB) in Xen """
-        c = Command ("xl info | grep free_memory")
-        status, out = c.read_from ()
-        out = out.strip ("\r\n")
-        if status == 0:
-            return int(out.split (":")[1].strip ())
-
-
+        out = call_cmd ("xl info | grep free_memory")
+        return int(out.strip("\r\n").split (":")[1].strip ())
 
     @staticmethod
     def uptime (domain):
-        c = Command ("xl uptime %s | grep %s " % (domain, domain))
+        cmd = "xl uptime %s | grep %s " % (domain, domain)
+        c = Command (cmd)
         status, out = c.read_from ()
-        try:
-            if status == 0:
-                return out.split ("")[2]
-        except IndexError:
+        if status == 0:
+            return out.split ()[2]
+        elif re.match (r"^.*Domain '.+?' does not exist.*$", out):
             return None
-        return None
+        else:
+            raise CommandException (cmd, msg=out, status=status)
+            
 
+if __name__ == '__main__':
+    import unittest
+    class TestXenInf (unittest.TestCase):
 
+        def setUp (self):
+            self.xeninf = get_xen_inf ()
+            print "testing %s" % (self.xeninf.__class__.__name__)
+
+        def test_uptime (self):
+            self.assertEqual (self.xeninf.uptime ("nonexistvps"), None)
+
+    
+    unittest.main ()
 

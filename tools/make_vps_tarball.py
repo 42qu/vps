@@ -5,6 +5,8 @@ import os
 import _env
 import ops.vps_common as vps_common
 from lib.command import call_cmd
+import conf
+assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
 
 
 def usage ():
@@ -20,8 +22,8 @@ def main():
     os_release = sys.argv[2]
     version = sys.argv[3]
     arch = sys.argv[4]
-    tarball_dir = "/vps"
-    tarball_path = os.path.join (tarball_dir, "%s_%s_%s.tar.gz" % (os_release, version, arch))
+
+    tarball_path = os.path.join (conf.OS_IMAGE_DIR, "%s-%s-%s.tar.gz" % (os_release, version, arch))
     if not os.path.exists (img_path):
         print "%s not exists" % (img_path)
         os._exit (1)

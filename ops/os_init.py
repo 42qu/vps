@@ -29,14 +29,14 @@ def set_root_passwd (vps, vps_mountpoint):
 echo 'root:%s' | /usr/sbin/chpasswd
 """ % (vps.root_pw)
 
-    user_data = os.path.join (vps_mountpoint, "tmp/user_data")
+    user_data = os.path.join (vps_mountpoint, "root/user_data")
     f = open (user_data, "w")
     try:
         try:
             f.write (sh_script)
         finally:
             f.close ()
-        call_cmd ("/bin/chroot %s /bin/sh /tmp/user_data" % (vps_mountpoint))
+        call_cmd ("chroot %s /bin/sh /root/user_data" % (vps_mountpoint)) # chroot's path varies among linux distribution
     finally:
         if os.path.exists (user_data):
             os.remove (user_data)
@@ -101,7 +101,7 @@ IPADDR=$ADDRESS
 NETMASK=$NETMASK
 GATEWAY=$GATEWAY
 """).substitute (ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
-    f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-eth0"))
+    f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-eth0"), "w+")
     try:
         f.write (ifcfg_eth0)
     finally:
@@ -129,7 +129,7 @@ gateway=$GATEWAY
 DAEMONS=(syslog-ng network crond sshd)
 
 """).substitute (HOSTNAME=vps.name, ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
-    f = open (os.path.join (vps_mountpoint, "etc/rc.conf"))
+    f = open (os.path.join (vps_mountpoint, "etc/rc.conf"), "w+")
     try:
         f.write (rcconf)
     finally:

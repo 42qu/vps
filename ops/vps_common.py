@@ -16,6 +16,27 @@ from lib.command import call_cmd
 #    if res != 0:
 #        raise Exception ("%s exit with %d" % (cmd, res))
 
+def call_cmd_via_ssh (ip, user, password, cmd):
+    import paramiko
+    client = paramiko.SSHClient()
+#    client.load_system_host_keys ()
+    client.set_missing_host_key_policy (paramiko.AutoAddPolicy ())
+    client.connect (ip, username=user, password=password, look_for_keys=False)
+    try:
+        stdin, stdout, stderr = client.exec_command(cmd)
+        try:
+            exit_status = stdout.channel.recv_exit_status()
+            out = "\n".join (stdout.readlines ())
+            err = "\n".join (stderr.readlines ())
+            return exit_status, out, err
+        finally:
+            stdin.close ()
+            stdout.close ()
+            stderr.close ()
+    finally:
+        client.close ()
+
+
 def gen_password (length=10):
     return "".join ([ random.choice(string.hexdigits) for i in xrange (0, length) ])
 
@@ -39,10 +60,13 @@ def umount_tmp (tmp_mount):
     call_cmd ("umount %s" % (tmp_mount))
     os.rmdir (tmp_mount)
 
-def create_raw_image (path, size_g, mkfs_cmd):
+def create_raw_image (path, size_g, mkfs_cmd, sparse=False):
     assert size_g > 0
     size_m = int (size_g * 1024)
-    call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
+    if sparse:
+        call_cmd ("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" % (path, size_m - 1))
+    else:
+        call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
     call_cmd ("%s %s" % (mkfs_cmd, path))
 
 
