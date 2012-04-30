@@ -23,7 +23,7 @@ class IXen (object):
 
     @classmethod
     def is_running (cls, domain):
-        raise NotImplementedError ()
+        return cls.uptime (domain) and True or False
 
     @staticmethod
     def create (xen_config):
@@ -54,10 +54,6 @@ class XenXM (IXen):
         path = search_path ("xm")
         return path and True or False
 
-    @classmethod
-    def is_running (cls, domain):
-        return cls.uptime (domain)
-
     @staticmethod
     def create (xen_config):
         if not os.path.exists (xen_config):
@@ -84,7 +80,7 @@ class XenXM (IXen):
         c = Command (cmd)
         status, out = c.read_from ()
         if status == 0:
-            return out.split ("")[2]
+            return out.split ()[2]
         elif re.match (r"^.*Domain '.+?' does not exist.*$", out):
             return None
         else:
@@ -97,11 +93,6 @@ class XenXL (IXen):
     def available ():
         path = search_path ("xl")
         return path and True or False
-
-    @classmethod
-    def is_running (cls, domain):
-        return cls.uptime (domain)
-
 
     @staticmethod
     def create (xen_config):
@@ -129,7 +120,7 @@ class XenXL (IXen):
         c = Command (cmd)
         status, out = c.read_from ()
         if status == 0:
-            return out.split ("")[2]
+            return out.split ()[2]
         elif re.match (r"^.*Domain '.+?' does not exist.*$", out):
             return None
         else:

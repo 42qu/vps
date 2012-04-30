@@ -16,6 +16,27 @@ from lib.command import call_cmd
 #    if res != 0:
 #        raise Exception ("%s exit with %d" % (cmd, res))
 
+def call_cmd_via_ssh (ip, user, password, cmd):
+    import paramiko
+    client = paramiko.SSHClient()
+#    client.load_system_host_keys ()
+    client.set_missing_host_key_policy (paramiko.AutoAddPolicy ())
+    client.connect (ip, username=user, password=password, look_for_keys=False)
+    try:
+        stdin, stdout, stderr = client.exec_command(cmd)
+        try:
+            exit_status = stdout.channel.recv_exit_status()
+            out = "\n".join (stdout.readlines ())
+            err = "\n".join (stderr.readlines ())
+            return exit_status, out, err
+        finally:
+            stdin.close ()
+            stdout.close ()
+            stderr.close ()
+    finally:
+        client.close ()
+
+
 def gen_password (length=10):
     return "".join ([ random.choice(string.hexdigits) for i in xrange (0, length) ])
 

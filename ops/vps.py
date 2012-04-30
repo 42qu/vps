@@ -105,7 +105,7 @@ vcpus = "$vcpu"
 maxmem = "$mem"
 memory = "$mem"
 vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
-disk = [ "file:$img_path,sda1,w","file:$swp_path,sda2,w" ]
+disk = [ "file:$img_path,sda1,w","file:$swp_path,sdb1,w" ]
 on_shutdown = "destroy"
 on_poweroff = "destroy"
 on_reboot = "restart"
@@ -117,7 +117,7 @@ on_crash = "restart"
         return xen_config
        
     def is_running (self):
-        self.xen_inf.is_running (self.name)
+        return self.xen_inf.is_running (self.name)
 
     def reboot (self):
         if self.is_running ():
@@ -131,9 +131,19 @@ on_crash = "restart"
         self.xen_inf.create (self.config_path)
 
     def stop (self):
+        """ shutdown a vps, because os needs time to shutdown, will wait for 60 sec until it's really not running"""
         if not self.is_running ():
             return
         self.xen_inf.shutdown (self.name)
+        start_ts = time.time ()
+        while True:
+            time.sleep (1)
+            if not self.is_running ():
+                return
+            now = time.time ()
+            if now - start_ts > 60:
+                raise Exception ("")
+
 
     def wait_until_reachable (self, timeout=20):
         """ wait for the vps to be reachable and return True, or timeout returns False"""
