@@ -105,7 +105,7 @@ vcpus = "$vcpu"
 maxmem = "$mem"
 memory = "$mem"
 vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
-disk = [ "file:$img_path,sda1,w","file:$swp_path,sdb1,w" ]
+disk = [ "file:$img_path,xvda1,w","file:$swp_path,xvda2,w" ]
 on_shutdown = "destroy"
 on_poweroff = "destroy"
 on_reboot = "restart"

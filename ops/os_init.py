@@ -101,7 +101,7 @@ IPADDR=$ADDRESS
 NETMASK=$NETMASK
 GATEWAY=$GATEWAY
 """).substitute (ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
-    f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-eth0"))
+    f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-eth0"), "w+")
     try:
         f.write (ifcfg_eth0)
     finally:
@@ -129,7 +129,7 @@ gateway=$GATEWAY
 DAEMONS=(syslog-ng network crond sshd)
 
 """).substitute (HOSTNAME=vps.name, ADDRESS=vps.ip, NETMASK=vps.netmask, GATEWAY=vps.gateway)
-    f = open (os.path.join (vps_mountpoint, "etc/rc.conf"))
+    f = open (os.path.join (vps_mountpoint, "etc/rc.conf"), "w+")
     try:
         f.write (rcconf)
     finally:

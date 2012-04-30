@@ -85,6 +85,7 @@ class VPSOps (object):
         vps.stop ()
         self.loginfo (vps, "vps stopped, going to delete data")
         if os.path.exists (vps.img_path):
+            #TODO check whether img mounted, !!!!!!!!!
             os.remove (vps.img_path)
             self.loginfo (vps, "delete %s" % (vps.img_path))
         if os.path.exists (vps.swp_path):

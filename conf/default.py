@@ -38,14 +38,16 @@ def prepare(o):
     o.XEN_BRIDGE = "xenbr0"
     o.MKFS_CMD = "/sbin/mkfs.ext4 -F"
     o.OS_IMAGE_DICT = {
-        #    2: 'CentOS-6.2',
-        #    1: 'CentOS-5.8',
-        #    10002: 'Ubuntu-11.10',
-        #    10001: 'Ubuntu-10.04',
-        #    20001: 'Debian-6.0',
+            2: {'os':'CentOS', 'version':'6.2-i386', 'image': 'centos-6.2-i386.tar.gz'},
+            1: {'os':'CentOS', 'version': '5.8-i386', 'image': 'centos-5.8-i386.tar.gz'},
+        #10003: {'os': 'Ubuntu', 'version': '12.04-i386', 'image': 'ubuntu00-12.04.img'},
+        10002: {'os': 'Ubuntu', 'version': '11.10-amd64', 'image': 'ubuntu00-11.10.img'},
+        10001: {'os': 'Ubuntu', 'version': '10.04-i386', 'image': 'ubuntu-10.04-i386.tar.gz'},
+        #10000: {'os': 'Ubuntu', 'version': '10.04-i386', 'image': 'ubuntu-10.04-amd64.tar.gz'},
+        20001: {'os': 'Debian', 'version': '6.0-i386', 'image': 'debian-6.0-i386.tar.gz'},
         #    30001: 'Arch',
-            50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
-            50002: {'os':'Gentoo', 'image':'gentoo00.img'},
+        #    50001: {'os':'Gentoo', 'image':'gentoo00.img'},
+        50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
         #    60001: 'Fedora',
         #   70001: 'OpenSUSE',
         #    80001: 'Slackware',
