@@ -41,7 +41,7 @@ enum Cmd{
   NONE    = 0,
   OPEN    = 1,
   CLOSE   = 2,
-  RESTART = 3,
+  REBOOT  = 3,
 }
 
 
