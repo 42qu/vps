@@ -29,14 +29,14 @@ def set_root_passwd (vps, vps_mountpoint):
 echo 'root:%s' | /usr/sbin/chpasswd
 """ % (vps.root_pw)
 
-    user_data = os.path.join (vps_mountpoint, "tmp/user_data")
+    user_data = os.path.join (vps_mountpoint, "root/user_data")
     f = open (user_data, "w")
     try:
         try:
             f.write (sh_script)
         finally:
             f.close ()
-        call_cmd ("/bin/chroot %s /bin/sh /tmp/user_data" % (vps_mountpoint))
+        call_cmd ("chroot %s /bin/sh /root/user_data" % (vps_mountpoint)) # chroot's path varies among linux distribution
     finally:
         if os.path.exists (user_data):
             os.remove (user_data)

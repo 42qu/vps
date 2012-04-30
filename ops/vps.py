@@ -45,22 +45,14 @@ class XenVPS (object):
     root_pw = None
 
     def __init__ (self, _id):
-        if _id < 10:
-            self.name = "vps0%d" % (_id) # to be compatible with current practice standard
-        else:
-            self.name = "vps%d" % str(_id)
+        self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         self.img_path = os.path.join (conf.VPS_IMAGE_DIR, self.name + ".img")
         self.swp_path = os.path.join (conf.VPS_SWAP_DIR, self.name + ".swp")
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
-        if xen.XenXM.available ():
-            self.xen_inf = xen.XenXM
-        elif xen.XenXL.available ():
-            self.xen_inf = xen.XenXL
-        else:
-            raise Exception ("xen-tools is not available")
+        self.xen_inf = xen.get_xen_inf ()
 
     def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
         """ on error will raise Exception """

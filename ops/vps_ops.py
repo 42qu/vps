@@ -31,7 +31,7 @@ class VPSOps (object):
         vps.check_resource_avail ()
 
         self.loginfo (vps, "begin to create image")
-        vps_common.create_raw_image (vps.img_path, vps.disk_g, conf.MKFS_CMD)
+        vps_common.create_raw_image (vps.img_path, vps.disk_g, conf.MKFS_CMD, sparse=True)
         self.loginfo (vps, "image %s created" % (vps.img_path))
 
         vps_common.create_raw_image (vps.swp_path, vps.swp_g, "/sbin/mkswap")
@@ -71,8 +71,21 @@ class VPSOps (object):
 
 
     def delete_vps (self, vps):
-        raise NotImplementedError ()
-        
+        vps.stop ()
+        self.loginfo (vps, "vps stopped, going to delete data")
+        if os.path.exists (vps.img_path):
+            os.remove (vps.img_path)
+            self.loginfo (vps, "delete %s" % (vps.img_path))
+        if os.path.exists (vps.swp_path):
+            os.remove (vps.swp_path)
+            self.loginfo (vps, "delete %s" % (vps.swp_path))
+        if os.path.exists (vps.config_path):
+            os.remove (vps.config_path)
+            self.loginfo (vps, "delete %s" % (vps.config_path))
+        if os.path.exists (vps.auto_config_path):
+            os.remove (vps.auto_config_path)
+            self.loginfo (vps, "delete %s" % (vps.auto_config_path))
+        self.loginfo (vps, "deleted")
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

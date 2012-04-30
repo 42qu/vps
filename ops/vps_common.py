@@ -39,10 +39,13 @@ def umount_tmp (tmp_mount):
     call_cmd ("umount %s" % (tmp_mount))
     os.rmdir (tmp_mount)
 
-def create_raw_image (path, size_g, mkfs_cmd):
+def create_raw_image (path, size_g, mkfs_cmd, sparse=False):
     assert size_g > 0
     size_m = int (size_g * 1024)
-    call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
+    if sparse:
+        call_cmd ("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" % (path, size_m - 1))
+    else:
+        call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
     call_cmd ("%s %s" % (mkfs_cmd, path))
 
 

@@ -11,7 +11,7 @@ def prepare(o):
     o.SAAS_PORT = 50042
 
     o.SAAS_HOST = "saas-vps.42qu.us"
-    O.ALLOWED_IPS = [
+    o.ALLOWED_IPS = [
         "119.254.32.166",
             ]
     import socket
@@ -44,8 +44,8 @@ def prepare(o):
         #    10001: 'Ubuntu-10.04',
         #    20001: 'Debian-6.0',
         #    30001: 'Arch',
-            50001: {'os':'Gentoo', 'image':'gentoo_201202_amd64.tar.gz'},
-            50002: {'os':'Gentoo', 'image':'gentoo_template.img'},
+            50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
+            50002: {'os':'Gentoo', 'image':'gentoo00.img'},
         #    60001: 'Fedora',
         #   70001: 'OpenSUSE',
         #    80001: 'Slackware',
