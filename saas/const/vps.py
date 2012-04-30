@@ -28,3 +28,26 @@ VPS_STATE2CN = {
     VPS_STATE_CLOSE : '被关闭' ,
     VPS_STATE_PAY : '未开通' ,
 }
+
+VPS_COUNTRY_DICT = {
+    1: ('中国',
+        {
+            1   : '北京 双线BGP',
+        },
+       ),
+    2: ('美国',
+        {
+            1001: 'Los Angeles 洛杉矶机房',
+            1002: 'Las Vegas 拉斯维加斯1号机房',
+            1003: 'Las Vegas 拉斯维加斯2号机房',
+            1004: 'Orange County 加州 OC 机房',
+            1005: 'San Jose',
+        },
+   ),
+}
+
+VPS_DATA_CENTER_CN = dict()
+for __i in VPS_COUNTRY_DICT.itervalues():
+    VPS_DATA_CENTER_CN.update(__i[1])
+
+
