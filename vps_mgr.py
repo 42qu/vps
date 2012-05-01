@@ -28,7 +28,7 @@ class VPSMgr (object):
         self.host_id = HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
-            Cmd.RESTART: self.__class__.vps_restart,
+            Cmd.REBOOT: self.__class__.vps_reboot,
         }
         self.workers = []
         self.running = False
@@ -120,22 +120,22 @@ class VPSMgr (object):
             return
         self.done_task (Cmd.OPEN, vps.id, True)
 
-    def vps_restart (self, vps):
+    def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
         if vps.id != 51:
             #TODO TEST
-            self.done_task (Cmd.RESTART, vps.id, False, "no testing for online vps")
+            self.done_task (Cmd.REBOOT, vps.id, False, "no testing for online vps")
             self.logger.warn ("not restart for online vps %s" % (vps.id))
             return
         try:
             xv.reboot ()
         except Exception, e:
-            self.done_task (Cmd.RESTART, vps.id, False, "exception %s" % (str(e))) 
+            self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e))) 
             return
         if xv.wait_until_reachable ():
-            self.done_task (Cmd.RESTART, vps.id, True)
+            self.done_task (Cmd.REBOOT, vps.id, True)
         else:
-            self.done_task (Cmd.RESTART, vps.id, False, "timeout")
+            self.done_task (Cmd.REBOOT, vps.id, False, "timeout")
 
             
     def loop (self):
