@@ -28,6 +28,7 @@ class VPSMgr (object):
         self.host_id = HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
+            Cmd.RESTART: self.__class__.vps_restart,
         }
         self.workers = []
         self.running = False
@@ -41,6 +42,9 @@ class VPSMgr (object):
                 vps_id = client.todo (self.host_id, cmd)
                 if vps_id > 0:
                     vps = client.vps (vps_id)
+                    if not self.vps_is_valid (vps):
+                        self.logger.error ("invalid vps data while task_id=%s, cmd=%s" % (str(vps_id), str(cmd)))
+                        vps = None
             finally:
                 trans.close ()
         except Exception, e:
@@ -87,9 +91,16 @@ class VPSMgr (object):
             self.logger.exception (e)
 
     @staticmethod
+    def vps_is_valid (vps):
+        return vps.id > 0 and vps.name is not None and vps.ipv4 and vps.gateway 
+
+    @staticmethod
     def dumpy_vps_info (vps):
-        return "id %d, state %d, os %d, cpu %d, ram %dM, hd %dG, ip %s, netmask %s, gateway %s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
-            int2ip (vps.ipv4), int2ip (vps.ipv4_netmask), int2ip (vps.ipv4_gateway)
+        ip = vps.ipv4 is not None and int2ip (vps.ipv4) or None
+        netmask = vps.ipv4_netmask is not None and int2ip (vps.netmask) or None
+        gateway = vps.ipv4_gateway is not None and int2ip (vps.gateway) or None
+        return "id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
+            ip, netmask, gateway
             )
 
 
@@ -108,6 +119,24 @@ class VPSMgr (object):
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
             return
         self.done_task (Cmd.OPEN, vps.id, True)
+
+    def vps_restart (self, vps):
+        xv = XenVPS (vps.id) 
+        if vps.id != 51:
+            #TODO TEST
+            self.done_task (Cmd.RESTART, vps.id, False, "no testing for online vps")
+            self.logger.warn ("not restart for online vps %s" % (vps.id))
+            return
+        try:
+            xv.reboot ()
+        except Exception, e:
+            self.done_task (Cmd.RESTART, vps.id, False, "exception %s" % (str(e))) 
+            return
+        if xv.wait_until_reachable ():
+            self.done_task (Cmd.RESTART, vps.id, True)
+        else:
+            self.done_task (Cmd.RESTART, vps.id, False, "timeout")
+
             
     def loop (self):
         while self.running:

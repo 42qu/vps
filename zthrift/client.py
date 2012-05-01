@@ -13,6 +13,7 @@ from thrift.transport.TSSLSocket import TSSLSocket
 def get_client (saas, host=SAAS_HOST):
     sock = TSSLSocket(host, SAAS_PORT, ca_certs=None, validate=False)
 #    sock = TSocket(SAAS_HOST, SAAS_PORT)
+#    transport = TTransport.TBufferedTransport(sock)
     transport = TTransport.TFramedTransport (sock)
     protocol = TBinaryProtocol.TBinaryProtocol(transport)
     client = saas.Client(protocol)
