@@ -44,6 +44,7 @@ def prepare(o):
         10002: {'os': 'Ubuntu', 'version': '11.10-amd64', 'image': 'ubuntu-11.10-amd64.tar.gz'},
         #10001: {'os': 'Ubuntu', 'version': '10.04-i386', 'image': 'ubuntu-10.04-i386.tar.gz'},
         10001: {'os': 'Ubuntu', 'version': '10.04-amd64', 'image': 'ubuntu-10.04-amd64.tar.gz'},
+        20001: {'os': 'Debian', 'version': '6.0-amd64', 'image': 'debian-6.0-amd64.tar.gz'},
         #20001: {'os': 'Debian', 'version': '6.0-i386', 'image': 'debian-6.0-i686-pae.tar.gz'},
         #    30001: 'Arch',
         50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
