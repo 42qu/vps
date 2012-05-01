@@ -43,7 +43,8 @@ class TestVPSCreate (unittest.TestCase):
             #vps.setup (os_id=2, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=10000, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            vps.setup (os_id=10003, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             print vps.gen_xenpv_config ()
             vpsops.create_vps (vps)
         except Exception, e:

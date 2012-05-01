@@ -106,6 +106,8 @@ maxmem = "$mem"
 memory = "$mem"
 vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
 disk = [ "file:$img_path,xvda1,w","file:$swp_path,xvda2,w" ]
+root = "/dev/xvda1"
+extra = "fastboot"
 on_shutdown = "destroy"
 on_poweroff = "destroy"
 on_reboot = "restart"
