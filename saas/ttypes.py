@@ -20,20 +20,20 @@ class Cmd:
   NONE = 0
   OPEN = 1
   CLOSE = 2
-  RESTART = 3
+  REBOOT = 3
 
   _VALUES_TO_NAMES = {
     0: "NONE",
     1: "OPEN",
     2: "CLOSE",
-    3: "RESTART",
+    3: "REBOOT",
   }
 
   _NAMES_TO_VALUES = {
     "NONE": 0,
     "OPEN": 1,
     "CLOSE": 2,
-    "RESTART": 3,
+    "REBOOT": 3,
   }
 
 
