@@ -42,7 +42,7 @@ class Handler(object):
                 cpu     = vps.cpu,
                 host_id = 2, #TODO
                 state   = vps.state,
-                ip_inter = vps.ip_inter
+                ipv4_inter = vps.ip_inter
             )
         except Exception, e:
             logging.exception (e)
