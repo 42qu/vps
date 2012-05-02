@@ -43,7 +43,7 @@ class VPSMgr (object):
                 vps_id = client.todo (self.host_id, cmd)
                 if vps_id > 0:
                     vps = client.vps (vps_id)
-                    if vps.id <= 0:
+                    if not self.vps_is_valid (vps.id):
                         vps = None
             finally:
                 trans.close ()
@@ -146,6 +146,32 @@ class VPSMgr (object):
         else:
             self.done_task (Cmd.REBOOT, vps.id, False, "timeout")
 
+    def query_vps (self, vps_id):
+        trans, client = get_client (VPS)
+        trans.open ()
+        vps = None
+        try:
+            vps = client.vps (vps_id)
+        finally:
+            trans.close ()
+        if VPSMgr.vps_is_valid (vps):
+            return vps
+        return None
+
+
+    def delete_vps (self, vps):
+        """ must be run manually """
+        raise NotImplementedError ()
+        try:
+            assert vps.state == 0  # TODO hard code
+            vpsops = VPSOps (self.logger)
+            xv = XenVPS (vps.id)
+            vpsops.delete_vps (xv)
+        except Exception, e:
+            self.logger.exception (e)
+            raise e
+
+
             
     def loop (self):
         while self.running:
@@ -178,6 +204,7 @@ class VPSMgr (object):
 def usage ():
     print "usage:\t%s star/stop/restart\t#manage forked daemon" % (sys.argv[0])
     print "\t%s run\t\t# run without daemon, for test purpose" % (sys.argv[0])
+    os._exit (1)
 
 
 stop_singal_flag = False
@@ -196,33 +223,67 @@ def _main():
     signal.signal (signal.SIGTERM, exit_sig_handler)
     signal.signal (signal.SIGINT, exit_sig_handler)
     client.loop ()
+    return
+
+
+def delete_vps (vps_id):
+    """ interact operation """
+    vps_id = int (vps_id)
+    client = VPSMgr ()
+    vps = None
+    try:
+        vps = client.query_vps (vps_id)
+    except Exception, e:
+        print "failed to query vps state:" + type(e) + str(e)
+        return
+    if vps.state != 0: #TODO hard code
+        print "vps %s state=%s, is not to be deleted" % (vps_id, vps.state)
+        return
+    if vps.host_id != conf.HOST_ID:
+        print "vps %s host_id=%s != current host %s ?" % (vps.id, vps.host_id, conf.HOST_ID)
+    answer = raw_input ('if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
+    if answer != 'CONFIRM':
+        print "aborted"
+        return
+    print "you have 10 second to regreat"
+    time.sleep(10)
+    print "begin"
+    try:
+        client.delete_vps (vps)
+        print "done"
+    except Exception, e:
+        print type(e), e
+    return
 
 
 if __name__ == "__main__":
-    log_dir = conf.log_dir
-    if not os.path.exists (log_dir):
-        os.makedirs (log_dir, 0700)
-    run_dir = conf.RUN_DIR
-    if not os.path.exists (run_dir):
-        os.makedirs (run_dir, 0700)
-    logger = Log ("vps_mgr", config=conf)
-    os.chdir (run_dir)
 
-    pid_file = "vps_mgr.pid"
-    mon_pid_file = "vps_mgr_mon.pid"
+    if len (sys.argv) <= 1:
+        usage ()
+    else:
+        log_dir = conf.log_dir
+        if not os.path.exists (log_dir):
+            os.makedirs (log_dir, 0700)
+        run_dir = conf.RUN_DIR
+        if not os.path.exists (run_dir):
+            os.makedirs (run_dir, 0700)
+        logger = Log ("vps_mgr", config=conf) # to ensure log is permitted to write
+        os.chdir (run_dir)
+
+        pid_file = "vps_mgr.pid"
+        mon_pid_file = "vps_mgr_mon.pid"
 
 
-    def _log_err (msg):
-        print msg
-        logger.error (msg, bt_level=1)
+        def _log_err (msg):
+            print msg
+            logger.error (msg, bt_level=1)
 
-    def _start ():
-        daemon.start (_main, pid_file, mon_pid_file, _log_err)
+        def _start ():
+            daemon.start (_main, pid_file, mon_pid_file, _log_err)
 
-    def _stop ():
-        daemon.stop (signal.SIGTERM, pid_file, mon_pid_file)
+        def _stop ():
+            daemon.stop (signal.SIGTERM, pid_file, mon_pid_file)
 
-    if len (sys.argv) > 1:
         action = sys.argv[1]
         if action == "start":
             _start ()
@@ -236,8 +297,12 @@ if __name__ == "__main__":
             daemon.status (pid_file, mon_pid_file)
         elif action == "run":
             _main ()
+        elif action == "delete_vps":
+            if len (sys.argv) < 3:
+                print "missing vps id"
+                usage ()
+            else:
+                delete_vps (sys.argv[2])
         else:
             usage ()
-    else:
-        usage ()
 
