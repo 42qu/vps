@@ -14,7 +14,7 @@ struct Vps {
    8 : i64 ram                       ,                       //单位M
    9 : i16 cpu                       ,                       //几个core
   10 : i64 host_id                   ,                       //如pc1.42qu.us
-
+  11 : optional Ip ipv4_inter        ,                       //内网IP
 /*
 VPS_STATE_RM = 0
 VPS_STATE_PAY = 10
