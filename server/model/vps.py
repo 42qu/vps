@@ -5,6 +5,8 @@ from model._db import redis
 from saas.ttypes import  Cmd
 from array import array
 from model.vps_sell import vps_one_list_by_vps_order, VpsOrder, VPS_STATE_PAY
+from model.mail import mq_sendmail  
+
 
 REDIS_VPS_SAAS_CMD = 'VpsSaasCmd:%s.%s'
 
@@ -33,14 +35,22 @@ def vps_saas_cmd_open(host_id, id):
     return _vps_saas_cmd_new(Cmd.OPEN, host_id, id)
 
 def task_done(host_id, cmd, id, state, message):
-    if not cmd:
-        return
-    if redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), id):
-        pass
-        #TODO 删除存在的
+    if cmd:
+        if redis.lrem(REDIS_VPS_SAAS_CMD%(host_id, cmd), id):
+            pass
+            #TODO 删除存在的
+
+    mq_sendmail(
+        "task_done(host_id=%s, cmd=%s, id=%s, state=%s, message=%s)"%(
+            host_id, Cmd._VALUES_TO_NAMES.get(cmd,"?"), id, state, message
+        ),
+        "",
+        "42qu-vps-saas@googlegroups.com"
+    )
 
 if __name__ == '__main__':
-    task = task_by_host_id(2)
-    print task_done(2, task)
-    print task
-
+#    task = task_by_host_id(2)
+#    print task_done(2, task)
+#    print task
+    #from time import time
+    task_done(1,2,1,0,"")
