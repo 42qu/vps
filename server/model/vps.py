@@ -5,7 +5,7 @@ from model._db import redis
 from saas.ttypes import  Cmd
 from array import array
 from model.vps_sell import vps_one_list_by_vps_order, VpsOrder, VPS_STATE_PAY
-from model.mail import mq_sendmail  
+from model.mail import mq_sendmail
 from time import time
 
 
@@ -37,12 +37,12 @@ def task_by_host_id(host_id, cmd):
         t = redis.zrange(key, 0, 0)
         if t:
             redis.zadd(key, t, now)
-            return int(t[0])    
+            return int(t[0])
     else:
         t = redis.rpoplpush(key , key)
         if t:
             return int(t)
-    return 0 
+    return 0
 
 def vps_saas_cmd_reboot(host_id, id):
     return _vps_saas_cmd_new(Cmd.REBOOT, host_id, id)
@@ -63,11 +63,11 @@ def task_done(host_id, cmd, id, state, message):
         count = 0
 
     mq_sendmail(
-        "task_done(host_id=%s, cmd=%s, id=%s, state=%s, message=%s) = %s"%(
-            host_id, Cmd._VALUES_TO_NAMES.get(cmd,"?"), id, state, message, count
+        'task_done(host_id=%s, cmd=%s, id=%s, state=%s, message=%s) rem count = %s'%(
+            host_id, Cmd._VALUES_TO_NAMES.get(cmd, '?'), id, state, message, count
         ),
-        "",
-        "42qu-vps-saas@googlegroups.com"
+        '',
+        '42qu-vps-saas@googlegroups.com'
     )
 
     return count
@@ -79,4 +79,4 @@ if __name__ == '__main__':
     #from time import time
     #task_done(1,2,1,0,"")
     pass
-    print task_by_host_id(2,Cmd.REBOOT)
+    print task_by_host_id(2, Cmd.REBOOT)
