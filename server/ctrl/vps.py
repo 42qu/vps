@@ -20,19 +20,29 @@ class Handler(object):
                 return Vps()
             
             ip = vps.ip_autobind() # what if no ip can be autobind ?
+            if ip:
+                ipv4         = ip.ip
+                ipv4_netmask = ip.netmask
+                ipv4_gateway = ip.gateway
+            else:
+                ipv4 = ipv4_netmask = ipv4_gateway = 0
 
             return Vps(
                 id=vps.id,
-                ipv4=ip.ip,
-                ipv4_netmask=ip.netmask,
-                ipv4_gateway=ip.gateway,
+
+                ipv4=ipv4,
+                ipv4_netmask=ipv4_netmask,
+                ipv4_gateway=ipv4_gateway,
+
                 password=vps.password,
                 os=vps.os,
                 hd=vps.hd,
                 ram=vps.ram,
+
                 cpu     = vps.cpu,
                 host_id = 2, #TODO
-                state   = vps.state
+                state   = vps.state,
+                ip_inter = vps.ip_inter
             )
         except Exception, e:
             logging.exception (e)
