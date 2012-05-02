@@ -32,7 +32,7 @@ class TestSAASClient (unittest.TestCase):
         print "test vps 40"
         trans.open ()
         try:
-            vps = client.vps (40)
+            vps = client.vps (53)
             print VPSMgr.dump_vps_info (vps)
         finally:
             trans.close ()

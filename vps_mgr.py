@@ -98,10 +98,11 @@ class VPSMgr (object):
     @staticmethod
     def dump_vps_info (vps):
         ip = vps.ipv4 is not None and int2ip (vps.ipv4) or None
+        ip_inter = vps.ipv4_inter is not None  and int2ip (vps.ipv4_inter) or None
         netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
         gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
-        return "id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
-            ip, netmask, gateway
+        return "id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
+            ip, netmask, gateway, ip_inter
             )
 
 
