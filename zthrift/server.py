@@ -18,14 +18,14 @@ class MySSLServerSocket (TSSLServerSocket):
     """ change to raise ssl exception """
 
     def __init__ (self, host=None, port=9090, certfile='cert.pem', unix_socket=None, allowed_ips=None):
-        assert allowed_ips is None or isinstance (allowed_ips, list)
+        assert allowed_ips is None or isinstance (allowed_ips, (list,set,tuple))
         self.allowed_ips = allowed_ips
         TSSLServerSocket.__init__(self, host, port, certfile=certfile, unix_socket=unix_socket)
 
     def accept(self):
         while True:
             plain_client, addr = self.handle.accept()
-
+            print self.allowed_ips, addr[0]
             if self.allowed_ips and addr[0] not in self.allowed_ips:
                 logging.warn ("client %s is not allowed to connect" % (addr[0]))
                 plain_client.close()
@@ -56,8 +56,8 @@ def server(saas, handler, host=None, allowed_ips=None):
     pfactory  = TBinaryProtocol.TBinaryProtocolFactory()
 
 
-    server    = TServer.TSimpleServer(processor, sock, tfactory, pfactory)  # which cannot deal with exception correctly
-    #server = TServer.TThreadedServer(processor, sock, tfactory, pfactory)
+    #server    = TServer.TSimpleServer(processor, sock, tfactory, pfactory)  # which cannot deal with exception correctly
+    server = TServer.TThreadedServer(processor, sock, tfactory, pfactory)
     #server = TServer.TThreadPoolServer(processor, sock, tfactory, pfactory) # which will hang and only be kill by signal 9
     server.serve()
 
