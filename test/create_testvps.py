@@ -63,6 +63,16 @@ class TestVPSCreate (unittest.TestCase):
         vps.stop ()
         self.assert_ (not vps.is_running ())
 
+#    def test_vps53 (self):
+#        print "create vps53"
+#        logger = Log ("test", config=conf)
+#        vpsops = VPSOps (logger)
+#        vps = XenVPS (53)
+#        vps.setup (os_id=2, vcpu=1, mem_m=2048, disk_g=50, ip="10.10.1.4", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+#        print vps.gen_xenpv_config ()
+#        vpsops.create_vps (vps)
+#        self.assert_ (vps.is_running ())
+#        print "vps started"
 
     def test_delete_vps0 (self):
         logger = Log ("test", config=conf)
@@ -83,7 +93,7 @@ def main():
     runner = unittest.TextTestRunner ()
 #    runner.run (TestVPSCreate ("test_find_image"))
 #    runner.run (TestVPSCreate ("test_mem_too_big"))
-    runner.run (TestVPSCreate ("test_vps0"))
+#    runner.run (TestVPSCreate ("test_vps0"))
 #    runner.run (TestVPSCreate ("test_delete_vps0"))
 #    runner.run (TestVPSCreate ("test_ssh"))
     

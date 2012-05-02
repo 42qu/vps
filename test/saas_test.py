@@ -27,17 +27,18 @@ class TestSAASClient (unittest.TestCase):
         finally:
             trans.close ()
 
-    def test_51 (self):
+    def test_40 (self):
         trans, client = get_client (saas.VPS)
-        print "test vps 51"
+        print "test vps 40"
         trans.open ()
         try:
-            vps = client.vps (51)
+            vps = client.vps (40)
             print VPSMgr.dumpy_vps_info (vps)
         finally:
             trans.close ()
 
 if __name__ == '__main__':
-   unittest.main () 
+    runner = unittest.TextTestRunner ()
+    runner.run (TestSAASClient ("test_40"))
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

@@ -97,14 +97,18 @@ class VPSMgr (object):
     @staticmethod
     def dumpy_vps_info (vps):
         ip = vps.ipv4 is not None and int2ip (vps.ipv4) or None
-        netmask = vps.ipv4_netmask is not None and int2ip (vps.netmask) or None
-        gateway = vps.ipv4_gateway is not None and int2ip (vps.gateway) or None
+        netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
+        gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
         return "id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
             ip, netmask, gateway
             )
 
 
     def vps_open (self, vps): 
+        if vps.state != 10:
+            self.logger.error ("vps open cmd received while vps.state=%d, ignored" % (vps.state))
+            self.done_task (Cmd.OPEN, vps.id, False, "ignored")
+            return
         xv = XenVPS (vps.id) 
         vpsops = VPSOps (self.logger)
         try:
