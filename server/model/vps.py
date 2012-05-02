@@ -77,6 +77,6 @@ if __name__ == '__main__':
 #    print task_done(2, task)
 #    print task
     #from time import time
-    #task_done(1,2,1,0,"")
+    task_done(1,2,1,0,"")
     pass
-    print task_by_host_id(2, Cmd.REBOOT)
+    #print task_by_host_id(2, Cmd.REBOOT)
