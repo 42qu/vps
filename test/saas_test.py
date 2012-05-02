@@ -19,10 +19,10 @@ class TestSAASClient (unittest.TestCase):
         print "connected"
         try:
             vps = client.vps (0)
-            print VPSMgr.dumpy_vps_info (vps)
+            print VPSMgr.dump_vps_info (vps)
             self.assert_ (not VPSMgr.vps_is_valid (vps))
             vps = client.vps (100000000)
-            print VPSMgr.dumpy_vps_info (vps)
+            print VPSMgr.dump_vps_info (vps)
             self.assert_ (not VPSMgr.vps_is_valid (vps))
         finally:
             trans.close ()
@@ -33,7 +33,7 @@ class TestSAASClient (unittest.TestCase):
         trans.open ()
         try:
             vps = client.vps (40)
-            print VPSMgr.dumpy_vps_info (vps)
+            print VPSMgr.dump_vps_info (vps)
         finally:
             trans.close ()
 

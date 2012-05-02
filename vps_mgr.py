@@ -35,6 +35,7 @@ class VPSMgr (object):
 
     def run_once (self, cmd):
         vps_id = None
+        vps = None
         try:
             trans, client = get_client (VPS)
             trans.open ()
@@ -42,8 +43,7 @@ class VPSMgr (object):
                 vps_id = client.todo (self.host_id, cmd)
                 if vps_id > 0:
                     vps = client.vps (vps_id)
-                    if not self.vps_is_valid (vps):
-                        self.logger.error ("invalid vps data while task_id=%s, cmd=%s" % (str(vps_id), str(cmd)))
+                    if vps.id <= 0:
                         vps = None
             finally:
                 trans.close ()
@@ -57,11 +57,11 @@ class VPSMgr (object):
             try:
                 h (self, vps)
             except Exception, e:
-                self.logger.exception ("uncaught exception: " + str(e))
+                self.logger.exception ("vps %s, uncaught exception: %s" % (vps.id, str(e)))
                 #TODO notify maintainments
                 return False
         else:
-            self.logger.warn ("no handler, cmd %s, vps: %s" % (str(cmd), self.dumpy_vps_info(vps)))
+            self.logger.warn ("no handler for cmd %s, vps: %s" % (str(cmd), self.dump_vps_info(vps)))
             self.done_task (cmd, vps_id, False, "not implemented")
             return False
 
@@ -84,6 +84,7 @@ class VPSMgr (object):
             trans, client = get_client (VPS)
             trans.open ()
             try:
+                self.logger.info ("send done_task cmd=%s vps_id=%s" % (str(cmd), str(vps_id)))
                 client.done (self.host_id, cmd, vps_id, state, msg)
             finally:
                 trans.close ()
@@ -92,10 +93,10 @@ class VPSMgr (object):
 
     @staticmethod
     def vps_is_valid (vps):
-        return vps.id > 0 and vps.name is not None and vps.ipv4 and vps.gateway 
+        return vps.id > 0 
 
     @staticmethod
-    def dumpy_vps_info (vps):
+    def dump_vps_info (vps):
         ip = vps.ipv4 is not None and int2ip (vps.ipv4) or None
         netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
         gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
@@ -106,8 +107,12 @@ class VPSMgr (object):
 
     def vps_open (self, vps): 
         if vps.state != 10:
-            self.logger.error ("vps open cmd received while vps.state=%d, ignored" % (vps.state))
+            self.logger.error ("vps %s open cmd received while vps.state=%d, ignored" % (str(vps.id), vps.state))
             self.done_task (Cmd.OPEN, vps.id, False, "ignored")
+            return
+        if not vps.ipv4 or not vps.ipv4_gateway or vps.cpu <= 0 or vps.ram <= 0 or vps.hd <= 0 or not vps.password:
+            self.logger.error ("invalid vps data received: %s" % (self.dump_vps_info (vps)))
+            self.done_task (Cmd.OPEN, vps.id, False, "invalid vps data")
             return
         xv = XenVPS (vps.id) 
         vpsops = VPSOps (self.logger)

@@ -79,6 +79,7 @@ class VPSOps (object):
                 self.loginfo (vps, "checked swap size is %d" % (swap_size))
         else:
             raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
+        self.loginfo (vps, "done vps creation")
 
 
     def delete_vps (self, vps):

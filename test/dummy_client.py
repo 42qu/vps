@@ -12,7 +12,7 @@ import time
 from zkit.ip import int2ip 
 
 def vps_open_mock (self, vps):
-    print self.dumpy_vps_info (vps)
+    print self.dump_vps_info (vps)
     if int (time.time ()) % 2:
         print "true"
         self.done_task (Cmd.OPEN, vps.id, True)
