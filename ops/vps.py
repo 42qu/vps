@@ -79,20 +79,23 @@ class XenVPS (object):
     def check_resource_avail (self):
         """ on error or space not available raise Exception """
         assert self.has_all_attr
+        if self.is_running ():
+            raise Exception ("check resource: %s is running, no need to create" % (self.name))
         mem_free = self.xen_inf.mem_free ()
         if self.mem_m > mem_free:
-            raise Exception ("xen free memory is not enough  (%dM left < %dM)" % (mem_free, self.mem_m))
-
+            raise Exception ("check resource: xen free memory is not enough  (%dM left < %dM)" % (mem_free, self.mem_m))
         #check disks not implemented, too complicate, expect error throw during vps creation
         # check ip available
-        if 0 == os.system ("ping -c2 -W2 %s >/dev/null" % (self.ip)):
-            raise Exception ("ip %s is in use" % (self.ip))
+        if 0 == os.system ("ping -c2 -W1 %s >/dev/null" % (self.ip)):
+            raise Exception ("check resource: ip %s is in use" % (self.ip))
+        if os.system ("ping -c2 -W1 %s >/dev/null" % (self.gateway)):
+            raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
         if os.path.exists (self.config_path):
-            raise Exception ("%s already exists" % (self.config_path))
+            raise Exception ("check resource: %s already exists" % (self.config_path))
         if os.path.exists (self.img_path):
-            raise Exception ("%s already exists" % (self.img_path))
+            raise Exception ("check resource: %s already exists" % (self.img_path))
         if os.path.exists (self.swp_path):
-            raise Exception ("%s already exists" % (self.swp_path))
+            raise Exception ("check resource: %s already exists" % (self.swp_path))
 
     def gen_xenpv_config (self):
         assert self.has_all_attr

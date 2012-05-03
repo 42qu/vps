@@ -43,7 +43,10 @@ class VPSMgr (object):
                 vps_id = client.todo (self.host_id, cmd)
                 if vps_id > 0:
                     vps = client.vps (vps_id)
-                    if not self.vps_is_valid (vps.id):
+                    print cmd, vps_id
+                    if not self.vps_is_valid (vps):
+                        self.logger.error ("invalid vps data received, cmd=%s, vps_id=%s" % (cmd, vps_id))
+                        self.done_task(cmd, vps_id, False, "invalid data")
                         vps = None
             finally:
                 trans.close ()
@@ -107,9 +110,10 @@ class VPSMgr (object):
 
 
     def vps_open (self, vps): 
-        if vps.state != 10:
-            self.logger.error ("vps %s open cmd received while vps.state=%d, ignored" % (str(vps.id), vps.state))
-            self.done_task (Cmd.OPEN, vps.id, False, "ignored")
+        if vps.host_id != conf.HOST_ID:
+            msg = "vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, conf.HOST_ID)
+            self.logger.error (msg)
+            self.done_task (Cmd.OPEN, vps.id, False, msg)
             return
         if not vps.ipv4 or not vps.ipv4_gateway or vps.cpu <= 0 or vps.ram <= 0 or vps.hd <= 0 or not vps.password:
             self.logger.error ("invalid vps data received: %s" % (self.dump_vps_info (vps)))
@@ -162,7 +166,6 @@ class VPSMgr (object):
 
     def delete_vps (self, vps):
         """ must be run manually """
-        raise NotImplementedError ()
         try:
             assert vps.state == 0  # TODO hard code
             vpsops = VPSOps (self.logger)
@@ -171,7 +174,6 @@ class VPSMgr (object):
         except Exception, e:
             self.logger.exception (e)
             raise e
-
 
             
     def loop (self):
@@ -237,6 +239,9 @@ def delete_vps (vps_id):
     except Exception, e:
         print "failed to query vps state:" + type(e) + str(e)
         return
+    if not client.vps_is_valid (vps):
+        print "not backend data for vps %s" % (vps_id)
+        return
     if vps.state != 0: #TODO hard code
         print "vps %s state=%s, is not to be deleted" % (vps_id, vps.state)
         return
@@ -255,6 +260,24 @@ def delete_vps (vps_id):
     except Exception, e:
         print type(e), e
     return
+
+def create_vps (vps_id):
+    vps_id = int (vps_id)
+    client = VPSMgr ()
+    vps = None
+    try:
+        vps = client.query_vps (vps_id)
+    except Exception, e:
+        print "failed to query vps state:" + type(e) + str(e)
+        return
+    if not client.vps_is_valid (vps):
+        print "not backend data for vps %s" % (vps_id)
+        return
+    if vps.state not in [10, 15]: #TODO hard code
+        print "vps %s state=%s, is not to be created" % (vps_id, vps.state)
+        return
+    client.vps_open(vps)
+
 
 
 if __name__ == "__main__":
@@ -304,6 +327,12 @@ if __name__ == "__main__":
                 usage ()
             else:
                 delete_vps (sys.argv[2])
+        elif action == "create_vps":
+            if len (sys.argv) < 3:
+                print "missing vps id"
+                usage ()
+            else:
+                create_vps (sys.argv[2])
         else:
             usage ()
 
