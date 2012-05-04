@@ -11,21 +11,31 @@ from thrift.server import TServer, TNonblockingServer
 import threading
 import logging
 import select
+from zkit.ip import address_to_in6
+import socket
 
 import ssl
 
 class MySSLServerSocket (TSSLServerSocket):
     """ change to raise ssl exception """
 
+    allowed_ips = None
+
     def __init__ (self, host=None, port=9090, certfile='cert.pem', unix_socket=None, allowed_ips=None):
         assert allowed_ips is None or isinstance (allowed_ips, (list,set,tuple))
-        self.allowed_ips = allowed_ips
         TSSLServerSocket.__init__(self, host, port, certfile=certfile, unix_socket=unix_socket)
+        if allowed_ips: 
+            res = socket.getaddrinfo(host, port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE | socket.AI_ADDRCONFIG)
+            af = res[-1][0]
+            if socket.has_ipv6 and af == socket.AF_INET6:
+                self.allowed_ips = map (lambda x: socket.inet_ntop (socket.AF_INET6, address_to_in6(x)), allowed_ips)
+            else:
+                self.allowed_ips = allowed_ips
 
     def accept(self):
         while True:
             plain_client, addr = self.handle.accept()
-            print self.allowed_ips, addr[0]
+            #print self.allowed_ips, addr[0]
             if self.allowed_ips and addr[0] not in self.allowed_ips:
                 logging.warn ("client %s is not allowed to connect" % (addr[0]))
                 plain_client.close()
@@ -46,11 +56,11 @@ class MySSLServerSocket (TSSLServerSocket):
             return result
 
 
-def server(saas, handler, host=None, allowed_ips=None):
+def server(saas, handler, host=None, port=SAAS_PORT, allowed_ips=None):
     processor = saas.Processor(handler)
 #    transport = TServerSocket(host, port=SAAS_PORT)
 #    transport = TSSLServerSocket(host, port=SAAS_PORT, certfile=SSL_CERT)
-    sock = MySSLServerSocket(host, port=SAAS_PORT, certfile=SSL_CERT, allowed_ips=allowed_ips)
+    sock = MySSLServerSocket(host, port=port, certfile=SSL_CERT, allowed_ips=allowed_ips)
     #tfactory  = TTransport.TBufferedTransportFactory()
     tfactory  = TTransport.TFramedTransportFactory()
     pfactory  = TBinaryProtocol.TBinaryProtocolFactory()

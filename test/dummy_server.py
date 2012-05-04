@@ -10,6 +10,7 @@ import unittest
 import threading
 import time
 import logging
+import conf
 
 class DummyHandler (object):
     """ ignore the host_id, I'm just a test handler """
@@ -40,14 +41,14 @@ class DummyHandler (object):
 def get_queue_dict ():
     queues = dict ()
     queues[Cmd.OPEN] = list ()
-    queues[Cmd.RESTART] = list ()
+    queues[Cmd.REBOOT] = list ()
     queues[Cmd.CLOSE] = list ()
     return queues
 
 def run_server (queue_dict):
 #    server = zthrift.server.get_server_nonblock (saas.VPS, DummyHandler (queue_dict))
 #    return server.serve ()
-    zthrift.server.server (saas.VPS, DummyHandler (queue_dict), allowed_ips=["10.10.1.1"])
+    zthrift.server.server (saas.VPS, DummyHandler (queue_dict), port=conf.SAAS_PORT + 1, allowed_ips=["119.254.32.166", "127.0.0.1"])
     print "server exit ?"
 
 
@@ -59,7 +60,7 @@ if __name__ == '__main__':
     th.setDaemon(1)
     th.start ()
     time.sleep (2)
-    transport, client = get_client (saas.VPS, host="127.0.0.1")
+    transport, client = get_client (saas.VPS, host="127.0.0.1", port=conf.SAAS_PORT + 1)
     transport.open ()
     try:
         vps = client.vps (1) 
