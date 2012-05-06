@@ -69,7 +69,11 @@ def task_done(host_id, cmd, id, state, message):
         '',
         '42qu-vps-saas@googlegroups.com'
     )
-
+    
+    if cmd == Cmd.OPEN:
+        from model.vps_sell import vps_order_open_by_vps_id
+        vps_order_open_by_vps_id(id)
+             
     return count
 
 if __name__ == '__main__':
@@ -77,6 +81,6 @@ if __name__ == '__main__':
 #    print task_done(2, task)
 #    print task
     #from time import time
-    task_done(1,2,1,0,"")
+    task_done(1,Cmd.OPEN, 36,0,"")
     pass
     #print task_by_host_id(2, Cmd.REBOOT)

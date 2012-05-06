@@ -1,6 +1,7 @@
 #coding:utf-8
 from conf import  SAAS_PORT, SSL_CERT
 
+from zkit.ip import address_to_in6
 import thrift
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TSSLSocket import TSSLServerSocket
@@ -11,7 +12,6 @@ from thrift.server import TServer, TNonblockingServer
 import threading
 import logging
 import select
-from zkit.ip import address_to_in6
 import socket
 
 import ssl
