@@ -5,7 +5,7 @@ import sys
 import os
 import conf
 from conf import HOST_ID
-
+import saas.const.vps as vps_const
 from saas import VPS
 from saas.ttypes import Cmd
 from zthrift.client import get_client
@@ -14,9 +14,13 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
 import time
+import re
 import lib.daemon as daemon
 import signal
 import threading
+from lib.timer_events import TimerEvents
+import ops.netflow as netflow
+from saas.ttypes import NetFlow
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -25,19 +29,61 @@ class VPSMgr (object):
 
     def __init__ (self):
         self.logger = Log ("vps_mgr", config=conf)
+        self.logger_misc = Log ("misc", config=conf) 
         self.host_id = HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
             Cmd.REBOOT: self.__class__.vps_reboot,
         }
+        self.timer = TimerEvents (time.time, self.logger_misc)
+        assert conf.NETFLOW_COLLECT_INV > 0
+        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.send_netflow)
         self.workers = []
         self.running = False
+
+    def get_client (self):
+        return get_client (VPS)
+
+    def send_netflow (self):
+        result = None
+        try:
+            result = netflow.read_proc ()
+        except Exception, e:
+            self.logger_misc.exception ("cannot read netflow data from proc: %s" % (str(e)))
+            return
+        ts = time.time ()
+        netflow_list = list ()
+        try:
+            for ifname, v in result.iteritems ():
+                om = re.match ("^vps(\d+)$", ifname)
+                if not om:
+                    continue
+                vps_id = int(om.group (1))
+                netflow_list.append (NetFlow (vps_id, rx=v[0], tx=v[1]))
+        except Exception, e:
+            self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
+            return
+        if not netflow_list:
+            self.logger_misc.info ("no netflow data is to be sent")
+            return
+        trans, client = self.get_client ()
+        try:
+            trans.open ()
+            try:
+                client.netflow_save (self.host_id, netflow_list, ts)
+                self.logger_misc.info ("netflow data sent")
+            finally:
+                trans.close ()
+        except Exception, e:
+            self.logger_misc.exception ("cannot send netflow data: %s" % (str(e)))
+
+
 
     def run_once (self, cmd):
         vps_id = None
         vps = None
         try:
-            trans, client = get_client (VPS)
+            trans, client = self.get_client ()
             trans.open ()
             try:
                 vps_id = client.todo (self.host_id, cmd)
@@ -84,7 +130,7 @@ class VPSMgr (object):
         if not is_ok:
             state = 1 
         try:
-            trans, client = get_client (VPS)
+            trans, client = self.get_client ()
             trans.open ()
             try:
                 self.logger.info ("send done_task cmd=%s vps_id=%s" % (str(cmd), str(vps_id)))
@@ -152,7 +198,7 @@ class VPSMgr (object):
             self.done_task (Cmd.REBOOT, vps.id, False, "timeout")
 
     def query_vps (self, vps_id):
-        trans, client = get_client (VPS)
+        trans, client = self.get_client ()
         trans.open ()
         vps = None
         try:
@@ -167,7 +213,7 @@ class VPSMgr (object):
     def delete_vps (self, vps):
         """ must be run manually """
         try:
-            assert vps.state == 0  # TODO hard code
+            assert vps.state == vps_const.VPS_STATE_RM
             vpsops = VPSOps (self.logger)
             xv = XenVPS (vps.id)
             vpsops.delete_vps (xv)
@@ -179,6 +225,8 @@ class VPSMgr (object):
     def loop (self):
         while self.running:
             time.sleep (1)
+#        self.timer.stop ()  #TODO test
+        self.logger.info ("timer stopped")
         while self.workers:
             th = self.workers.pop (0)
             th.join ()
@@ -195,6 +243,8 @@ class VPSMgr (object):
                 self.workers.append (th)
             except Exception, e:
                 self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmd), str(e)))
+        #self.timers.start ()  #TODO test
+        self.logger.info ("timer started")
         self.running = True
 
     def stop (self):
@@ -242,8 +292,8 @@ def delete_vps (vps_id):
     if not client.vps_is_valid (vps):
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state != 0: #TODO hard code
-        print "vps %s state=%s, is not to be deleted" % (vps_id, vps.state)
+    if vps.state != vps_const.VPS_STATE_RM: 
+        print "vps %s state=%s, is not to be deleted" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
         return
     if vps.host_id != conf.HOST_ID:
         print "vps %s host_id=%s != current host %s ?" % (vps.id, vps.host_id, conf.HOST_ID)
@@ -273,8 +323,8 @@ def create_vps (vps_id):
     if not client.vps_is_valid (vps):
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state not in [10, 15]: #TODO hard code
-        print "vps %s state=%s, is not to be created" % (vps_id, vps.state)
+    if vps.state not in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
+        print "vps %s state=%s, is not to be created" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
         return
     client.vps_open(vps)
 

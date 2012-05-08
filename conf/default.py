@@ -38,6 +38,7 @@ def prepare(o):
     o.VPS_SWAP_DIR = "/swp"
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
+    o.NETFLOW_COLLECT_INV = 60  # in sec
     o.XEN_BRIDGE = "xenbr0"
     o.MKFS_CMD = "mkfs.ext4 -F"
     o.OS_IMAGE_DICT = {

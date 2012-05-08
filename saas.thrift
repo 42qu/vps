@@ -54,7 +54,7 @@ service VPS {
    void  done            ( 1:i64  host_id , 2:Cmd cmd, 3:Id id, 4:i32 state=0, 5:string message=''), 
 
    Vps   vps             ( 1:i64  vps_id   ),
-   void  netflow_save    ( 1:list<NetFlow> netflow, 2:i64 timestamp),
+   void  netflow_save    ( 1:i64 host_id, 2:list<NetFlow> netflow, 3:i64 timestamp),
 }
 
 

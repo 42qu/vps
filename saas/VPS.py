@@ -44,9 +44,10 @@ class Iface:
     """
     pass
 
-  def netflow_save(self, netflow, timestamp):
+  def netflow_save(self, host_id, netflow, timestamp):
     """
     Parameters:
+     - host_id
      - netflow
      - timestamp
     """
@@ -158,18 +159,20 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "vps failed: unknown result");
 
-  def netflow_save(self, netflow, timestamp):
+  def netflow_save(self, host_id, netflow, timestamp):
     """
     Parameters:
+     - host_id
      - netflow
      - timestamp
     """
-    self.send_netflow_save(netflow, timestamp)
+    self.send_netflow_save(host_id, netflow, timestamp)
     self.recv_netflow_save()
 
-  def send_netflow_save(self, netflow, timestamp):
+  def send_netflow_save(self, host_id, netflow, timestamp):
     self._oprot.writeMessageBegin('netflow_save', TMessageType.CALL, self._seqid)
     args = netflow_save_args()
+    args.host_id = host_id
     args.netflow = netflow
     args.timestamp = timestamp
     args.write(self._oprot)
@@ -251,7 +254,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = netflow_save_result()
-    self._handler.netflow_save(args.netflow, args.timestamp)
+    self._handler.netflow_save(args.host_id, args.netflow, args.timestamp)
     oprot.writeMessageBegin("netflow_save", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -664,17 +667,20 @@ class vps_result:
 class netflow_save_args:
   """
   Attributes:
+   - host_id
    - netflow
    - timestamp
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.LIST, 'netflow', (TType.STRUCT,(NetFlow, NetFlow.thrift_spec)), None, ), # 1
-    (2, TType.I64, 'timestamp', None, None, ), # 2
+    (1, TType.I64, 'host_id', None, None, ), # 1
+    (2, TType.LIST, 'netflow', (TType.STRUCT,(NetFlow, NetFlow.thrift_spec)), None, ), # 2
+    (3, TType.I64, 'timestamp', None, None, ), # 3
   )
 
-  def __init__(self, netflow=None, timestamp=None,):
+  def __init__(self, host_id=None, netflow=None, timestamp=None,):
+    self.host_id = host_id
     self.netflow = netflow
     self.timestamp = timestamp
 
@@ -688,6 +694,11 @@ class netflow_save_args:
       if ftype == TType.STOP:
         break
       if fid == 1:
+        if ftype == TType.I64:
+          self.host_id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
         if ftype == TType.LIST:
           self.netflow = []
           (_etype3, _size0) = iprot.readListBegin()
@@ -698,7 +709,7 @@ class netflow_save_args:
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
-      elif fid == 2:
+      elif fid == 3:
         if ftype == TType.I64:
           self.timestamp = iprot.readI64();
         else:
@@ -713,15 +724,19 @@ class netflow_save_args:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('netflow_save_args')
+    if self.host_id is not None:
+      oprot.writeFieldBegin('host_id', TType.I64, 1)
+      oprot.writeI64(self.host_id)
+      oprot.writeFieldEnd()
     if self.netflow is not None:
-      oprot.writeFieldBegin('netflow', TType.LIST, 1)
+      oprot.writeFieldBegin('netflow', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.netflow))
       for iter6 in self.netflow:
         iter6.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.timestamp is not None:
-      oprot.writeFieldBegin('timestamp', TType.I64, 2)
+      oprot.writeFieldBegin('timestamp', TType.I64, 3)
       oprot.writeI64(self.timestamp)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
