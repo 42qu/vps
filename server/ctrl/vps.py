@@ -7,11 +7,16 @@ import logging
 
 class Handler(object):
     def todo(self, host_id, cmd):
-        return task_by_host_id(host_id, cmd)
+        r = task_by_host_id(host_id, cmd)
+        print "todo",host_id , cmd , r
+        return r 
 
 
     def done(self, host_id, cmd, id, state, message):
         task_done(host_id, cmd, id, state, message)
+
+    def netflow_save(self, netflow, timestamp):
+        print netflow, timestamp
 
     def vps(self, vps_id):
         try:
