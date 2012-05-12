@@ -59,6 +59,8 @@ class VPSMgr (object):
                 if not om:
                     continue
                 vps_id = int(om.group (1))
+                if vps_id <= 0:
+                    continue
                 netflow_list.append (NetFlow (vps_id, rx=v[0], tx=v[1]))
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
