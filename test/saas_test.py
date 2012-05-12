@@ -27,12 +27,12 @@ class TestSAASClient (unittest.TestCase):
         finally:
             trans.close ()
 
-    def test_40 (self):
+    def test_state (self):
         trans, client = get_client (saas.VPS)
-        print "test vps 40"
+        print "test state"
         trans.open ()
         try:
-            vps = client.vps (53)
+            vps = client.vps (55)
             print VPSMgr.dump_vps_info (vps)
         finally:
             trans.close ()
@@ -43,7 +43,7 @@ class TestSAASClient (unittest.TestCase):
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner ()
-    #runner.run (TestSAASClient ("test_40"))
-    runner.run (TestSAASClient ("test_netflow"))
+    runner.run (TestSAASClient ("test_state"))
+    #runner.run (TestSAASClient ("test_netflow"))
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
