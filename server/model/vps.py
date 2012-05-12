@@ -12,8 +12,6 @@ from time import time
 REDIS_VPS_SAAS_CMD = 'VpsSaasCmd:%s.%s'
 
 
-
-
 def _vps_saas_cmd_new(cmd , host_id , id):
     if not cmd:
         return
@@ -31,6 +29,7 @@ def _vps_saas_cmd_new(cmd , host_id , id):
 
 def task_by_host_id(host_id, cmd):
     key = REDIS_VPS_SAAS_CMD%(host_id, cmd)
+    print cmd == Cmd.REBOOT
     if cmd == Cmd.REBOOT:
         now = time()
         redis.zremrangebyscore(key, 0 , now-600) #存活期 10 分钟
@@ -40,8 +39,10 @@ def task_by_host_id(host_id, cmd):
             return int(t[0])
     else:
         t = redis.rpoplpush(key , key)
+        print "t", t
         if t:
             return int(t)
+    print "cmd", ".............."
     return 0
 
 def vps_saas_cmd_reboot(host_id, id):
@@ -69,18 +70,23 @@ def task_done(host_id, cmd, id, state, message):
         '',
         '42qu-vps-saas@googlegroups.com'
     )
-    
+
     if cmd == Cmd.OPEN:
         from model.vps_sell import vps_order_open_by_vps_id
         vps_order_open_by_vps_id(id)
-             
+
     return count
 
 if __name__ == '__main__':
+    print Cmd.OPEN
+    key = REDIS_VPS_SAAS_CMD%(2, Cmd.OPEN)
+    print task_by_host_id(2, Cmd.OPEN)
 #    task = task_by_host_id(2)
 #    print task_done(2, task)
 #    print task
     #from time import time
-    task_done(1,Cmd.OPEN, 36,0,"")
+    #task_done(1,Cmd.OPEN, 36,0,"")
     pass
     #print task_by_host_id(2, Cmd.REBOOT)
+#    from model.vps_sell import vps_order_open_by_vps_id
+#    vps_order_open_by_vps_id(id)
