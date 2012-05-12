@@ -154,25 +154,29 @@ class VPSMgr (object):
             ip, netmask, gateway, ip_inter
             )
 
+    def setup_vps (self, xenvps, vps):
+        xenvps.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, 
+                ip=int2ip (vps.ipv4), 
+                netmask=int2ip (vps.ipv4_netmask), 
+                gateway=int2ip (vps.ipv4_gateway),
+                root_pw=vps.password)
+
 
     def vps_open (self, vps): 
+        self.logger.info ("to open vps %s" % (vps.id))
         if vps.host_id != conf.HOST_ID:
-            msg = "vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, conf.HOST_ID)
+            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, conf.HOST_ID)
             self.logger.error (msg)
             self.done_task (Cmd.OPEN, vps.id, False, msg)
             return
         if not vps.ipv4 or not vps.ipv4_gateway or vps.cpu <= 0 or vps.ram <= 0 or vps.hd <= 0 or not vps.password:
-            self.logger.error ("invalid vps data received: %s" % (self.dump_vps_info (vps)))
+            self.logger.error ("vps open: invalid vps data received: %s" % (self.dump_vps_info (vps)))
             self.done_task (Cmd.OPEN, vps.id, False, "invalid vps data")
             return
         xv = XenVPS (vps.id) 
         vpsops = VPSOps (self.logger)
         try:
-            xv.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, 
-                    ip=int2ip (vps.ipv4), 
-                    netmask=int2ip (vps.ipv4_netmask), 
-                    gateway=int2ip (vps.ipv4_gateway),
-                    root_pw=vps.password)
+            self.setup_vps (xv, vps)
             vpsops.create_vps (xv)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
@@ -182,10 +186,13 @@ class VPSMgr (object):
 
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
+        self.logger.info ("to reboot vps %s" % (vps.id))
         vpsops = VPSOps (self.logger)
         try:
-            vpsops.reboot_vps (vps)
+            self.setup_vps (xv, vps)
+            vpsops.reboot_vps (xv)
         except Exception, e:
+            self.logger.exception (e)
             self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e))) 
             return
         self.done_task (Cmd.REBOOT, vps.id, True)
@@ -218,7 +225,7 @@ class VPSMgr (object):
     def loop (self):
         while self.running:
             time.sleep (1)
-#        self.timer.stop ()  #TODO test
+        self.timer.stop () 
         self.logger.info ("timer stopped")
         while self.workers:
             th = self.workers.pop (0)
@@ -228,6 +235,7 @@ class VPSMgr (object):
     def start (self):
         if self.running:
             return
+        self.running = True
         for cmd in self.handlers.keys ():
             th = threading.Thread (target=self.run_loop, args=(cmd, ))
             try:
@@ -236,9 +244,8 @@ class VPSMgr (object):
                 self.workers.append (th)
             except Exception, e:
                 self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmd), str(e)))
-        #self.timers.start ()  #TODO test
+        self.timer.start ()  
         self.logger.info ("timer started")
-        self.running = True
 
     def stop (self):
         if not self.running:
