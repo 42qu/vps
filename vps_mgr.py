@@ -218,7 +218,7 @@ class VPSMgr (object):
     def loop (self):
         while self.running:
             time.sleep (1)
-#        self.timer.stop ()  #TODO test
+        self.timer.stop () 
         self.logger.info ("timer stopped")
         while self.workers:
             th = self.workers.pop (0)
@@ -228,6 +228,7 @@ class VPSMgr (object):
     def start (self):
         if self.running:
             return
+        self.running = True
         for cmd in self.handlers.keys ():
             th = threading.Thread (target=self.run_loop, args=(cmd, ))
             try:
@@ -236,9 +237,8 @@ class VPSMgr (object):
                 self.workers.append (th)
             except Exception, e:
                 self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmd), str(e)))
-        #self.timers.start ()  #TODO test
+        self.timer.start ()  
         self.logger.info ("timer started")
-        self.running = True
 
     def stop (self):
         if not self.running:
