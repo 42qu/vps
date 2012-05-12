@@ -29,7 +29,7 @@ def _vps_saas_cmd_new(cmd , host_id , id):
 
 def task_by_host_id(host_id, cmd):
     key = REDIS_VPS_SAAS_CMD%(host_id, cmd)
-    print cmd == Cmd.REBOOT
+    #print cmd == Cmd.REBOOT
     if cmd == Cmd.REBOOT:
         now = time()
         redis.zremrangebyscore(key, 0 , now-600) #存活期 10 分钟
@@ -39,10 +39,10 @@ def task_by_host_id(host_id, cmd):
             return int(t[0])
     else:
         t = redis.rpoplpush(key , key)
-        print "t", t
+        #print "t", t
         if t:
             return int(t)
-    print "cmd", ".............."
+    #print "cmd", ".............."
     return 0
 
 def vps_saas_cmd_reboot(host_id, id):
