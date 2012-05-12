@@ -35,8 +35,9 @@ def task_by_host_id(host_id, cmd):
         redis.zremrangebyscore(key, 0 , now-600) #存活期 10 分钟
         t = redis.zrange(key, 0, 0)
         if t:
+            t = t[0]
             redis.zadd(key, t, now)
-            return int(t[0])
+            return int(t)
     else:
         t = redis.rpoplpush(key , key)
         #print "t", t
@@ -78,9 +79,6 @@ def task_done(host_id, cmd, id, state, message):
     return count
 
 if __name__ == '__main__':
-    print Cmd.OPEN
-    key = REDIS_VPS_SAAS_CMD%(2, Cmd.OPEN)
-    print task_by_host_id(2, Cmd.OPEN)
 #    task = task_by_host_id(2)
 #    print task_done(2, task)
 #    print task
@@ -90,3 +88,6 @@ if __name__ == '__main__':
     #print task_by_host_id(2, Cmd.REBOOT)
 #    from model.vps_sell import vps_order_open_by_vps_id
 #    vps_order_open_by_vps_id(id)
+    for i in redis.keys("VpsSaasCmd:*"):
+        print i
+        redis.delete(i)
