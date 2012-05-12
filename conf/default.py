@@ -13,6 +13,7 @@ def prepare(o):
     o.SAAS_HOST = "saas-vps.42qu.us"
 
     o.ALLOWED_IPS = set((
+        "113.11.199.5",
         "119.254.32.166",
         "118.145.8.17" ,
     ))
