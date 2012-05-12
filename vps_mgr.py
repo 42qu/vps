@@ -260,7 +260,7 @@ def usage ():
     os._exit (1)
 
 
-stop_singal_flag = False
+stop_signal_flag = False
             
 def _main():
     client = VPSMgr ()
