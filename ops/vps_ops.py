@@ -1,8 +1,6 @@
 #!/usr/bin/env python
 
 import _env
-import conf
-assert conf.MKFS_CMD
 
 import os
 import re
@@ -33,22 +31,22 @@ class VPSOps (object):
         vps.check_resource_avail ()
 
         self.loginfo (vps, "begin to create image")
-        vps_common.create_raw_image (vps.img_path, vps.disk_g, conf.MKFS_CMD, sparse=True)
-        self.loginfo (vps, "image %s created" % (vps.img_path))
+        vps.root_store.create (vps.disk_g)
+        self.loginfo (vps, "%s created" % (str(vps.root_store)))
         
         if vps.swp_g > 0:
-            vps_common.create_raw_image (vps.swp_path, vps.swp_g, "/sbin/mkswap")
-            self.loginfo (vps, "swap image %s created" % (vps.swp_path))
+            vps.swap_store.create (vps.swp_g)
+            self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
         
-        vps_mountpoint = vps_common.mount_loop_tmp (vps.img_path)
-        self.loginfo (vps, "mounted vps image %s" % (vps.img_path))
+        vps_mountpoint = vps.root_store.mount_tmp ()
+        self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
 
         try:
             if re.match (r'.*\.img$', vps.template_image):
                 vps_common.sync_img (vps_mountpoint, vps.template_image)
             else:
                 vps_common.unpack_tarball (vps_mountpoint, vps.template_image)
-            self.loginfo (vps, "synced vps os to %s" % (vps.img_path))
+            self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
             
             self.loginfo (vps, "begin to init os")
             os_init (vps, vps_mountpoint)
@@ -75,7 +73,7 @@ class VPSOps (object):
             if vps.swp_g > 0:
                 swap_size = int (out.split ()[1])
                 if swap_size == 0:
-                   raise Exception ("it seems swap has not properly configured, please check") 
+                    raise Exception ("it seems swap has not properly configured, please check") 
                 self.loginfo (vps, "checked swap size is %d" % (swap_size))
         else:
             raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
@@ -85,13 +83,12 @@ class VPSOps (object):
     def delete_vps (self, vps):
         vps.stop ()
         self.loginfo (vps, "vps stopped, going to delete data")
-        if os.path.exists (vps.img_path):
-            #TODO check whether img mounted, !!!!!!!!!
-            os.remove (vps.img_path)
-            self.loginfo (vps, "delete %s" % (vps.img_path))
-        if os.path.exists (vps.swp_path):
-            os.remove (vps.swp_path)
-            self.loginfo (vps, "delete %s" % (vps.swp_path))
+        if vps.root_store.exists ():
+            vps.root_store.delete ()
+            self.loginfo (vps, "delete %s" % (str(vps.root_store)))
+        if vps.swap_store.exists ():
+            vps.swap_store.delete ()
+            self.loginfo (vps, "delete %s" % (str(vps.swap_store)))
         if os.path.exists (vps.config_path):
             os.remove (vps.config_path)
             self.loginfo (vps, "delete %s" % (vps.config_path))

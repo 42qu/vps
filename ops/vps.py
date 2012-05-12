@@ -7,17 +7,16 @@ import _env
 from string import Template
 import vps_common
 import os_image
+from ops.vps_store import VPSRootLV, VPSSwapLV, VPSRootImage, VPSSwapImage
 
 
 import conf
 assert conf.XEN_BRIDGE
-assert conf.VPS_IMAGE_DIR
-assert conf.VPS_SWAP_DIR
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
-assert conf.MKFS_CMD
 import xen
 import time
+
 
 
 class XenVPS (object):
@@ -25,8 +24,8 @@ class XenVPS (object):
 
     xen_inf = None
     name = None
-    img_path = None
-    swp_path = None
+    root_store = None
+    swap_store = None
     config_path = None
     auto_config_path = None
     xen_bridge = None
@@ -46,8 +45,16 @@ class XenVPS (object):
 
     def __init__ (self, _id):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
-        self.img_path = os.path.join (conf.VPS_IMAGE_DIR, self.name + ".img")
-        self.swp_path = os.path.join (conf.VPS_SWAP_DIR, self.name + ".swp")
+        if conf.USE_LVM:
+            assert conf.VPS_LVM_VGNAME
+            self.root_store = VPSRootLV (conf.VPS_LVM_VGNAME, self.name)
+            self.swap_store = VPSSwapLV (conf.VPS_LVM_VGNAME, self.name)
+        else:
+            assert conf.VPS_IMAGE_DIR
+            assert conf.VPS_SWAP_DIR
+            self.root_store = VPSRootImage (conf.VPS_IMAGE_DIR, self.name)
+            self.swap_store = VPSSwapImage (conf.VPS_SWAP_DIR, self.name)
+
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
@@ -92,10 +99,10 @@ class XenVPS (object):
             raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
         if os.path.exists (self.config_path):
             raise Exception ("check resource: %s already exists" % (self.config_path))
-        if os.path.exists (self.img_path):
-            raise Exception ("check resource: %s already exists" % (self.img_path))
-        if os.path.exists (self.swp_path):
-            raise Exception ("check resource: %s already exists" % (self.swp_path))
+        if self.root_store.exists ():
+            raise Exception ("check resource: %s already exists" % (str(self.root_store)))
+        if self.swap_store.exists ():
+            raise Exception ("check resource: %s already exists" % (str(self.swap_store)))
 
     def gen_xenpv_config (self):
         assert self.has_all_attr
@@ -108,7 +115,7 @@ vcpus = "$vcpu"
 maxmem = "$mem"
 memory = "$mem"
 vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
-disk = [ "file:$img_path,xvda1,w","file:$swp_path,xvda2,w" ]
+disk = [ "$root_path,xvda1,w","$swap_path,xvda2,w" ]
 root = "/dev/xvda1"
 extra = "fastboot independent_wallclock=1"
 on_shutdown = "destroy"
@@ -117,7 +124,7 @@ on_reboot = "restart"
 on_crash = "restart"
 """ )
         xen_config = t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
-                img_path=self.img_path, swp_path=self.swp_path,
+                root_path=self.root_store.xen_path, swap_path=self.swap_store.xen_path,
                 ip=self.ip, bridge=self.xen_bridge, mac=str(self.mac))
         return xen_config
        

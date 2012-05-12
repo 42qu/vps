@@ -36,6 +36,9 @@ def prepare(o):
     o.OS_IMAGE_DIR = "/vps/images"
     o.VPS_IMAGE_DIR = "/vps"
     o.VPS_SWAP_DIR = "/swp"
+    o.USE_LVM=True
+    o.VPS_LVM_VGNAME="main"
+
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
     o.NETFLOW_COLLECT_INV = 60  # in sec

@@ -55,6 +55,16 @@ def mount_loop_tmp (img_path, readonly=False):
         call_cmd ("mount %s %s -o loop" % (img_path, tmp_mount))
     return tmp_mount
 
+def mount_partition_tmp (dev_path, readonly=False):
+    tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
+    if readonly:
+        call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
+    else:
+        call_cmd ("mount %s %s" % (dev_path, tmp_mount))
+    return tmp_mount
+
+
+
 def umount_tmp (tmp_mount):
     """ umount loop file and delete temporary mount point """
     call_cmd ("umount %s" % (tmp_mount))
@@ -92,6 +102,17 @@ def unpack_tarball (vpsmountpoint, tarball_path):
     finally:
         os.chdir (pwd)
 
+
+def lv_create (vg_name, lv_name, size_g, mkfs_cmd):
+    call_cmd ("lvcreate --name %s --size %dG /dev/%s" % (lv_name, size_g, vg_name))
+    lv_dev = "/dev/%s/%s" % (vg_name, lv_name)
+    if not os.path.exists (lv_dev):
+        raise Exception ("lv %s not exists after creating" % (lv_dev))
+    call_cmd ("%s %s" % (mkfs_cmd, lv_dev))
+    return lv_dev
+
+def lv_delete (lv_dev):
+    call_cmd ("lvremove -f %s" % (lv_dev))
 
 
 #def check_loop (img_path):
