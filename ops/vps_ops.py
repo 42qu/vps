@@ -81,8 +81,11 @@ class VPSOps (object):
 
 
     def delete_vps (self, vps):
-        vps.stop ()
-        self.loginfo (vps, "vps stopped, going to delete data")
+        if vps.stop ():
+            self.loginfo (vps, "vps stopped, going to delete data")
+        else:
+            vps.destroy ()
+            self.loginfo (vps, "vps cannot shutdown, destroyed it, going to delete data")
         if vps.root_store.exists ():
             vps.root_store.delete ()
             self.loginfo (vps, "delete %s" % (str(vps.root_store)))
@@ -96,6 +99,20 @@ class VPSOps (object):
             os.remove (vps.auto_config_path)
             self.loginfo (vps, "delete %s" % (vps.auto_config_path))
         self.loginfo (vps, "deleted")
+
+    def reboot_vps (self, vps):
+        if vps.stop ():
+            self.loginfo (vps, "stopped")
+        else:
+            vps.destroy ()
+            self.loginfo (vps, "force destroy")
+        vps.start ()
+        if not vps.wait_until_reachable (60):
+            raise Exception ("the vps started, seems not reachable")
+        self.loginfo (vps, "started")
+       
+
+
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

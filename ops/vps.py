@@ -141,25 +141,52 @@ on_crash = "restart"
         if self.is_running ():
             return
         self.xen_inf.create (self.config_path)
+        start_ts = time.time ()
+        while True:
+            time.sleep (1)
+            if self.is_running ():
+                return 
+            now = time.time ()
+            if now - start_ts > 5:
+                raise Exception ("failed to create domain %s" % (self.name))
+
 
     def stop (self):
-        """ shutdown a vps, because os needs time to shutdown, will wait for 60 sec until it's really not running"""
+        """ shutdown a vps, because os needs time to shutdown, will wait for 30 sec until it's really not running
+            if shutdowned, returns True, otherwise return False
+        """
         if not self.is_running ():
-            return
+            return True
         self.xen_inf.shutdown (self.name)
+        start_ts = time.time ()
+        while True:
+            time.sleep (1)
+            if not self.is_running ():
+                return True
+            now = time.time ()
+            if now - start_ts > 30:
+                # shutdown failed
+                return False
+
+    def destroy (self):
+        """ if failed to destroy, raise Exception """
+        self.xen_inf.destroy (self.name)
         start_ts = time.time ()
         while True:
             time.sleep (1)
             if not self.is_running ():
                 return
             now = time.time ()
-            if now - start_ts > 60:
-                raise Exception ("")
+            if now - start_ts > 5:
+                raise Exception ("cannot destroy %s after 5 sec" % (self.name))
+
 
 
     def wait_until_reachable (self, timeout=20):
         """ wait for the vps to be reachable and return True, or timeout returns False"""
         start_ts = time.time ()
+        if not self.ip:
+            raise Exception ("%s has no ip, vps object not properly setup" % (self.name))
         while True:
             time.sleep (1)
             if 0 == os.system ("ping -c1 -W1 %s>/dev/null" % (self.ip)):

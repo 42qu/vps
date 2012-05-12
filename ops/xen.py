@@ -29,13 +29,19 @@ class IXen (object):
     def create (xen_config):
         raise NotImplementedError ()
 
-    @staticmethod
-    def reboot (domain):
-        raise NotImplementedError ()
+#    @staticmethod
+#    def reboot (domain):
+#        raise NotImplementedError ()
 
     @staticmethod
     def shutdown (domain):
         raise NotImplementedError ()
+
+    @staticmethod
+    def destroy (domain):
+        raise NotImplementedError ()
+
+
 
     @staticmethod
     def uptime (domain):
@@ -60,13 +66,19 @@ class XenXM (IXen):
             raise Exception ("%s not exist" % (xen_config))
         call_cmd ("xm create %s" % (xen_config))
 
-    @staticmethod
-    def reboot (domain):
-        call_cmd ("xm reboot %s" % (domain))
+#    @staticmethod
+#    def reboot (domain):
+#        # xm reboot is broken, and will cause subsequenced xm shutdown not working
+#        call_cmd ("xm reboot %s" % (domain))
 
     @staticmethod
     def shutdown (domain):
         call_cmd ("xm shutdown %s" % (domain))
+
+    @staticmethod
+    def destroy (domain):
+        call_cmd ("xm destroy %s" % (domain))
+
 
     @staticmethod
     def mem_free ():
@@ -100,13 +112,17 @@ class XenXL (IXen):
             raise Exception ("%s not exist" % (xen_config))
         call_cmd ("xl create %s" % (xen_config))
 
-    @staticmethod
-    def reboot (domain):
-        call_cmd ("xl reboot %s" % (domain))
+#    @staticmethod
+#    def reboot (domain):
+#        call_cmd ("xl reboot %s" % (domain))
 
     @staticmethod
     def shutdown (domain):
         call_cmd ("xl shutdown %s" % (domain))
+
+    @staticmethod
+    def destroy (domain):
+        call_cmd ("xl destroy %s" % (domain))
 
     @staticmethod
     def mem_free ():

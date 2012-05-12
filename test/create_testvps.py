@@ -63,16 +63,26 @@ class TestVPSCreate (unittest.TestCase):
         vps.stop ()
         self.assert_ (not vps.is_running ())
 
-#    def test_vps53 (self):
-#        print "create vps53"
+#    def test_vps1010101 (self):
+#        print "create vps1010101"
 #        logger = Log ("test", config=conf)
 #        vpsops = VPSOps (logger)
-#        vps = XenVPS (53)
-#        vps.setup (os_id=2, vcpu=1, mem_m=2048, disk_g=50, ip="10.10.1.4", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+#        vps = XenVPS (1010101)
+#        vps.setup (os_id=2, vcpu=1, mem_m=2048, disk_g=50, ip="113.11.199.4", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
 #        print vps.gen_xenpv_config ()
 #        vpsops.create_vps (vps)
 #        self.assert_ (vps.is_running ())
 #        print "vps started"
+
+    def test_delete_vps1010101 (self):
+        logger = Log ("test", config=conf)
+        vpsops = VPSOps (logger)
+        vps = XenVPS (1010101)
+        print "going to delete %s in 10 sec" % (vps.name)
+        time.sleep(10)
+        vpsops.delete_vps (vps)
+
+
 
     def test_delete_vps0 (self):
         logger = Log ("test", config=conf)
@@ -88,13 +98,25 @@ class TestVPSCreate (unittest.TestCase):
         self.assertEqual(status, 0)
         print out
 
+    def test_reboot00 (self):
+        print "test reboot vps00"
+        logger = Log ("test", config=conf)
+        vps = XenVPS (0)
+        vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
+        vpsops = VPSOps (logger)
+        vpsops.reboot_vps (vps)
+        print "reboot ok"
+
 
 def main():
     runner = unittest.TextTestRunner ()
 #    runner.run (TestVPSCreate ("test_find_image"))
 #    runner.run (TestVPSCreate ("test_mem_too_big"))
-    runner.run (TestVPSCreate ("test_vps0"))
+#    runner.run (TestVPSCreate ("test_vps0"))
+    runner.run (TestVPSCreate ("test_reboot00"))
+#    runner.run (TestVPSCreate ("test_vps1010101"))
 #    runner.run (TestVPSCreate ("test_delete_vps0"))
+#    runner.run (TestVPSCreate ("test_delete_vps1010101"))
 #    runner.run (TestVPSCreate ("test_ssh"))
     
 

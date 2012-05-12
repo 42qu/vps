@@ -10,7 +10,7 @@ assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
 
 
 def usage ():
-    print """usage: \n%s [image_path] [os] [version] [arch]
+    print """usage: \n%s [image_path/partion_path] [os] [version] [arch]
 """ % (sys.argv[0])
 
 
@@ -34,7 +34,10 @@ def main():
             os._exit (0)
         os.unlink (tarball_path)
     cwd = os.getcwd ()
-    mount_point = vps_common.mount_loop_tmp (img_path, readonly=True)
+    if img_path.find ("/dev") == 0:
+        mount_point = vps_common.mount_partition_tmp (img_path, readonly=True)
+    else:
+        mount_point = vps_common.mount_loop_tmp (img_path, readonly=True)
     os.chdir (mount_point)
     try:
         call_cmd ("tar zcf %s ." % (tarball_path))

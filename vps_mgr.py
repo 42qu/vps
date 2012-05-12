@@ -182,20 +182,13 @@ class VPSMgr (object):
 
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
-        if vps.id != 51:
-            #TODO TEST
-            self.done_task (Cmd.REBOOT, vps.id, False, "no testing for online vps")
-            self.logger.warn ("not restart for online vps %s" % (vps.id))
-            return
+        vpsops = VPSOps (self.logger)
         try:
-            xv.reboot ()
+            vpsops.reboot_vps (vps)
         except Exception, e:
             self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e))) 
             return
-        if xv.wait_until_reachable ():
-            self.done_task (Cmd.REBOOT, vps.id, True)
-        else:
-            self.done_task (Cmd.REBOOT, vps.id, False, "timeout")
+        self.done_task (Cmd.REBOOT, vps.id, True)
 
     def query_vps (self, vps_id):
         trans, client = self.get_client ()
