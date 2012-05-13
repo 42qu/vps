@@ -110,7 +110,7 @@ class VPSOps (object):
         if not vps.wait_until_reachable (60):
             raise Exception ("the vps started, seems not reachable")
         self.loginfo (vps, "started")
-       
+
 
 
 
