@@ -6,7 +6,6 @@ def prepare(o):
     from os.path import join, dirname
     from _env import PREFIX
     
-#    o.SSL_KEY_PEM = join(dirname(PREFIX),'conf/private/server.key')
     o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
     o.SAAS_PORT = 50042
 
@@ -47,14 +46,12 @@ def prepare(o):
     o.XEN_BRIDGE = "xenbr0"
     o.MKFS_CMD = "mkfs.ext4 -F"
     o.OS_IMAGE_DICT = {
-            2: {'os':'CentOS', 'version':'6.2-i386', 'image': 'centos-6.2-i386.tar.gz'},
+            2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},
             1: {'os':'CentOS', 'version': '5.8-i386', 'image': 'centos-5.8-i386.tar.gz'},
         10003: {'os': 'Ubuntu', 'version': '12.04-amd64', 'image': 'ubuntu-12.04-amd64.tar.gz'},
         10002: {'os': 'Ubuntu', 'version': '11.10-amd64', 'image': 'ubuntu-11.10-amd64.tar.gz'},
-        #10001: {'os': 'Ubuntu', 'version': '10.04-i386', 'image': 'ubuntu-10.04-i386.tar.gz'},
         10001: {'os': 'Ubuntu', 'version': '10.04-amd64', 'image': 'ubuntu-10.04-amd64.tar.gz'},
         20001: {'os': 'Debian', 'version': '6.0-amd64', 'image': 'debian-6.0-amd64.tar.gz'},
-        #20001: {'os': 'Debian', 'version': '6.0-i386', 'image': 'debian-6.0-i686-pae.tar.gz'},
         #    30001: 'Arch',
         50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
         #    60001: 'Fedora',
