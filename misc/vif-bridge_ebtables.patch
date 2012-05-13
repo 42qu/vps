@@ -1,0 +1,37 @@
+--- /etc/xen/scripts/vif-bridge.orig	2012-05-13 02:22:59.686677359 +0800
++++ /etc/xen/scripts/vif-bridge	2012-05-13 02:41:19.518677008 +0800
+@@ -88,11 +88,34 @@
+                 ip link set $dev mtu $mtu || :
+         fi
+         add_to_bridge "$bridge" "$dev"
++
++        ebtables -N $dev
++        ebtables -P $dev DROP
++        ebtables -A INPUT -i $dev -j $dev
++        ebtables -A FORWARD -i $dev -j $dev
++        ebtables -A $dev -p ARP --arp-opcode 1 -j ACCEPT
++        
++        if [ ! -z $ip ]; then
++                for oneip in $ip; do
++                        ebtables -A $dev -p IPv4 --ip-src $oneip -j ACCEPT
++                        ebtables -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
++                        ebtables -A $dev -p ARP --arp-opcode 2 --arp-ip-src $oneip -j ACCEPT
++                done
++                
++                ebtables -A $dev --log-prefix="arp-drop" --log-arp -j DROP
++        fi
++                
+         ;;
+ 
+     offline)
+         do_without_error brctl delif "$bridge" "$dev"
+         do_without_error ifconfig "$dev" down
++        
++        do_without_error ebtables -D INPUT -i $dev -j $dev
++        do_without_error ebtables -D FORWARD -i $dev -j $dev
++        do_without_error ebtables -F $dev
++        do_without_error ebtables -X $dev
++
+         ;;
+ 
+     add)

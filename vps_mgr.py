@@ -59,6 +59,8 @@ class VPSMgr (object):
                 if not om:
                     continue
                 vps_id = int(om.group (1))
+                if vps_id <= 0:
+                    continue
                 netflow_list.append (NetFlow (vps_id, rx=v[0], tx=v[1]))
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
@@ -87,9 +89,9 @@ class VPSMgr (object):
             trans.open ()
             try:
                 vps_id = client.todo (self.host_id, cmd)
+                print cmd, vps_id
                 if vps_id > 0:
                     vps = client.vps (vps_id)
-                    print cmd, vps_id
                     if not self.vps_is_valid (vps):
                         self.logger.error ("invalid vps data received, cmd=%s, vps_id=%s" % (cmd, vps_id))
                         self.done_task(cmd, vps_id, False, "invalid data")
@@ -105,6 +107,7 @@ class VPSMgr (object):
         if callable (h):
             try:
                 h (self, vps)
+                return True
             except Exception, e:
                 self.logger.exception ("vps %s, uncaught exception: %s" % (vps.id, str(e)))
                 #TODO notify maintainments
@@ -122,7 +125,7 @@ class VPSMgr (object):
                     continue
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
-            time.sleep (1)
+            time.sleep (2)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
@@ -150,7 +153,7 @@ class VPSMgr (object):
         ip_inter = vps.ipv4_inter is not None  and int2ip (vps.ipv4_inter) or None
         netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
         gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
-        return "id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s" % (vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
+        return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s" % (vps.host_id, vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
             ip, netmask, gateway, ip_inter
             )
 

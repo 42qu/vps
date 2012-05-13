@@ -4,7 +4,6 @@ import os
 from os.path import dirname
 
 def prepare(o):
-    o.HOST_ID = 2
     o.USE_LVM = False
     base_dir = dirname (dirname (dirname (__file__)))
     o.log_dir = os.path.join (base_dir, "log") # for test

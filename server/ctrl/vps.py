@@ -3,6 +3,7 @@ import _env
 from saas.ttypes import Cmd, Vps
 from server.model.vps import task_by_host_id, task_done
 from model.vps_sell import VpsOne
+from model.vps_netflow import netflow_save
 import logging
 
 class Handler(object):
@@ -16,7 +17,7 @@ class Handler(object):
         task_done(host_id, cmd, id, state, message)
 
     def netflow_save(self, host_id, netflow, timestamp):
-        print host_id , netflow, timestamp
+        netflow_save(host_id, netflow, timestamp)
 
     def vps(self, vps_id):
         try:
@@ -45,7 +46,7 @@ class Handler(object):
                 ram=vps.ram,
 
                 cpu     = vps.cpu,
-                host_id = 2, #TODO
+                host_id = vps.host_id, 
                 state   = vps.state,
                 ipv4_inter = vps.ip_inter
             )
