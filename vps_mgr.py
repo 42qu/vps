@@ -89,9 +89,9 @@ class VPSMgr (object):
             trans.open ()
             try:
                 vps_id = client.todo (self.host_id, cmd)
+                print cmd, vps_id
                 if vps_id > 0:
                     vps = client.vps (vps_id)
-                    print cmd, vps_id
                     if not self.vps_is_valid (vps):
                         self.logger.error ("invalid vps data received, cmd=%s, vps_id=%s" % (cmd, vps_id))
                         self.done_task(cmd, vps_id, False, "invalid data")
@@ -107,6 +107,7 @@ class VPSMgr (object):
         if callable (h):
             try:
                 h (self, vps)
+                return True
             except Exception, e:
                 self.logger.exception ("vps %s, uncaught exception: %s" % (vps.id, str(e)))
                 #TODO notify maintainments
@@ -124,7 +125,7 @@ class VPSMgr (object):
                     continue
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
-            time.sleep (1)
+            time.sleep (2)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):

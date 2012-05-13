@@ -30,6 +30,14 @@ class TestVPSCreate (unittest.TestCase):
             return
         self.fail ("expected exception not thrown")
 
+#    def test_vps08 (self): 
+#        logger = Log ("test", config=conf)
+#        vpsops = VPSOps (logger)
+#        vps = XenVPS (8)
+#        vps.setup (os_id=50001, vcpu=2, mem_m=2048, disk_g=50, ip="113.11.199.20", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fda")
+#        vpsops.alloc_space_n_config (vps)
+        
+
 
     def test_vps0 (self):
         print "create vps00"
@@ -140,6 +148,7 @@ def main():
 #    runner.run (TestVPSCreate ("test_find_image"))
 #    runner.run (TestVPSCreate ("test_mem_too_big"))
     runner.run (TestVPSCreate ("test_vps0"))
+#    runner.run (TestVPSCreate ("test_vps08"))
 #    runner.run (TestVPSCreate ("test_reboot00"))
 #    runner.run (TestVPSCreate ("test_multiple"))
 #    runner.run (TestVPSCreate ("test_destroy_multiple"))

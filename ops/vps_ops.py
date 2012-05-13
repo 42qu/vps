@@ -23,11 +23,11 @@ class VPSOps (object):
         else:
             self.logger.info (message)
 
-    def create_vps (self, vps):
-        """ check resources, create vps, wait for ip reachable, check ssh loging and check swap of vps.
-            on error raise Exception, the caller should log exception """
+    def alloc_space_n_config (self, vps):
+
         assert isinstance (vps, XenVPS)
         assert vps.has_all_attr
+
         vps.check_resource_avail ()
 
         self.loginfo (vps, "begin to create image")
@@ -37,6 +37,22 @@ class VPSOps (object):
         if vps.swp_g > 0:
             vps.swap_store.create (vps.swp_g)
             self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
+
+        xen_config = vps.gen_xenpv_config ()
+        f = open (vps.config_path, 'w')
+        try:
+            f.write (xen_config)
+            self.loginfo (vps, "%s created" % (vps.config_path))
+        finally:
+            f.close ()
+
+
+    def create_vps (self, vps):
+        """ check resources, create vps, wait for ip reachable, check ssh loging and check swap of vps.
+            on error raise Exception, the caller should log exception """
+        assert isinstance (vps, XenVPS)
+    
+        self.alloc_space_n_config (vps)
         
         vps_mountpoint = vps.root_store.mount_tmp ()
         self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
@@ -53,13 +69,8 @@ class VPSOps (object):
             self.loginfo (vps, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
-        xen_config = vps.gen_xenpv_config ()
-        f = open (vps.config_path, 'w')
-        try:
-            f.write (xen_config)
-        finally:
-            f.close ()
-        self.loginfo (vps, "%s created, going to start it" % (vps.config_path))
+
+        self.loginfo (vps, "booting")
         vps.start ()
         if not vps.wait_until_reachable (60):
             raise Exception ("the vps started, seems not reachable")
