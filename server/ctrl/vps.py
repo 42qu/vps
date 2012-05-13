@@ -45,7 +45,7 @@ class Handler(object):
                 ram=vps.ram,
 
                 cpu     = vps.cpu,
-                host_id = 2, #TODO
+                host_id = vps.host_id, 
                 state   = vps.state,
                 ipv4_inter = vps.ip_inter
             )
