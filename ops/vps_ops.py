@@ -23,9 +23,12 @@ class VPSOps (object):
         else:
             self.logger.info (message)
 
-    def alloc_space_n_config (self, vps):
 
+    def create_vps (self, vps, vps_image=None, is_new=True):
+        """ check resources, create vps, wait for ip reachable, check ssh loging and check swap of vps.
+            on error raise Exception, the caller should log exception """
         assert isinstance (vps, XenVPS)
+    
         assert vps.has_all_attr
 
         vps.check_resource_avail ()
@@ -46,26 +49,21 @@ class VPSOps (object):
         finally:
             f.close ()
 
-
-    def create_vps (self, vps):
-        """ check resources, create vps, wait for ip reachable, check ssh loging and check swap of vps.
-            on error raise Exception, the caller should log exception """
-        assert isinstance (vps, XenVPS)
-    
-        self.alloc_space_n_config (vps)
         
         vps_mountpoint = vps.root_store.mount_tmp ()
         self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
-
+    
+        if vps_image is None:
+            vps_image = vps.template_image
         try:
-            if re.match (r'.*\.img$', vps.template_image):
-                vps_common.sync_img (vps_mountpoint, vps.template_image)
+            if re.match (r'.*\.img$', vps_image):
+                vps_common.sync_img (vps_mountpoint, vps_image)
             else:
-                vps_common.unpack_tarball (vps_mountpoint, vps.template_image)
+                vps_common.unpack_tarball (vps_mountpoint, vps_image)
             self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
             
             self.loginfo (vps, "begin to init os")
-            os_init (vps, vps_mountpoint)
+            os_init (vps, vps_mountpoint, to_init_passwd=is_new)
             self.loginfo (vps, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -74,10 +72,13 @@ class VPSOps (object):
         vps.start ()
         if not vps.wait_until_reachable (60):
             raise Exception ("the vps started, seems not reachable")
-        self.loginfo (vps, "started and reachable, wait for ssh connection")
-        time.sleep (5)
-        status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
-        self.loginfo (vps, "ssh login ok")
+        if is_new:
+            self.loginfo (vps, "started and reachable, wait for ssh connection")
+            time.sleep (5)
+            status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
+            self.loginfo (vps, "ssh login ok")
+        else:
+            self.loginfo (vps, "started and reachable")
         vps.create_autolink ()
         self.loginfo (vps, "created link to xen auto")
         if status == 0:

@@ -7,7 +7,7 @@ from lib.command import call_cmd
 from vps import XenVPS
 import string
 
-def os_init (vps, vps_mountpoint):
+def os_init (vps, vps_mountpoint, to_init_passwd=True):
     assert isinstance (vps, XenVPS)
     
     os_type = vps.os_type
@@ -21,7 +21,8 @@ def os_init (vps, vps_mountpoint):
         arch_init (vps, vps_mountpoint)
     else:
         raise NotImplementedError ()
-    set_root_passwd (vps, vps_mountpoint)
+    if to_init_passwd:
+        set_root_passwd (vps, vps_mountpoint)
 
 
 def set_root_passwd (vps, vps_mountpoint):

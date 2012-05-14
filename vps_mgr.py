@@ -165,7 +165,7 @@ class VPSMgr (object):
                 root_pw=vps.password)
 
 
-    def vps_open (self, vps): 
+    def vps_open (self, vps, vps_image=None, is_new=True): 
         self.logger.info ("to open vps %s" % (vps.id))
         if vps.host_id != conf.HOST_ID:
             msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, conf.HOST_ID)
@@ -180,7 +180,7 @@ class VPSMgr (object):
         vpsops = VPSOps (self.logger)
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_vps (xv)
+            vpsops.create_vps (xv, vps_image, is_new)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
@@ -282,56 +282,6 @@ def _main():
     return
 
 
-def delete_vps (vps_id):
-    """ interact operation """
-    vps_id = int (vps_id)
-    client = VPSMgr ()
-    vps = None
-    try:
-        vps = client.query_vps (vps_id)
-    except Exception, e:
-        print "failed to query vps state:" + type(e) + str(e)
-        return
-    if not client.vps_is_valid (vps):
-        print "not backend data for vps %s" % (vps_id)
-        return
-    if vps.state != vps_const.VPS_STATE_RM: 
-        print "vps %s state=%s, is not to be deleted" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
-        return
-    if vps.host_id != conf.HOST_ID:
-        print "vps %s host_id=%s != current host %s ?" % (vps.id, vps.host_id, conf.HOST_ID)
-    answer = raw_input ('if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
-    if answer != 'CONFIRM':
-        print "aborted"
-        return
-    print "you have 10 second to regreat"
-    time.sleep(10)
-    print "begin"
-    try:
-        client.delete_vps (vps)
-        print "done"
-    except Exception, e:
-        print type(e), e
-    return
-
-def create_vps (vps_id):
-    vps_id = int (vps_id)
-    client = VPSMgr ()
-    vps = None
-    try:
-        vps = client.query_vps (vps_id)
-    except Exception, e:
-        print "failed to query vps state:" + type(e) + str(e)
-        return
-    if not client.vps_is_valid (vps):
-        print "not backend data for vps %s" % (vps_id)
-        return
-    if vps.state not in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
-        print "vps %s state=%s, is not to be created" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
-        return
-    client.vps_open(vps)
-
-
 
 if __name__ == "__main__":
 
@@ -374,18 +324,6 @@ if __name__ == "__main__":
             daemon.status (pid_file, mon_pid_file)
         elif action == "run":
             _main ()
-        elif action == "delete_vps":
-            if len (sys.argv) < 3:
-                print "missing vps id"
-                usage ()
-            else:
-                delete_vps (sys.argv[2])
-        elif action == "create_vps":
-            if len (sys.argv) < 3:
-                print "missing vps id"
-                usage ()
-            else:
-                create_vps (sys.argv[2])
         else:
             usage ()
 
