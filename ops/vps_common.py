@@ -63,6 +63,27 @@ def mount_partition_tmp (dev_path, readonly=False):
         call_cmd ("mount %s %s" % (dev_path, tmp_mount))
     return tmp_mount
 
+def get_partition_fs_type (dev_path=None, mount_point=None):
+    assert dev_path or mount_point
+    if mount_point and mount_point != "/":
+        mount_point = mount_point.rstrip ("/")
+    f= open ("/proc/mounts", "r")
+    lines = None
+    try:
+        lines = f.readlines ()
+    finally:
+        f.close ()
+    lines.reverse ()
+    for line in lines:
+        arr = line.split ()
+        if dev_path and arr[0] == dev_path:
+            return arr[2]
+        if mount_point and arr[1] == mount_point:
+            return arr[2]
+    if mount_point:
+        raise Exception ("%s is not a mount point" % (mount_point))
+    elif dev_path:
+        raise Exception ("device %s is not mounted" % (dev_path))
 
 
 def umount_tmp (tmp_mount):
@@ -115,18 +136,39 @@ def lv_delete (lv_dev):
     call_cmd ("lvremove -f %s" % (lv_dev))
 
 
-def pack_vps_tarball (img_path, tarball_path):
-    cwd = os.getcwd ()
+def pack_vps_tarball (img_path, tarball_dir_or_path):
+    """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
+    tarball_dir = None
+    tarball_path = None
+    if os.path.isdir (tarball_dir_or_path):
+        tarball_dir = tarball_dir_or_path
+    else:
+        if os.path.exists (tarball_dir_or_path):
+            raise Exception ("file %s exists" % (tarball_dir_or_path))
+        tarball_path = tarball_dir_or_path
+        tarball_dir = os.path.dirname (tarball_path)
+        if not os.path.isdir (tarball_dir):
+            raise Exception ("directory %s not exists" % (tarball_dir))
+
     if img_path.find ("/dev") == 0:
         mount_point = mount_partition_tmp (img_path, readonly=True)
     else:
         mount_point = mount_loop_tmp (img_path, readonly=True)
+    if not tarball_path and tarball_dir:
+        fs_type = get_partition_fs_type (mount_point=mount_point)
+        tarball_name = "%s_fs_%s.tar.gz" % (os.path.basename (img_path), fs_type)
+        tarball_path = os.path.join (tarball_dir, tarball_name)
+        if os.path.exists (tarball_path):
+            raise Exception ("file %s already exists" % (tarball_path))
+        
+    cwd = os.getcwd ()
     os.chdir (mount_point)
     try:
         call_cmd ("tar zcf %s ." % (tarball_path))
     finally:
         os.chdir (cwd)
         umount_tmp (mount_point)
+    return tarball_path
 
 
 

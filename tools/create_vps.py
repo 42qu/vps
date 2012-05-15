@@ -41,6 +41,8 @@ if __name__ == '__main__':
         usage ()
         os._exit (0)
 
+    #TODO file system type
+
     vps_id = int (args[0])
     for opt, v in optlist:
         if opt == '--help': 

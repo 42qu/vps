@@ -10,7 +10,7 @@ assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
 
 
 def usage ():
-    print """usage: \n%s [image_path/partion_path] [tarball_path]
+    print """usage: \n%s [image_path/partion_path] [tarball_dir]
 """ % (sys.argv[0])
 
 
@@ -19,16 +19,16 @@ def main():
         usage ()
         os._exit (0)
     img_path = sys.argv[1]
-    tarball_path = sys.argv[2]
+    tarball_dir = sys.argv[2]
 
     if not os.path.exists (img_path):
         print "%s not exists" % (img_path)
         os._exit (1)
-    if os.path.exists (tarball_path):
-        print '%s exists' % (tarball_path)
+    if not os.path.isdir (tarball_dir):
+        print '%s is not a directory' % (tarball_dir)
         os._exit (1)
-    vps_common.pack_vps_tarball (img_path, tarball_path)
-    print "done"
+    tarball_path = vps_common.pack_vps_tarball (img_path, tarball_dir)
+    print "%s packed in %s" % (img_path, tarball_path)
     
 if "__main__" == __name__:
     main()
