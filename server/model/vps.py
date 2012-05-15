@@ -74,7 +74,8 @@ def task_done(host_id, cmd, id, state, message):
 
     if cmd == Cmd.OPEN:
         from model.vps_sell import vps_order_open_by_vps_id
-        vps_order_open_by_vps_id(id)
+        if state != 0:
+            vps_order_open_by_vps_id(id)
 
     return count
 

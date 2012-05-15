@@ -60,7 +60,7 @@ if __name__ == '__main__':
     vps = VpsOne.mc_get(2)
     print dir (vps)
     print vps.ip_inter_str, vps.ip_list
-    #handler = Handler()
-    #print handler.vps(40)
+#   handler = Handler()
+#   print handler.vps(40)
 #    from zkit.ip import int2ip
 #    print int2ip(-16)
