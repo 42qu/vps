@@ -115,6 +115,21 @@ def lv_delete (lv_dev):
     call_cmd ("lvremove -f %s" % (lv_dev))
 
 
+def pack_vps_tarball (img_path, tarball_path):
+    cwd = os.getcwd ()
+    if img_path.find ("/dev") == 0:
+        mount_point = mount_partition_tmp (img_path, readonly=True)
+    else:
+        mount_point = mount_loop_tmp (img_path, readonly=True)
+    os.chdir (mount_point)
+    try:
+        call_cmd ("tar zcf %s ." % (tarball_path))
+    finally:
+        os.chdir (cwd)
+        umount_tmp (mount_point)
+
+
+
 #def check_loop (img_path):
 #    "return loop device name matching img_path. return None when not found"
 #    _out = subprocess.check_output (["losetup", "-a"])
