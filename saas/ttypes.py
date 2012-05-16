@@ -21,12 +21,14 @@ class Cmd:
   OPEN = 1
   CLOSE = 2
   REBOOT = 3
+  RM = 4
 
   _VALUES_TO_NAMES = {
     0: "NONE",
     1: "OPEN",
     2: "CLOSE",
     3: "REBOOT",
+    4: "RM",
   }
 
   _NAMES_TO_VALUES = {
@@ -34,6 +36,7 @@ class Cmd:
     "OPEN": 1,
     "CLOSE": 2,
     "REBOOT": 3,
+    "RM": 4,
   }
 
 

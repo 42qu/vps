@@ -42,6 +42,7 @@ enum Cmd{
   OPEN    = 1,
   CLOSE   = 2,
   REBOOT  = 3,
+  RM      = 4,
 }
 
 

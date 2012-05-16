@@ -92,3 +92,5 @@ if __name__ == '__main__':
     for i in redis.keys("VpsSaasCmd:*"):
         print i
         redis.delete(i)
+
+
