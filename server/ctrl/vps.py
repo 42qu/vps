@@ -4,7 +4,7 @@ from saas.ttypes import Cmd, Vps
 from server.model.vps import task_by_host_id, task_done
 from model.vps_sell import VpsOne
 from model.vps_netflow import netflow_save
-from model.sms import sms
+from model.sms import sms_send_mq 
 import logging
 
 class Handler(object):
@@ -22,7 +22,7 @@ class Handler(object):
 
     def sms(self, number_list, txt):
         for i in number_list:
-            sms.send(i, txt)        
+            sms_send_mq(i, txt)        
 
     def vps(self, vps_id):
         try:
