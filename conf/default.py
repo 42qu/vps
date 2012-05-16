@@ -61,6 +61,11 @@ def prepare(o):
         #   100001: 'NetBSD',
     }
 
+
+    o.SMS_NUMBER_LIST = (
+        "13693622296",
+    )
+
     return o
 
 
