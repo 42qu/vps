@@ -67,7 +67,7 @@ def get_partition_fs_type (dev_path=None, mount_point=None):
     assert dev_path or mount_point
     if mount_point and mount_point != "/":
         mount_point = mount_point.rstrip ("/")
-    f= open ("/proc/mounts", "r")
+    f = open ("/proc/mounts", "r")
     lines = None
     try:
         lines = f.readlines ()
@@ -91,14 +91,24 @@ def umount_tmp (tmp_mount):
     call_cmd ("umount %s" % (tmp_mount))
     os.rmdir (tmp_mount)
 
-def create_raw_image (path, size_g, mkfs_cmd, sparse=False):
+def create_raw_image (path, size_g, sparse=False):
     assert size_g > 0
     size_m = int (size_g * 1024)
     if sparse:
         call_cmd ("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" % (path, size_m - 1))
     else:
         call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
-    call_cmd ("%s %s" % (mkfs_cmd, path))
+
+def format_fs (fs_type, target):
+    if fs_type in ['ext4', 'ext3', 'ext2']:
+        mkfs_cmd = "mkfs.%s -F" % (fs_type)
+    elif fs_type == 'reiserfs':
+        mkfs_cmd = "mkfs.reiserfs -f"
+    elif fs_type in ['swap']:
+        mkfs_cmd = "mkfs.%s" % (fs_type)
+    else:
+        raise Exception ("not supported fs_type %s" % (fs_type))
+    call_cmd ("%s %s" % (mkfs_cmd, target))
 
 
 def sync_img (vpsmountpoint, template_img_path):
@@ -129,14 +139,16 @@ def lv_create (vg_name, lv_name, size_g, mkfs_cmd):
     lv_dev = "/dev/%s/%s" % (vg_name, lv_name)
     if not os.path.exists (lv_dev):
         raise Exception ("lv %s not exists after creating" % (lv_dev))
-    call_cmd ("%s %s" % (mkfs_cmd, lv_dev))
     return lv_dev
 
 def lv_delete (lv_dev):
     call_cmd ("lvremove -f %s" % (lv_dev))
 
+def lv_rename (src_dev, dest_dev):
+    call_cmd ("lvrename %s %s " % (src_dev, dest_dev))
 
-def pack_vps_tarball (img_path, tarball_dir_or_path):
+
+def pack_vps_fs_tarball (img_path, tarball_dir_or_path):
     """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
     tarball_dir = None
     tarball_path = None
@@ -170,7 +182,12 @@ def pack_vps_tarball (img_path, tarball_dir_or_path):
         umount_tmp (mount_point)
     return tarball_path
 
-
+def get_fs_from_tarball_name (tarball_path):
+    om = re.match (r"^.*?fs[_\-](\w+).*?$", os.path.basename (tarball_path))
+    if not om:
+        return None
+    fs_type = om.group (1)
+    return fs_type
 
 #def check_loop (img_path):
 #    "return loop device name matching img_path. return None when not found"
@@ -201,4 +218,14 @@ def pack_vps_tarball (img_path, tarball_dir_or_path):
 #    call_cmd ("losetup -d %s" % (lo_dev))
 
 
+if __name__ == '__main__':
+    import unittest
 
+    class TestVPSCommon (unittest.TestCase):
+
+        def test_fs_from_tarball_name (self):
+            self.assertEqual (get_fs_from_tarball_name ("/vps/ubuntu-11.10-amd64-fs-ext4.tar.gz"), "ext4")
+            self.assertEqual (get_fs_from_tarball_name ("ubuntu_11.10_amd64_fs_ext4.tar.gz"), "ext4")
+            self.assertEqual (get_fs_from_tarball_name ("ubuntu_11.10_amd64.tar.gz"), None)
+
+    unittest.main ()

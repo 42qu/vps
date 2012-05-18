@@ -35,6 +35,7 @@ def prepare(o):
 
     o.RUN_DIR = "/var/run/vps_mgr"
     o.OS_IMAGE_DIR = "/vps/images"
+    o.VPS_TRASH_DIR = "/vps/trash"
     o.VPS_IMAGE_DIR = "/vps"
     o.VPS_SWAP_DIR = "/swp"
     o.USE_LVM=True
@@ -44,7 +45,9 @@ def prepare(o):
     o.XEN_AUTO_DIR = "/etc/xen/auto"
     o.NETFLOW_COLLECT_INV = 60  # in sec
     o.XEN_BRIDGE = "xenbr0"
-    o.MKFS_CMD = "mkfs.ext4 -F"
+
+    o.DEFAULT_FS_TYPE = 'ext4'
+
     o.OS_IMAGE_DICT = {
             2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},
             1: {'os':'CentOS', 'version': '5.8-i386', 'image': 'centos-5.8-i386.tar.gz'},

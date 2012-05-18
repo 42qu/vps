@@ -33,7 +33,7 @@ def main():
             print "aborted"
             os._exit (0)
         os.unlink (tarball_path)
-    vps_common.pack_vps_tarball (img_path, tarball_path)
+    vps_common.pack_vps_fs_tarball (img_path, tarball_path)
     print "done"
 
     

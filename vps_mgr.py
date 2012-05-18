@@ -180,7 +180,10 @@ class VPSMgr (object):
         vpsops = VPSOps (self.logger)
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_vps (xv, vps_image, is_new)
+            if vps.state == vps_const.VPS_STATE_PAY:
+                vpsops.create_vps (xv, vps_image, is_new)
+            elif vps.state == vps_const.VPS_STATE_CLOSE:
+                vpsops.reopen_vps (xv)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
@@ -220,6 +223,16 @@ class VPSMgr (object):
             vpsops = VPSOps (self.logger)
             xv = XenVPS (vps.id)
             vpsops.delete_vps (xv)
+        except Exception, e:
+            self.logger.exception (e)
+            raise e
+
+    def close_vps (self, vps):
+        try:
+            assert vps.state == vps_const.VPS_STATE_CLOSE
+            xv = XenVPS (vps.id)
+            self.setup_vps (xv, vps)
+            vpsops.close_vps (vps)
         except Exception, e:
             self.logger.exception (e)
             raise e
