@@ -95,7 +95,7 @@ class XenVPS (object):
             raise Exception ("check resource: ip %s is in use" % (self.ip))
         if os.system ("ping -c2 -W1 %s >/dev/null" % (self.gateway)):
             raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
-        if ignore_trash:
+        if not ignore_trash:
             if os.path.exists (self.config_path):
                 raise Exception ("check resource: %s already exists" % (self.config_path))
             if self.root_store.exists ():
@@ -129,12 +129,6 @@ on_crash = "restart"
        
     def is_running (self):
         return self.xen_inf.is_running (self.name)
-
-    def reboot (self):
-        if self.is_running ():
-            self.xen_inf.reboot (self.name)
-        else:
-            self.start ()
 
     def start (self):
         if self.is_running ():

@@ -70,7 +70,7 @@ class Command (object):
     _res_out = None
     _res_err = None
 
-    def __init__ (self, cmd, timeout=None, close_fds=False):
+    def __init__ (self, cmd, timeout=None, close_fds=True):
         if timeout > 0:
             self.timeout = timeout
             self._timeout = timeout

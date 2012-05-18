@@ -10,7 +10,7 @@ import time
 
 import getopt
 
-def delete_vps (vps_id):
+def delete_vps (vps_id, forced=False):
     """ interact operation """
     client = VPSMgr ()
     vps = None
@@ -18,23 +18,27 @@ def delete_vps (vps_id):
         vps = client.query_vps (vps_id)
     except Exception, e:
         print "failed to query vps state:" + type(e) + str(e)
-        return
+        if not forced:
+            return
     if not client.vps_is_valid (vps):
         print "not backend data for vps %s" % (vps_id)
-        return
-    if vps.state != vps_const.VPS_STATE_RM: 
+        if not forced:
+            return
+    if vps and vps.state != vps_const.VPS_STATE_RM: 
         print "vps %s state=%s, is not to be deleted" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
-        return
+        if not forced:
+            return
     answer = raw_input ('if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
     if answer != 'CONFIRM':
         print "aborted"
         return
-    print "you have 10 second to regreat"
+    print "going to delete vps %s, you have 10 second to regret" % (vps_id)
     time.sleep(10)
     print "begin"
     try:
-        client.vps_delete (vps)
-        print "done"
+        if forced:
+            client._vps_delete (vps_id)
+            print "done"
     except Exception, e:
         print type(e), e
     return
@@ -50,15 +54,18 @@ if __name__ == '__main__':
         usage ()
         os._exit (0)
     vps_id = int (sys.argv[1])
-    optlist, args = getopt.gnu_getopt (sys.argv[2:], "", [
-                 "help", 
+    forced = False
+    optlist, args = getopt.gnu_getopt (sys.argv[2:], "f", [
+                 "help", "force",
                  ])
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
             os._exit (0)
+        if opt in [ '-f', '--force' ]:
+            forced = True
 
-    delete_vps (vps_id)
+    delete_vps (vps_id, forced)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
