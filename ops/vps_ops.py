@@ -37,6 +37,9 @@ class VPSOps (object):
     
     def _boot_and_test (self, vps, is_new=True):
         self.loginfo (vps, "booting")
+        status = None
+        out = None
+        err = None
         vps.start ()
         if not vps.wait_until_reachable (60):
             raise Exception ("the vps started, seems not reachable")
@@ -45,16 +48,16 @@ class VPSOps (object):
             time.sleep (5)
             status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
             self.loginfo (vps, "ssh login ok")
+            if status == 0:
+                if vps.swp_g > 0:
+                    swap_size = int (out.split ()[1])
+                    if swap_size == 0:
+                        raise Exception ("it seems swap has not properly configured, please check") 
+                    self.loginfo (vps, "checked swap size is %d" % (swap_size))
+            else:
+                raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
         else:
             self.loginfo (vps, "started and reachable")
-        if status == 0:
-            if vps.swp_g > 0:
-                swap_size = int (out.split ()[1])
-                if swap_size == 0:
-                    raise Exception ("it seems swap has not properly configured, please check") 
-                self.loginfo (vps, "checked swap size is %d" % (swap_size))
-        else:
-            raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
 
 
     def create_vps (self, vps, vps_image=None, is_new=True):

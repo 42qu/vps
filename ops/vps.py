@@ -7,7 +7,7 @@ import _env
 from string import Template
 import vps_common
 import os_image
-from ops.vps_store import VPSRootLV, VPSSwapLV, VPSRootImage, VPSSwapImage
+from ops.vps_store import VPSStoreImage, VPSStoreLV
 
 
 import conf
@@ -47,11 +47,11 @@ class XenVPS (object):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSRootLV (conf.VPS_LVM_VGNAME, "%s_root" % self.name)
-            self.swap_store = VPSSwapLV (conf.VPS_LVM_VGNAME, "%s_swap" % self.name)
+            self.root_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_root" % self.name)
+            self.swap_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_swap" % self.name)
         else:
-            self.root_store = VPSRootImage (conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name)
-            self.swap_store = VPSSwapImage (conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name)
+            self.root_store = VPSStoreImage (conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name)
+            self.swap_store = VPSStoreImage (conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name)
 
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)

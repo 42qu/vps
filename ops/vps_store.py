@@ -75,7 +75,7 @@ class VPSStoreImage (VPSStoreBase):
 
 
 
-class VPStoreLV (VPSStoreBase):
+class VPSStoreLV (VPSStoreBase):
 
     dev = None
     trash_dev = None
