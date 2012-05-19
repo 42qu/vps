@@ -66,6 +66,8 @@ class VPSStoreImage (VPSStoreBase):
         return vps_common.mount_loop_tmp (self.file_path, readonly)
 
     def dump_trash (self):
+        if not os.path.exists (self.file_path):
+            return
         if os.path.exists (self.trash_path):
             os.remove (self.trash_path)
         shutil.move (self.file_path, self.trash_path)
@@ -104,6 +106,8 @@ class VPSStoreLV (VPSStoreBase):
         return os.path.exists (self.trash_dev)
 
     def dump_trash (self):
+        if not os.path.exists (self.dev):
+            return
         if self.trash_dev:
             vps_common.lv_delete (self.trash_dev)
         vps_common.lv_rename (self.dev, self.trash_dev)
