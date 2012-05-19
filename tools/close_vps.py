@@ -4,14 +4,16 @@ import sys
 import os
 import _env
 from vps_mgr import VPSMgr
-import saas.const.vps as vps_const
 import conf
-import time
-
 import getopt
+import saas.const.vps as vps_const
 
-def delete_vps (vps_id):
-    """ interact operation """
+def usage ():
+    print "%s vps_id" % (sys.argv[0])
+    return
+
+
+def close_vps (vps_id):
     client = VPSMgr ()
     vps = None
     try:
@@ -22,28 +24,16 @@ def delete_vps (vps_id):
     if not client.vps_is_valid (vps):
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state != vps_const.VPS_STATE_RM: 
-        print "vps %s state=%s, is not to be deleted" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
+    if vps.state != vps_const.VPS_STATE_CLOSE:
+        print "vps %s state=%s, is not to be close" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
         return
-    answer = raw_input ('if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
-    if answer != 'CONFIRM':
-        print "aborted"
-        return
-    print "you have 10 second to regreat"
-    time.sleep(10)
-    print "begin"
     try:
-        client.vps_delete (vps)
+        client.vps_close (vps)
         print "done"
     except Exception, e:
         print type(e), e
     return
 
-
-
-def usage ():
-    print "%s vps_id" % (sys.argv[0])
-    return
 
 if __name__ == '__main__':
     if len (sys.argv) <= 1:
@@ -58,7 +48,9 @@ if __name__ == '__main__':
             usage ()
             os._exit (0)
 
-    delete_vps (vps_id)
+    close_vps (vps_id)
+
+
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
