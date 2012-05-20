@@ -49,21 +49,31 @@ def gen_mac ():
 def mount_loop_tmp (img_path, readonly=False):
     """ create temporary mount point and mount loop file """
     tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
-    if readonly:
-        call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
-    else:
-        call_cmd ("mount %s %s -o loop" % (img_path, tmp_mount))
+    try:
+        if readonly:
+            call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
+        else:
+            call_cmd ("mount %s %s -o loop" % (img_path, tmp_mount))
+    except Exception, e:
+        os.rmdir (tmp_mount)
+        raise e
     return tmp_mount
 
 def mount_partition_tmp (dev_path, readonly=False):
     tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
-    if readonly:
-        call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
-    else:
-        call_cmd ("mount %s %s" % (dev_path, tmp_mount))
+    try:
+        if readonly:
+            call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
+        else:
+            call_cmd ("mount %s %s" % (dev_path, tmp_mount))
+    except Exception, e:
+        os.rmdir (tmp_mount)
+        raise e
     return tmp_mount
 
-def get_partition_fs_type (dev_path=None, mount_point=None):
+def get_partition_fs_type (mount_point=None, dev_path=None):
+    """ NOTE that /dev/main/vps00_root will actually be  /dev/mapper/main-vps00_root in /proc/mounts, so dev_path is not likely to be reliable
+    """
     assert dev_path or mount_point
     if mount_point and mount_point != "/":
         mount_point = mount_point.rstrip ("/")
@@ -134,7 +144,7 @@ def unpack_tarball (vpsmountpoint, tarball_path):
         os.chdir (pwd)
 
 
-def lv_create (vg_name, lv_name, size_g, mkfs_cmd):
+def lv_create (vg_name, lv_name, size_g):
     call_cmd ("lvcreate --name %s --size %dG /dev/%s" % (lv_name, size_g, vg_name))
     lv_dev = "/dev/%s/%s" % (vg_name, lv_name)
     if not os.path.exists (lv_dev):

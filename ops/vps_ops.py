@@ -25,6 +25,7 @@ class VPSOps (object):
             self.logger.info (message)
 
     def _create_xen_config (self, vps):
+        """ will override config """
         xen_config = vps.gen_xenpv_config ()
         f = open (vps.config_path, 'w')
         try:
@@ -56,7 +57,7 @@ class VPSOps (object):
                     self.loginfo (vps, "checked swap size is %d" % (swap_size))
             else:
                 raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
-        else:
+        else: # if it's recoverd os, passwd is likely to be changed by user
             self.loginfo (vps, "started and reachable")
 
 
@@ -107,7 +108,7 @@ class VPSOps (object):
 
     def close_vps (self, vps):
         if vps.stop ():
-            self.loginfo (vps, "vps stopped, going to delete data")
+            self.loginfo (vps, "vps stopped, going to move data to trash")
         else:
             vps.destroy ()
             self.loginfo (vps, "vps cannot shutdown, destroyed it, going to delete data")
@@ -116,7 +117,7 @@ class VPSOps (object):
             self.loginfo (vps, "%s moved to trash" % (str(vps.root_store)))
         if vps.swap_store.exists ():
             vps.swap_store.delete ()
-            self.loginfo (vps, "deleted %s" % (str(vps.root_store)))
+            self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
         if os.path.exists (vps.config_path):
             os.remove (vps.config_path)
             self.loginfo (vps, "deleted %s" % (vps.config_path))
@@ -128,20 +129,26 @@ class VPSOps (object):
     def reopen_vps (self, vps):
         assert isinstance (vps, XenVPS)
         assert vps.has_all_attr
-        if not vps.root_store.trash_exists ():
+        if not vps.root_store.trash_exists () and not vps.root_store.exists ():
             self.loginfo (vps, "not trash found for root partition, cleanup first and create it")
             self.delete_vps (vps)
             return self.create_vps (vps)
         else:
-            vps.check_resource_avail (ignore_trash=True)
-            vps.root_store.restore_from_trash ()
-            self.loginfo (vps, "%s restored from trash" % (str (vps.root_store))) 
+            vps.check_resource_avail (ignore_trash=True) 
+            # TODO if resource not available on this host, we must allow moving the vps elsewhere
+            if vps.root_store.trash_exists ():
+                vps.root_store.restore_from_trash ()
+                self.loginfo (vps, "%s restored from trash" % (str (vps.root_store))) 
+            else:
+                assert vps.root_store.exists ()
             if vps.swap_store.exists ():
                 pass
             elif vps.swap_store.trash_exists ():
                 vps.swap_store.restore_from_trash () 
+                self.loginfo (vps, "%s restored from trash" % (str (vps.swap_store)))
             elif vps.swp_g > 0:
                 vps.swap_store.create (vps.swp_g, 'swap')
+                self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
             self._create_xen_config (vps)
             self._boot_and_test (vps, is_new=False)
             self.loginfo (vps, "done vps creation")

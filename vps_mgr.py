@@ -146,7 +146,7 @@ class VPSMgr (object):
 
     @staticmethod
     def vps_is_valid (vps):
-        return vps.id > 0 
+        return vps is not None and vps.id > 0 
 
     @staticmethod
     def dump_vps_info (vps):
@@ -217,12 +217,10 @@ class VPSMgr (object):
         return None
 
 
-    def vps_delete (self, vps):
-        """ must be run manually """
+    def _vps_delete (self, vps_id):
         try:
-            assert vps.state == vps_const.VPS_STATE_RM
             vpsops = VPSOps (self.logger)
-            xv = XenVPS (vps.id)
+            xv = XenVPS (vps_id)
             vpsops.delete_vps (xv)
         except Exception, e:
             self.logger.exception (e)

@@ -96,7 +96,7 @@ class VPSStoreLV (VPSStoreBase):
         return self.dev
 
     def create (self, disk_g, fs_type):
-        vps_common.create_raw_image (self.dev, disk_g, sparse=True)
+        vps_common.lv_create (self.vg_name, self.lv_name, disk_g)
         vps_common.format_fs (fs_type, self.dev)
         
     def exists (self):
@@ -108,7 +108,7 @@ class VPSStoreLV (VPSStoreBase):
     def dump_trash (self):
         if not os.path.exists (self.dev):
             return
-        if self.trash_dev:
+        if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
         vps_common.lv_rename (self.dev, self.trash_dev)
 
@@ -118,9 +118,9 @@ class VPSStoreLV (VPSStoreBase):
 
     def delete (self):
         #TODO check whether in use !!!!!!!!!
-        if self.dev:
+        if os.path.exists (self.dev):
             vps_common.lv_delete (self.dev)
-        if self.trash_dev:
+        if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
 
     def mount_tmp (self, readonly=False):
