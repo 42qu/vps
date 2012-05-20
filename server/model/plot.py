@@ -19,21 +19,21 @@ PLOT_CID_VPS_NETFLOW_1DAY ,\
 PLOT_CID_VPS_NETFLOW_1DAY_HOST = range(1,9) 
 
 CID2NAME = {
-    PLOT_CID_VPS_NETFLOW_RX_1MIN : "VPS . 带宽图 . 流入 . 虚拟机. 每分钟",
-    PLOT_CID_VPS_NETFLOW_TX_1MIN : "VPS . 带宽图 . 流出 . 虚拟机 . 每分钟",
-    PLOT_CID_VPS_NETFLOW_1MIN : "VPS . 带宽图 . 虚拟机 . 每分钟",
+    PLOT_CID_VPS_NETFLOW_RX_1MIN   : "VPS . 带宽图 . 流入 . 虚拟机. 每分钟",
+    PLOT_CID_VPS_NETFLOW_TX_1MIN   : "VPS . 带宽图 . 流出 . 虚拟机 . 每分钟",
+    PLOT_CID_VPS_NETFLOW_1MIN      : "VPS . 带宽图 . 虚拟机 . 每分钟",
     PLOT_CID_VPS_NETFLOW_1MIN_HOST : "VPS . 带宽图 . 物理机 . 每分钟",
 
-    PLOT_CID_VPS_NETFLOW_RX_1DAY : "VPS . 流量图 . 流入 . 虚拟机 . 每天",
-    PLOT_CID_VPS_NETFLOW_TX_1DAY : "VPS . 流量图 . 流出 . 虚拟机 . 每天",
-    PLOT_CID_VPS_NETFLOW_1DAY : "VPS . 流量图 . 虚拟机 . 每天",
+    PLOT_CID_VPS_NETFLOW_RX_1DAY   : "VPS . 流量图 . 流入 . 虚拟机 . 每天",
+    PLOT_CID_VPS_NETFLOW_TX_1DAY   : "VPS . 流量图 . 流出 . 虚拟机 . 每天",
+    PLOT_CID_VPS_NETFLOW_1DAY      : "VPS . 流量图 . 虚拟机 . 每天",
     PLOT_CID_VPS_NETFLOW_1DAY_HOST : "VPS . 流量图 . 物理机 . 每天",
 }
 
 
 def plot_point(cid, rid, limit, base=None):
     cursor = SQLSTORE.cursor()
-    cursor.execute('select value from `%s` order by id desc limit %s'%(int(cid), int(limit)), )
+    cursor.execute('select value from `%s` where rid=%%s order by id desc limit %s'%(int(cid), int(limit)), rid)
     if base is None:
         r = [i for i, in cursor.fetchall()]
     else:    
