@@ -71,19 +71,20 @@ KEY `index_2` (`rid`)
 if __name__ == '__main__':
     pass
     
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)
-    print ''
-
-    print 'plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)
-    print ''
+#    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)'
+#    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)
+#    print ''
+#
+#    print 'plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)'
+#    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)
+#    print ''
 
     print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1024*1024/8)
+    print plot_point(PLOT_CID_VPS_NETFLOW_RX_1MIN, 95, 1440, 1024*1024/8)
+    print plot_point(PLOT_CID_VPS_NETFLOW_TX_1MIN, 95, 1440, 1024*1024/8)
     print ''
     
 
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)
-    print ''
+#    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)'
+#    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)
+#    print ''
