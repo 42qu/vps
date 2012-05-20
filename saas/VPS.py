@@ -53,6 +53,16 @@ class Iface:
     """
     pass
 
+  def plot(self, cid, rid, value, timestamp):
+    """
+    Parameters:
+     - cid
+     - rid
+     - value
+     - timestamp
+    """
+    pass
+
   def sms(self, number_list, txt):
     """
     Parameters:
@@ -199,6 +209,40 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
+  def plot(self, cid, rid, value, timestamp):
+    """
+    Parameters:
+     - cid
+     - rid
+     - value
+     - timestamp
+    """
+    self.send_plot(cid, rid, value, timestamp)
+    self.recv_plot()
+
+  def send_plot(self, cid, rid, value, timestamp):
+    self._oprot.writeMessageBegin('plot', TMessageType.CALL, self._seqid)
+    args = plot_args()
+    args.cid = cid
+    args.rid = rid
+    args.value = value
+    args.timestamp = timestamp
+    args.write(self._oprot)
+    self._oprot.writeMessageEnd()
+    self._oprot.trans.flush()
+
+  def recv_plot(self, ):
+    (fname, mtype, rseqid) = self._iprot.readMessageBegin()
+    if mtype == TMessageType.EXCEPTION:
+      x = TApplicationException()
+      x.read(self._iprot)
+      self._iprot.readMessageEnd()
+      raise x
+    result = plot_result()
+    result.read(self._iprot)
+    self._iprot.readMessageEnd()
+    return
+
   def sms(self, number_list, txt):
     """
     Parameters:
@@ -240,6 +284,7 @@ class Processor(Iface, TProcessor):
     self._processMap["done"] = Processor.process_done
     self._processMap["vps"] = Processor.process_vps
     self._processMap["netflow_save"] = Processor.process_netflow_save
+    self._processMap["plot"] = Processor.process_plot
     self._processMap["sms"] = Processor.process_sms
 
   def process(self, iprot, oprot):
@@ -297,6 +342,17 @@ class Processor(Iface, TProcessor):
     result = netflow_save_result()
     self._handler.netflow_save(args.host_id, args.netflow, args.timestamp)
     oprot.writeMessageBegin("netflow_save", TMessageType.REPLY, seqid)
+    result.write(oprot)
+    oprot.writeMessageEnd()
+    oprot.trans.flush()
+
+  def process_plot(self, seqid, iprot, oprot):
+    args = plot_args()
+    args.read(iprot)
+    iprot.readMessageEnd()
+    result = plot_result()
+    self._handler.plot(args.cid, args.rid, args.value, args.timestamp)
+    oprot.writeMessageBegin("plot", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
     oprot.trans.flush()
@@ -833,6 +889,144 @@ class netflow_save_result:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('netflow_save_result')
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class plot_args:
+  """
+  Attributes:
+   - cid
+   - rid
+   - value
+   - timestamp
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'cid', None, None, ), # 1
+    (2, TType.I64, 'rid', None, None, ), # 2
+    (3, TType.I64, 'value', None, None, ), # 3
+    (4, TType.I64, 'timestamp', None, None, ), # 4
+  )
+
+  def __init__(self, cid=None, rid=None, value=None, timestamp=None,):
+    self.cid = cid
+    self.rid = rid
+    self.value = value
+    self.timestamp = timestamp
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.cid = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.rid = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.value = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I64:
+          self.timestamp = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('plot_args')
+    if self.cid is not None:
+      oprot.writeFieldBegin('cid', TType.I64, 1)
+      oprot.writeI64(self.cid)
+      oprot.writeFieldEnd()
+    if self.rid is not None:
+      oprot.writeFieldBegin('rid', TType.I64, 2)
+      oprot.writeI64(self.rid)
+      oprot.writeFieldEnd()
+    if self.value is not None:
+      oprot.writeFieldBegin('value', TType.I64, 3)
+      oprot.writeI64(self.value)
+      oprot.writeFieldEnd()
+    if self.timestamp is not None:
+      oprot.writeFieldBegin('timestamp', TType.I64, 4)
+      oprot.writeI64(self.timestamp)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class plot_result:
+
+  thrift_spec = (
+  )
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('plot_result')
     oprot.writeFieldStop()
     oprot.writeStructEnd()
 
