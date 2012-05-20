@@ -61,7 +61,8 @@ class VPSMgr (object):
                 vps_id = int(om.group (1))
                 if vps_id <= 0:
                     continue
-                netflow_list.append (NetFlow (vps_id, rx=v[0], tx=v[1]))
+                # direction of vps bridged network interface needs to be reverse
+                netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
             return
