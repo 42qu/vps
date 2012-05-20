@@ -53,13 +53,12 @@ class Iface:
     """
     pass
 
-  def plot(self, cid, rid, value, timestamp):
+  def plot(self, cid, rid, value):
     """
     Parameters:
      - cid
      - rid
      - value
-     - timestamp
     """
     pass
 
@@ -209,24 +208,22 @@ class Client(Iface):
     self._iprot.readMessageEnd()
     return
 
-  def plot(self, cid, rid, value, timestamp):
+  def plot(self, cid, rid, value):
     """
     Parameters:
      - cid
      - rid
      - value
-     - timestamp
     """
-    self.send_plot(cid, rid, value, timestamp)
+    self.send_plot(cid, rid, value)
     self.recv_plot()
 
-  def send_plot(self, cid, rid, value, timestamp):
+  def send_plot(self, cid, rid, value):
     self._oprot.writeMessageBegin('plot', TMessageType.CALL, self._seqid)
     args = plot_args()
     args.cid = cid
     args.rid = rid
     args.value = value
-    args.timestamp = timestamp
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -351,7 +348,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = plot_result()
-    self._handler.plot(args.cid, args.rid, args.value, args.timestamp)
+    self._handler.plot(args.cid, args.rid, args.value)
     oprot.writeMessageBegin("plot", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -913,7 +910,6 @@ class plot_args:
    - cid
    - rid
    - value
-   - timestamp
   """
 
   thrift_spec = (
@@ -921,14 +917,12 @@ class plot_args:
     (1, TType.I64, 'cid', None, None, ), # 1
     (2, TType.I64, 'rid', None, None, ), # 2
     (3, TType.I64, 'value', None, None, ), # 3
-    (4, TType.I64, 'timestamp', None, None, ), # 4
   )
 
-  def __init__(self, cid=None, rid=None, value=None, timestamp=None,):
+  def __init__(self, cid=None, rid=None, value=None,):
     self.cid = cid
     self.rid = rid
     self.value = value
-    self.timestamp = timestamp
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -954,11 +948,6 @@ class plot_args:
           self.value = iprot.readI64();
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.I64:
-          self.timestamp = iprot.readI64();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -980,10 +969,6 @@ class plot_args:
     if self.value is not None:
       oprot.writeFieldBegin('value', TType.I64, 3)
       oprot.writeI64(self.value)
-      oprot.writeFieldEnd()
-    if self.timestamp is not None:
-      oprot.writeFieldBegin('timestamp', TType.I64, 4)
-      oprot.writeI64(self.timestamp)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

@@ -57,7 +57,7 @@ service VPS {
    Vps   vps             ( 1:i64 vps_id   ),
    void  netflow_save    ( 1:i64 host_id, 2:list<NetFlow> netflow, 3:i64 timestamp),
 
-   void  plot            ( 1:i64 cid, 2:i64 rid, 3:i64 value, 4:i64 timestamp     ),
+   void  plot            ( 1:i64 cid, 2:i64 rid, 3:i64 value ),
 
    string   sms          ( 1:list<string>  number_list, 2:string txt),
 }

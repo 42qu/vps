@@ -2,6 +2,7 @@
 import _env
 from saas.ttypes import Cmd, Vps
 from server.model.vps import task_by_host_id, task_done
+from server.model.plot import plot 
 from model.vps_sell import VpsOne
 from model.vps_netflow import netflow_save
 from model.sms import sms_send_mq 
@@ -16,6 +17,10 @@ class Handler(object):
 
     def done(self, host_id, cmd, id, state, message):
         task_done(host_id, cmd, id, state, message)
+
+
+    def plot(self, cid, rid, value):
+        plot( cid, rid, value)
 
     def netflow_save(self, host_id, netflow, timestamp):
         netflow_save(host_id, netflow, timestamp)
