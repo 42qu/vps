@@ -31,6 +31,15 @@ CID2NAME = {
 }
 
 
+def plot_point(cid, rid, limit, base=None):
+    cursor = SQLSTORE.cursor()
+    cursor.execute('select value from `%s` order by id desc limit %s'%(int(cid), int(limit)), )
+    if base is None:
+        r = [i for i, in cursor.fetchall()]
+    else:    
+        r = [i/base for i, in cursor.fetchall()]
+    return r
+
 def _plot( cid, rid, value, timestamp):
     cursor = SQLSTORE.cursor()
     cursor.execute('INSERT DELAYED INTO `%s` (rid, value, time) VALUES (%%s, %%s, %%s)'%int(cid), (rid, value, timestamp))
@@ -61,4 +70,4 @@ KEY `index_2` (`rid`)
 
 if __name__ == '__main__':
     pass
-
+    print plot_point(4, 3, 1440, 1024*1024/8)
