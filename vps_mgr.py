@@ -4,7 +4,6 @@
 import sys
 import os
 import conf
-from conf import HOST_ID
 import saas.const.vps as vps_const
 from saas import VPS
 from saas.ttypes import Cmd
@@ -30,10 +29,11 @@ class VPSMgr (object):
     def __init__ (self):
         self.logger = Log ("vps_mgr", config=conf)
         self.logger_misc = Log ("misc", config=conf) 
-        self.host_id = HOST_ID
+        self.host_id = conf.HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
             Cmd.REBOOT: self.__class__.vps_reboot,
+            Cmd.CLOSE: self.__class__.vps_close,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -145,7 +145,7 @@ class VPSMgr (object):
 
     @staticmethod
     def vps_is_valid (vps):
-        return vps.id > 0 
+        return vps is not None and vps.id > 0 
 
     @staticmethod
     def dump_vps_info (vps):
@@ -167,8 +167,8 @@ class VPSMgr (object):
 
     def vps_open (self, vps, vps_image=None, is_new=True): 
         self.logger.info ("to open vps %s" % (vps.id))
-        if vps.host_id != conf.HOST_ID:
-            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, conf.HOST_ID)
+        if vps.host_id != self.host_id:
+            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, self.host_id)
             self.logger.error (msg)
             self.done_task (Cmd.OPEN, vps.id, False, msg)
             return
@@ -176,11 +176,14 @@ class VPSMgr (object):
             self.logger.error ("vps open: invalid vps data received: %s" % (self.dump_vps_info (vps)))
             self.done_task (Cmd.OPEN, vps.id, False, "invalid vps data")
             return
-        xv = XenVPS (vps.id) 
+        xv = XenVPS (vps.id)
         vpsops = VPSOps (self.logger)
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_vps (xv, vps_image, is_new)
+            if vps.state == vps_const.VPS_STATE_PAY:
+                vpsops.create_vps (xv, vps_image, is_new)
+            elif vps.state == vps_const.VPS_STATE_CLOSE:
+                vpsops.reopen_vps (xv)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
@@ -213,16 +216,27 @@ class VPSMgr (object):
         return None
 
 
-    def delete_vps (self, vps):
-        """ must be run manually """
+    def _vps_delete (self, vps_id):
         try:
-            assert vps.state == vps_const.VPS_STATE_RM
             vpsops = VPSOps (self.logger)
-            xv = XenVPS (vps.id)
+            xv = XenVPS (vps_id)
             vpsops.delete_vps (xv)
         except Exception, e:
             self.logger.exception (e)
             raise e
+
+    def vps_close (self, vps):
+        try:
+            assert vps.state == vps_const.VPS_STATE_CLOSE
+            vpsops = VPSOps (self.logger)
+            xv = XenVPS (vps.id)
+            self.setup_vps (xv, vps)
+            vpsops.close_vps (xv)
+        except Exception, e:
+            self.logger.exception (e)
+            self.done_task (Cmd.CLOSE, vps.id, False, "exception %s" % (str(e)))
+            return
+        self.done_task (Cmd.CLOSE, vps.id, True)
 
             
     def loop (self):

@@ -27,7 +27,7 @@ def main():
     if not os.path.isdir (tarball_dir):
         print '%s is not a directory' % (tarball_dir)
         os._exit (1)
-    tarball_path = vps_common.pack_vps_tarball (img_path, tarball_dir)
+    tarball_path = vps_common.pack_vps_fs_tarball (img_path, tarball_dir)
     print "%s packed in %s" % (img_path, tarball_path)
     
 if "__main__" == __name__:

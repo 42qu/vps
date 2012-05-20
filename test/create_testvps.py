@@ -8,6 +8,7 @@ import conf
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 import ops.os_image as os_image
+import ops.vps_common as vps_common
 import unittest
 from lib.log import Log
 import time
@@ -37,6 +38,31 @@ class TestVPSCreate (unittest.TestCase):
 #        vps.setup (os_id=50001, vcpu=2, mem_m=2048, disk_g=50, ip="113.11.199.20", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fda")
 #        vpsops.alloc_space_n_config (vps)
         
+    def test_create_vps0 (self):
+        print "create vps00"
+        logger = Log ("test", config=conf)
+        vpsops = VPSOps (logger)
+        vps = XenVPS (0)
+        try:
+            #vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
+            vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=10002, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=2, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=10000, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=10003, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+
+            print vps.gen_xenpv_config ()
+            vpsops.create_vps (vps)
+        except Exception, e:
+            print str(e)
+            logger.exception (e)
+            raise e
+        self.assert_ (vps.is_running ())
+        print "vps00 started"
+
 
 
     def test_vps0 (self):
@@ -45,8 +71,8 @@ class TestVPSCreate (unittest.TestCase):
         vpsops = VPSOps (logger)
         vps = XenVPS (0)
         try:
-            vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
-            #vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+            #vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
+            vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1", root_pw="fdfdfd")
             #vps.setup (os_id=10002, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=2, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
@@ -57,7 +83,6 @@ class TestVPSCreate (unittest.TestCase):
             print vps.gen_xenpv_config ()
             vpsops.create_vps (vps)
         except Exception, e:
-            print str(e)
             logger.exception (e)
             raise e
         self.assert_ (vps.is_running ())
@@ -71,24 +96,75 @@ class TestVPSCreate (unittest.TestCase):
         vps.stop ()
         self.assert_ (not vps.is_running ())
 
-#    def test_vps1010101 (self):
-#        print "create vps1010101"
-#        logger = Log ("test", config=conf)
-#        vpsops = VPSOps (logger)
-#        vps = XenVPS (1010101)
-#        vps.setup (os_id=2, vcpu=1, mem_m=2048, disk_g=50, ip="113.11.199.4", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
-#        print vps.gen_xenpv_config ()
-#        vpsops.create_vps (vps)
-#        self.assert_ (vps.is_running ())
-#        print "vps started"
+        try:
+            print "test reopen without moving to trash"
+            vpsops.reopen_vps (vps)
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (vps.is_running ())
+        try:
+            print "close vps0"
+            vpsops.close_vps (vps)
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (not vps.is_running ())
+        self.assert_ (vps.root_store.trash_exists ())
+        self.assert_ (not vps.root_store.exists ())
+        try:
+            print "reopen vps0"
+            vpsops.reopen_vps (vps)
+            status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
+            if status == 0:
+                if vps.swp_g > 0:
+                    swap_size = int (out.split ()[1])
+                    if swap_size == 0:
+                        raise Exception ("it seems swap has not properly configured, please check") 
+            else:
+                self.fail ("ssh test failed %s, %s" % (out, err))
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (vps.is_running ())
+        self.assert_ (vps.root_store.exists ())
+        try:
+            print "delete vps0"
+            vpsops.delete_vps (vps)
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (not vps.root_store.exists ())
+        self.assert_ (not os.path.exists (vps.config_path))
+        self.assert_ (not os.path.exists (vps.auto_config_path))
+        try:
+            print "reopen vps0 == create vps0"
+            vpsops.reopen_vps (vps)
+            print "close vps0"
+            vpsops.close_vps (vps)
+            print "delete vps0"
+            vpsops.delete_vps (vps)
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (not vps.root_store.exists ())
+        self.assert_ (not os.path.exists (vps.config_path))
+        self.assert_ (not os.path.exists (vps.auto_config_path))
 
-    def test_delete_vps1010101 (self):
+
+    def test_closevps0 (self):
+        print "test_closevps0"
         logger = Log ("test", config=conf)
         vpsops = VPSOps (logger)
-        vps = XenVPS (1010101)
-        print "going to delete %s in 10 sec" % (vps.name)
-        time.sleep(10)
-        vpsops.delete_vps (vps)
+        vps = XenVPS (0)
+        vpsops.close_vps (vps)
+    
+    def test_reopen0 (self):
+        print "test reopen"
+        logger = Log ("test", config=conf)
+        vpsops = VPSOps (logger)
+        vps = XenVPS (0)
+        vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
 
 
 
@@ -148,13 +224,12 @@ def main():
 #    runner.run (TestVPSCreate ("test_find_image"))
 #    runner.run (TestVPSCreate ("test_mem_too_big"))
     runner.run (TestVPSCreate ("test_vps0"))
-#    runner.run (TestVPSCreate ("test_vps08"))
+#    runner.run (TestVPSCreate ("test_closevps0"))
+#    runner.run (TestVPSCreate ("test_reopen0"))
 #    runner.run (TestVPSCreate ("test_reboot00"))
 #    runner.run (TestVPSCreate ("test_multiple"))
 #    runner.run (TestVPSCreate ("test_destroy_multiple"))
-#    runner.run (TestVPSCreate ("test_vps1010101"))
 #    runner.run (TestVPSCreate ("test_delete_vps0"))
-#    runner.run (TestVPSCreate ("test_delete_vps1010101"))
 #    runner.run (TestVPSCreate ("test_ssh"))
     
 

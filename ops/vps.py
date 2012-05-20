@@ -7,7 +7,7 @@ import _env
 from string import Template
 import vps_common
 import os_image
-from ops.vps_store import VPSRootLV, VPSSwapLV, VPSRootImage, VPSSwapImage
+from ops.vps_store import VPSStoreImage, VPSStoreLV
 
 
 import conf
@@ -47,13 +47,11 @@ class XenVPS (object):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSRootLV (conf.VPS_LVM_VGNAME, self.name)
-            self.swap_store = VPSSwapLV (conf.VPS_LVM_VGNAME, self.name)
+            self.root_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_root" % self.name)
+            self.swap_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_swap" % self.name)
         else:
-            assert conf.VPS_IMAGE_DIR
-            assert conf.VPS_SWAP_DIR
-            self.root_store = VPSRootImage (conf.VPS_IMAGE_DIR, self.name)
-            self.swap_store = VPSSwapImage (conf.VPS_SWAP_DIR, self.name)
+            self.root_store = VPSStoreImage (conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name)
+            self.swap_store = VPSStoreImage (conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name)
 
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
@@ -83,7 +81,7 @@ class XenVPS (object):
         self.root_pw = root_pw
         self.template_image, self.os_type, self.os_version = os_image.find_os_image (os_id)
 
-    def check_resource_avail (self):
+    def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """
         assert self.has_all_attr
         if self.is_running ():
@@ -97,12 +95,13 @@ class XenVPS (object):
             raise Exception ("check resource: ip %s is in use" % (self.ip))
         if os.system ("ping -c2 -W1 %s >/dev/null" % (self.gateway)):
             raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
-        if os.path.exists (self.config_path):
-            raise Exception ("check resource: %s already exists" % (self.config_path))
-        if self.root_store.exists ():
-            raise Exception ("check resource: %s already exists" % (str(self.root_store)))
-        if self.swap_store.exists ():
-            raise Exception ("check resource: %s already exists" % (str(self.swap_store)))
+        if not ignore_trash:
+            if os.path.exists (self.config_path):
+                raise Exception ("check resource: %s already exists" % (self.config_path))
+            if self.root_store.exists ():
+                raise Exception ("check resource: %s already exists" % (str(self.root_store)))
+            if self.swap_store.exists ():
+                raise Exception ("check resource: %s already exists" % (str(self.swap_store)))
 
     def gen_xenpv_config (self):
         assert self.has_all_attr
@@ -130,12 +129,6 @@ on_crash = "restart"
        
     def is_running (self):
         return self.xen_inf.is_running (self.name)
-
-    def reboot (self):
-        if self.is_running ():
-            self.xen_inf.reboot (self.name)
-        else:
-            self.start ()
 
     def start (self):
         if self.is_running ():
@@ -179,7 +172,6 @@ on_crash = "restart"
             now = time.time ()
             if now - start_ts > 5:
                 raise Exception ("cannot destroy %s after 5 sec" % (self.name))
-
 
 
     def wait_until_reachable (self, timeout=20):
