@@ -22,6 +22,7 @@ class Cmd:
   CLOSE = 2
   REBOOT = 3
   RM = 4
+  BANDWIDTH = 5
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -29,6 +30,7 @@ class Cmd:
     2: "CLOSE",
     3: "REBOOT",
     4: "RM",
+    5: "BANDWIDTH",
   }
 
   _NAMES_TO_VALUES = {
@@ -37,6 +39,7 @@ class Cmd:
     "CLOSE": 2,
     "REBOOT": 3,
     "RM": 4,
+    "BANDWIDTH": 5,
   }
 
 
@@ -55,6 +58,7 @@ class Vps:
    - host_id
    - state
    - ipv4_inter
+   - bandwidth
   """
 
   thrift_spec = (
@@ -71,9 +75,10 @@ class Vps:
     (10, TType.I64, 'host_id', None, None, ), # 10
     (11, TType.I16, 'state', None, None, ), # 11
     (12, TType.I64, 'ipv4_inter', None, None, ), # 12
+    (13, TType.I64, 'bandwidth', None, None, ), # 13
   )
 
-  def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None, host_id=None, state=None, ipv4_inter=None,):
+  def __init__(self, id=None, ipv4=None, ipv4_netmask=None, ipv4_gateway=None, password=None, os=None, hd=None, ram=None, cpu=None, host_id=None, state=None, ipv4_inter=None, bandwidth=None,):
     self.id = id
     self.ipv4 = ipv4
     self.ipv4_netmask = ipv4_netmask
@@ -86,6 +91,7 @@ class Vps:
     self.host_id = host_id
     self.state = state
     self.ipv4_inter = ipv4_inter
+    self.bandwidth = bandwidth
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -156,6 +162,11 @@ class Vps:
           self.ipv4_inter = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 13:
+        if ftype == TType.I64:
+          self.bandwidth = iprot.readI64();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -213,6 +224,10 @@ class Vps:
     if self.ipv4_inter is not None:
       oprot.writeFieldBegin('ipv4_inter', TType.I64, 12)
       oprot.writeI64(self.ipv4_inter)
+      oprot.writeFieldEnd()
+    if self.bandwidth is not None:
+      oprot.writeFieldBegin('bandwidth', TType.I64, 13)
+      oprot.writeI64(self.bandwidth)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

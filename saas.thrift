@@ -29,6 +29,7 @@ VPS_STATE2CN = {
 */
   11 : i16 state                     ,
   12 : optional Ip ipv4_inter        ,                       //内网IP
+  13 : optional i64 bandwidth       ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
 }
 
 struct NetFlow {
@@ -38,11 +39,12 @@ struct NetFlow {
 }
 
 enum Cmd{
-  NONE    = 0,
-  OPEN    = 1,
-  CLOSE   = 2,
-  REBOOT  = 3,
-  RM      = 4,
+  NONE        = 0,
+  OPEN        = 1,
+  CLOSE       = 2,
+  REBOOT      = 3,
+  RM          = 4,
+  BANDWIDTH   = 5, //调整带宽
 }
 
 
