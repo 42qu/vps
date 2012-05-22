@@ -24,7 +24,12 @@ def create_vps (vps_id, vps_image=None, is_new=True):
     if vps.state not in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
         print "vps %s state=%s, is not to be created" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
         return
-    client.vps_open(vps, vps_image, is_new)
+    if vps_image and not os.path.exists (vps_image):
+        print "%s not exist" % (vps_image)
+        return
+    if not client.vps_open(vps, vps_image, is_new):
+        print "error, pls check the log"
+        return
 
 
 def usage ():

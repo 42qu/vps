@@ -66,14 +66,13 @@ class VPSOps (object):
             on error raise Exception, the caller should log exception """
         assert isinstance (vps, XenVPS)
         assert vps.has_all_attr
-
+        
+        if vps_image:
+            vps.template_image = vps_image
         vps.check_resource_avail ()
 
-        if vps_image is None:
-            vps_image = vps.template_image
-
         #fs_type is tied to the image
-        fs_type = vps_common.get_fs_from_tarball_name (vps_image)
+        fs_type = vps_common.get_fs_from_tarball_name (vps.template_image)
         if not fs_type:
             fs_type = conf.DEFAULT_FS_TYPE
         
@@ -91,10 +90,10 @@ class VPSOps (object):
         self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
     
         try:
-            if re.match (r'.*\.img$', vps_image):
-                vps_common.sync_img (vps_mountpoint, vps_image)
+            if re.match (r'.*\.img$', vps.template_image):
+                vps_common.sync_img (vps_mountpoint, vps.template_image)
             else:
-                vps_common.unpack_tarball (vps_mountpoint, vps_image)
+                vps_common.unpack_tarball (vps_mountpoint, vps.template_image)
             self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
             
             self.loginfo (vps, "begin to init os")
