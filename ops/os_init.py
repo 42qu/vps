@@ -7,10 +7,9 @@ from lib.command import call_cmd
 from vps import XenVPS
 import string
 
-def os_init (vps, vps_mountpoint, to_init_passwd=True):
+def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
     assert isinstance (vps, XenVPS)
     
-    os_type = vps.os_type
     if os_type.find ('gentoo') == 0:
         gentoo_init (vps, vps_mountpoint)
     elif re.match (r'^(redhat|rhel|centos).*', os_type):

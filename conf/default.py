@@ -36,6 +36,7 @@ def prepare(o):
     o.RUN_DIR = "/var/run/vps_mgr"
     o.OS_IMAGE_DIR = "/vps/images"
     o.VPS_TRASH_DIR = "/vps/trash"
+    o.VPS_METADATA_DIR = "/vps/metadata"
     o.VPS_IMAGE_DIR = "/vps"
     o.VPS_SWAP_DIR = "/swp"
     o.USE_LVM=True

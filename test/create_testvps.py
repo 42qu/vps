@@ -98,6 +98,7 @@ class TestVPSCreate (unittest.TestCase):
         try:
             #vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
             vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1", root_pw="fdfdfd")
+            vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
             #vps.setup (os_id=10002, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=2, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
             #vps.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
@@ -136,13 +137,14 @@ class TestVPSCreate (unittest.TestCase):
             raise e
         self.assert_ (not vps.is_running ())
         self.assert_ (vps.root_store.trash_exists ())
+        self.assert_ (vps.data_disks['xvdc1'].trash_exists ())
         self.assert_ (not vps.root_store.exists ())
         try:
             print "reopen vps0"
             vpsops.reopen_vps (vps)
             status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
             if status == 0:
-                if vps.swp_g > 0:
+                if vps.swap_store.size_g > 0:
                     swap_size = int (out.split ()[1])
                     if swap_size == 0:
                         raise Exception ("it seems swap has not properly configured, please check") 
@@ -153,6 +155,7 @@ class TestVPSCreate (unittest.TestCase):
             raise e
         self.assert_ (vps.is_running ())
         self.assert_ (vps.root_store.exists ())
+        self.assert_ (vps.data_disks['xvdc1'].exists ())
         try:
             print "delete vps0"
             vpsops.delete_vps (vps)
@@ -162,9 +165,13 @@ class TestVPSCreate (unittest.TestCase):
         self.assert_ (not vps.root_store.exists ())
         self.assert_ (not os.path.exists (vps.config_path))
         self.assert_ (not os.path.exists (vps.auto_config_path))
+        self.assert_ (not vps.data_disks['xvdc1'].exists ())
         try:
             print "reopen vps0 == create vps0"
             vpsops.reopen_vps (vps)
+            self.assert_ (vps.is_running ())
+            self.assert_ (vps.root_store.exists ())
+            self.assert_ (vps.data_disks['xvdc1'].exists ())
             print "close vps0"
             vpsops.close_vps (vps)
             print "delete vps0"
@@ -248,9 +255,8 @@ def main():
     runner = unittest.TextTestRunner ()
 #    runner.run (TestVPSCreate ("test_find_image"))
 #    runner.run (TestVPSCreate ("test_mem_too_big"))
-#    runner.run (TestVPSCreate ("test_vps0"))
+    runner.run (TestVPSCreate ("test_vps0"))
 #    runner.run (TestVPSCreate ("test_create_vps0"))
-    runner.run (TestVPSCreate ("test_create_vps1"))
 #    runner.run (TestVPSCreate ("test_closevps0"))
 #    runner.run (TestVPSCreate ("test_reopen0"))
 #    runner.run (TestVPSCreate ("test_reboot00"))

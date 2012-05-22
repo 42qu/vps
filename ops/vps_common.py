@@ -116,6 +116,8 @@ def format_fs (fs_type, target):
         mkfs_cmd = "mkfs.reiserfs -f"
     elif fs_type in ['swap']:
         mkfs_cmd = "mkswap"
+    elif fs_type == 'raw':
+        pass
     else:
         raise Exception ("not supported fs_type %s" % (fs_type))
     call_cmd ("%s %s" % (mkfs_cmd, target))

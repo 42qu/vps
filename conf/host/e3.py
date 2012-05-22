@@ -10,6 +10,7 @@ def prepare(o):
     o.RUN_DIR = os.path.join (base_dir, "run")
     o.USE_LVM = True
     o.OS_IMAGE_DIR = "/data/vps/images/"
+    o.VPS_METADATA_DIR = "/data/vps/metadata"
 #    o.VPS_IMAGE_DIR = "/data/vps"
 #    o.VPS_SWAP_DIR = "/data/swp"
     o.VPS_LVM_VGNAME="main"

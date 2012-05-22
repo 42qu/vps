@@ -61,7 +61,7 @@ class VPSMgr (object):
                 vps_id = int(om.group (1))
                 if vps_id <= 0:
                     continue
-                # direction of vps bridged network interface needs to be reverse
+                # direction of vps bridged network interface needs to be reversed
                 netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
@@ -159,11 +159,11 @@ class VPSMgr (object):
             )
 
     def setup_vps (self, xenvps, vps):
-        xenvps.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, 
+        xenvps.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, root_pw=vps.password, 
                 ip=int2ip (vps.ipv4), 
                 netmask=int2ip (vps.ipv4_netmask), 
                 gateway=int2ip (vps.ipv4_gateway),
-                root_pw=vps.password)
+                )
 
 
     def vps_open (self, vps, vps_image=None, is_new=True): 
@@ -192,6 +192,7 @@ class VPSMgr (object):
         self.done_task (Cmd.OPEN, vps.id, True)
         return True
 
+
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
         self.logger.info ("to reboot vps %s" % (vps.id))
@@ -201,10 +202,25 @@ class VPSMgr (object):
             vpsops.reboot_vps (xv)
         except Exception, e:
             self.logger.exception (e)
-            self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e))) 
+            self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.REBOOT, vps.id, True)
         return True
+
+    def modify_vif_rate (self, vps):
+        xv = XenVPS (vps.id)
+        vpsops = VPSOps (self.logger)
+        self.logger.info ("to modify vif rate for vps %s" % (vps.id))
+        try:
+            self.setup_vps (xv, vps)
+            vpsops.create_xen_config ()
+        except Exception, e:
+            self.logger.exception (e)
+            self.done_task (Cmd.BANDWIDTH, vps.id, False, "exception %s" % (str(e)))
+            return
+        self.done_task (Cmd.BANDWIDTH, vps.id, True)
+        return True
+
 
     def query_vps (self, vps_id):
         trans, client = self.get_client ()

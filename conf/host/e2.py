@@ -9,6 +9,7 @@ def prepare(o):
     o.log_dir = os.path.join (base_dir, "log") # for test
 
     o.RUN_DIR = os.path.join (base_dir, "run")
+    o.VPS_METADATA_DIR = "/vps/metadata"
     o.OS_IMAGE_DIR = "/vps/images/"
     o.VPS_IMAGE_DIR = "/vps"
     o.VPS_SWAP_DIR = "/swp/"
