@@ -56,13 +56,14 @@ def prepare(o):
         10002: {'os': 'Ubuntu', 'version': '11.10-amd64', 'image': 'ubuntu-11.10-amd64.tar.gz'},
         10001: {'os': 'Ubuntu', 'version': '10.04-amd64', 'image': 'ubuntu-10.04-amd64.tar.gz'},
         20001: {'os': 'Debian', 'version': '6.0-amd64', 'image': 'debian-6.0-amd64.tar.gz'},
-        30001: {'os':  'Arch', 'image': 'arch-2011.08.19-i386-fs-ext3.tar.gz'},
+        30001: {'os': 'Arch'},
+        #30001: {'os': 'Arch', 'image': 'arch-2011.08.19-i386-fs-ext3.tar.gz'},
         50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
-        #    60001: 'Fedora',
-        #   70001: 'OpenSUSE',
-        #    80001: 'Slackware',
-        #    90001: 'Scientific Linux',
-        #   100001: 'NetBSD',
+        60001: {'os': 'Fedora'},
+        70001: {'os': 'OpenSUSE'},
+        80001: {'os':'Slackware'},
+        90001: {'os':'Scientific'},
+        100001: {'os':'NetBSD'},
     }
 
 

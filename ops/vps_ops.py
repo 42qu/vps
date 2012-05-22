@@ -71,7 +71,7 @@ class VPSOps (object):
         if not vps_image:
             vps_image = _vps_image
         if not vps_image:
-            raise Exception ("no template image for os_type=%s, os_id=%s" % (os_type, vps.os_id))
+            raise Exception ("no template image configured for os_type=%s, os_id=%s" % (os_type, vps.os_id))
         if not os.path.exists (vps_image):
             raise Exception ("image %s not exists" % (vps_image))
 
