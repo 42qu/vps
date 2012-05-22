@@ -190,6 +190,7 @@ class VPSMgr (object):
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
             return
         self.done_task (Cmd.OPEN, vps.id, True)
+        return True
 
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
@@ -203,6 +204,7 @@ class VPSMgr (object):
             self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e))) 
             return
         self.done_task (Cmd.REBOOT, vps.id, True)
+        return True
 
     def query_vps (self, vps_id):
         trans, client = self.get_client ()
@@ -238,6 +240,7 @@ class VPSMgr (object):
             self.done_task (Cmd.CLOSE, vps.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.CLOSE, vps.id, True)
+        return True
 
             
     def loop (self):

@@ -135,6 +135,7 @@ DAEMONS=(syslog-ng network crond sshd)
         f.write (rcconf)
     finally:
         f.close ()
+
     
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
