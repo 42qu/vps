@@ -37,7 +37,7 @@ def plot_point(cid, rid, limit, base=None):
     if base is None:
         r = [i for i, in cursor.fetchall()]
     else:
-        r = [i/base for i, in cursor.fetchall()]
+        r = [float(i)/base for i, in cursor.fetchall()]
     return r
 
 def _plot( cid, rid, value, timestamp):
@@ -72,11 +72,6 @@ if __name__ == '__main__':
     pass
     
 
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1/8.0)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_RX_1MIN, 95, 1440, 1024*1024/8)
-    print plot_point(PLOT_CID_VPS_NETFLOW_TX_1MIN, 95, 1440, 1024*1024/8)
-    print map(int,plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440*2, 1024*1024/8))
-    print ''
     
 
     #print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)'
@@ -88,4 +83,8 @@ if __name__ == '__main__':
 
     print 'plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)'
     print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)
+    print ''
+    
+    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1/8.0)'
+    print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440*2, 1024*1024/8)])
     print ''
