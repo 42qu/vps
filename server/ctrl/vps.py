@@ -43,6 +43,7 @@ class Handler(object):
             else:
                 ipv4 = ipv4_netmask = ipv4_gateway = 0
 
+
             return Vps(
                 id=vps.id,
 
@@ -58,7 +59,9 @@ class Handler(object):
                 cpu     = vps.cpu,
                 host_id = vps.host_id, 
                 state   = vps.state,
-                ipv4_inter = vps.ip_inter
+                ipv4_inter = vps.ip_inter,
+                bandwidth = vps.bandwidth,
+                qos = vps.qos
             )
         except Exception, e:
             logging.exception (e)
