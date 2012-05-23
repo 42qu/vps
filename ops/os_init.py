@@ -22,7 +22,35 @@ def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
         raise NotImplementedError ()
     if to_init_passwd:
         set_root_passwd (vps, vps_mountpoint)
+    gen_fstab (vps, vps_mountpoint)
 
+
+def gen_fstab (vps, vps_mountpoint):
+
+    fstab_t = string.Template ("""
+/dev/$root_xen_dev		 /                      $root_fs_type    defaults,noatime        1 1
+tmpfs                   /dev/shm                tmpfs   defaults        0 0
+devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
+sysfs                   /sys                    sysfs   defaults        0 0
+proc                    /proc                   proc    defaults        0 0
+""")
+    fstab = fstab_t.substitute (root_xen_dev=vps.root_store.xen_dev, root_fs_type=vps.root_store.fs_type)
+    if vps.swap_store.size_g > 0:
+        fstab += "/dev/%s   none    swap    sw  0 0\n"  % (vps.swap_store.xen_dev)
+    keys = vps.data_disks.keys ()
+    keys.remove (vps.root_store.xen_dev)
+    keys.sort ()
+    for k in keys:
+        disk = vps.data_disks[k]
+        if disk.mount_point and disk.mount_point not in ['none', '/']:
+            fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev, disk.mount_point, disk.fs_type) 
+            mount_dir = os.path.join (vps_mountpoint, disk.mount_point.strip ("/"))
+            os.makedirs (mount_dir, 0755)
+    f = open (os.path.join (vps_mountpoint, "etc/fstab"), 'w')
+    try:
+        f.write (fstab)
+    finally:
+        f.close ()
 
 def set_root_passwd (vps, vps_mountpoint):
     sh_script = """

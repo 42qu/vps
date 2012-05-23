@@ -11,11 +11,12 @@ class VPSStoreBase (object):
     xen_path = None
     fs_type = None
     
-    def __init__ (self, xen_dev, xen_path, size_g, fs_type):
+    def __init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g):
         self.size_g = size_g
         self.fs_type = fs_type
         self.xen_dev = xen_dev
         self.xen_path = xen_path
+        self.mount_point = mount_point
 
 
     def create (self, fs_type=None):
@@ -43,11 +44,11 @@ class VPSStoreImage (VPSStoreBase):
     file_path = None
     trash_path = None
 
-    def __init__ (self, xen_dev, img_dir, trash_dir, img_name, fs_type, size_g):
+    def __init__ (self, xen_dev, img_dir, trash_dir, img_name, fs_type=None, mount_point=None, size_g=None):
         self.file_path = os.path.join (img_dir, img_name)
         self.trash_path = os.path.join (trash_dir, img_name)
         xen_path = "file:" + self.file_path
-        VPSStoreBase.__init__ (self, xen_dev, xen_path, size_g, fs_type)
+        VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
 
     def __str__ (self):
         return self.file_path
@@ -99,15 +100,14 @@ class VPSStoreLV (VPSStoreBase):
     lv_name = None
     vg_name = None
 
-    def __init__ (self, xen_dev, vg_name, lv_name, fs_type=None, size_g=None):
+    def __init__ (self, xen_dev, vg_name, lv_name, fs_type=None, mount_point=None, size_g=None):
         self.lv_name = lv_name
         self.vg_name = vg_name
-        self.size_g = size_g
         self.fs_type = fs_type
         self.dev = "/dev/%s/%s" % (self.vg_name, self.lv_name)
         self.trash_dev = "/dev/%s/trash_%s" % (self.vg_name, self.lv_name)
         xen_path = "phy:" + self.dev
-        VPSStoreBase.__init__ (self, xen_dev, xen_path, size_g, fs_type)
+        VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
 
     def __str__ (self):
         return self.dev

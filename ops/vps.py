@@ -46,11 +46,11 @@ class XenVPS (object):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name)
-            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap')
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/')
+            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none')
         else:
-            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name)
-            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 'swap')
+            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name, None, '/')
+            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 'swap', 'none')
 
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
@@ -92,13 +92,14 @@ class XenVPS (object):
         assert disk_id > 0
         assert size_g > 0
         xen_dev = "xvdc%d" % (disk_id)
+        mount_point = '/mnt/data%d' % (disk_id)
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
             lv_name = "%s_data%s" % (self.name, disk_id)
-            self.data_disks[xen_dev] = VPSStoreLV (xen_dev, conf.VPS_LVM_VGNAME, lv_name, fs_type, size_g)
+            self.data_disks[xen_dev] = VPSStoreLV (xen_dev, conf.VPS_LVM_VGNAME, lv_name, fs_type, mount_point, size_g)
         else:
             filename = "%s_data%s.img" % (self.name, disk_id)
-            self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, size_g)
+            self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
 
     def add_netinf (self, name, ip, netmask, bridge, mac):
         mac = mac or vps_common.gen_mac ()
@@ -151,10 +152,15 @@ on_crash = "restart"
         disk_t = Template (""" "$path,$dev,$mod" """)
         disks = []
         vifs = []
-        for data_disk in self.data_disks.values ():
-            disks.append ( disk_t.substitute (path=data_disk.xen_path, dev=data_disk.xen_dev, mod="w") )
+        disk_keys = self.data_disks.keys ()
+        disk_keys.sort ()
+        disks.append (disk_t.substitute (path=self.root_store.xen_path, dev=self.root_store.xen_dev, mod="w") )
         if self.swap_store.size_g > 0:
             disks.append ( disk_t.substitute (path=self.swap_store.xen_path, dev=self.swap_store.xen_dev, mod="w") )
+        for k in disk_keys:
+            data_disk = self.data_disks[k]
+            if k != self.root_store.xen_dev:
+                disks.append ( disk_t.substitute (path=data_disk.xen_path, dev=data_disk.xen_dev, mod="w") )
 
         for vif in self.vifs.values ():
             vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=vif.ip, bridge=vif.bridge) )
