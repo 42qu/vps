@@ -34,11 +34,11 @@ def prepare(o):
     # for log.py
 
     o.RUN_DIR = "/var/run/vps_mgr"
-    o.OS_IMAGE_DIR = "/vps/images"
-    o.VPS_TRASH_DIR = "/vps/trash"
-    o.VPS_METADATA_DIR = "/vps/metadata"
-    o.VPS_IMAGE_DIR = "/vps"
-    o.VPS_SWAP_DIR = "/swp"
+    o.OS_IMAGE_DIR = "/data/vps/images"
+    o.VPS_METADATA_DIR = "/data/vps/metadata" 
+    o.VPS_TRASH_DIR = "/data/vps/trash" # no needed when USE_LVM=True
+    o.VPS_IMAGE_DIR = "/data/vps" # no needed when USE_LVM=True
+    o.VPS_SWAP_DIR = "/data/swp" # no needed when USE_LVM=True
     o.USE_LVM=True
     o.VPS_LVM_VGNAME="main"
 
