@@ -7,9 +7,9 @@ import re
 import time
 
 import vps_common
+import os_image
 from vps import XenVPS
 import conf
-assert conf.DEFAULT_FS_TYPE
 from os_init import os_init
 
 class VPSOps (object):
@@ -24,7 +24,7 @@ class VPSOps (object):
         else:
             self.logger.info (message)
 
-    def _create_xen_config (self, vps):
+    def create_xen_config (self, vps):
         """ will override config """
         xen_config = vps.gen_xenpv_config ()
         f = open (vps.config_path, 'w')
@@ -50,7 +50,7 @@ class VPSOps (object):
             status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
             self.loginfo (vps, "ssh login ok")
             if status == 0:
-                if vps.swp_g > 0:
+                if vps.swap_store.size_g > 0:
                     swap_size = int (out.split ()[1])
                     if swap_size == 0:
                         raise Exception ("it seems swap has not properly configured, please check") 
@@ -67,37 +67,43 @@ class VPSOps (object):
         assert isinstance (vps, XenVPS)
         assert vps.has_all_attr
         
-        if vps_image:
-            vps.template_image = vps_image
+        _vps_image, os_type, os_version = os_image.find_os_image (vps.os_id)
+        if not vps_image:
+            vps_image = _vps_image
+        if not vps_image:
+            raise Exception ("no template image configured for os_type=%s, os_id=%s" % (os_type, vps.os_id))
+        if not os.path.exists (vps_image):
+            raise Exception ("image %s not exists" % (vps_image))
+
         vps.check_resource_avail ()
 
         #fs_type is tied to the image
-        fs_type = vps_common.get_fs_from_tarball_name (vps.template_image)
+        fs_type = vps_common.get_fs_from_tarball_name (vps_image)
         if not fs_type:
             fs_type = conf.DEFAULT_FS_TYPE
-        
-        self.loginfo (vps, "begin to create image")
-        vps.root_store.create (vps.disk_g, fs_type)
-        self.loginfo (vps, "%s created" % (str(vps.root_store)))
-        
-        if vps.swp_g > 0:
-            vps.swap_store.create (vps.swp_g, 'swap')
-            self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
 
-        self._create_xen_config (vps)
+        self.loginfo (vps, "begin to create image")
+        if vps.swap_store.size_g > 0:
+            vps.swap_store.create ()
+        vps.root_store.fs_type = fs_type
+        for disk in vps.data_disks.values ():
+            disk.create ()
+            self.loginfo (vps, "%s created" % (str(disk)))
+
+        self.create_xen_config (vps)
 
         vps_mountpoint = vps.root_store.mount_tmp ()
         self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
     
         try:
-            if re.match (r'.*\.img$', vps.template_image):
-                vps_common.sync_img (vps_mountpoint, vps.template_image)
+            if re.match (r'.*\.img$', vps_image):
+                vps_common.sync_img (vps_mountpoint, vps_image)
             else:
-                vps_common.unpack_tarball (vps_mountpoint, vps.template_image)
+                vps_common.unpack_tarball (vps_mountpoint, vps_image)
             self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
             
             self.loginfo (vps, "begin to init os")
-            os_init (vps, vps_mountpoint, to_init_passwd=is_new)
+            os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=is_new)
             self.loginfo (vps, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -111,9 +117,10 @@ class VPSOps (object):
         else:
             vps.destroy ()
             self.loginfo (vps, "vps cannot shutdown, destroyed it, going to delete data")
-        if vps.root_store.exists ():
-            vps.root_store.dump_trash ()
-            self.loginfo (vps, "%s moved to trash" % (str(vps.root_store)))
+        for disk in vps.data_disks.values ():
+            if disk.exists ():
+                disk.dump_trash ()
+                self.loginfo (vps, "%s moved to trash" % (str(disk)))
         if vps.swap_store.exists ():
             vps.swap_store.delete ()
             self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
@@ -133,22 +140,24 @@ class VPSOps (object):
             self.delete_vps (vps)
             return self.create_vps (vps)
         else:
-            vps.check_resource_avail (ignore_trash=True) 
+            vps.check_resource_avail (ignore_trash=True)
             # TODO if resource not available on this host, we must allow moving the vps elsewhere
-            if vps.root_store.trash_exists ():
-                vps.root_store.restore_from_trash ()
-                self.loginfo (vps, "%s restored from trash" % (str (vps.root_store))) 
-            else:
-                assert vps.root_store.exists ()
+            for disk in vps.data_disks.values ():
+                if disk.trash_exists ():
+                    disk.restore_from_trash ()
+                    self.loginfo (vps, "%s restored from trash" % (str(disk)))
+                else:
+                    if not disk.exists ():
+                        Exception ("%s missing" % (str(disk)))
             if vps.swap_store.exists ():
                 pass
             elif vps.swap_store.trash_exists ():
                 vps.swap_store.restore_from_trash () 
                 self.loginfo (vps, "%s restored from trash" % (str (vps.swap_store)))
-            elif vps.swp_g > 0:
-                vps.swap_store.create (vps.swp_g, 'swap')
+            elif vps.swap_store.size_g > 0:
+                vps.swap_store.create ()
                 self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
-            self._create_xen_config (vps)
+            self.create_xen_config (vps)
             self._boot_and_test (vps, is_new=False)
             self.loginfo (vps, "done vps creation")
 
@@ -161,12 +170,11 @@ class VPSOps (object):
         else:
             vps.destroy ()
             self.loginfo (vps, "vps cannot shutdown, destroyed it, going to delete data")
-        if vps.root_store.exists ():
-            vps.root_store.delete ()
-            self.loginfo (vps, "deleted %s" % (str(vps.root_store)))
-        if vps.swap_store.exists ():
-            vps.swap_store.delete ()
-            self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
+        for disk in vps.data_disks.values ():
+            disk.delete ()
+            self.loginfo (vps, "deleted %s" % (str(disk)))
+        vps.swap_store.delete ()
+        self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
         if os.path.exists (vps.config_path):
             os.remove (vps.config_path)
             self.loginfo (vps, "deleted %s" % (vps.config_path))

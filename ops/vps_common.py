@@ -116,6 +116,8 @@ def format_fs (fs_type, target):
         mkfs_cmd = "mkfs.reiserfs -f"
     elif fs_type in ['swap']:
         mkfs_cmd = "mkswap"
+    elif fs_type == 'raw':
+        pass
     else:
         raise Exception ("not supported fs_type %s" % (fs_type))
     call_cmd ("%s %s" % (mkfs_cmd, target))
@@ -145,7 +147,9 @@ def unpack_tarball (vpsmountpoint, tarball_path):
 
 
 def lv_create (vg_name, lv_name, size_g):
-    call_cmd ("lvcreate --name %s --size %dG /dev/%s" % (lv_name, size_g, vg_name))
+    assert size_g > 0
+    size_m = int (size_g * 1024)
+    call_cmd ("lvcreate --name %s --size %dM /dev/%s" % (lv_name, size_m, vg_name))
     lv_dev = "/dev/%s/%s" % (vg_name, lv_name)
     if not os.path.exists (lv_dev):
         raise Exception ("lv %s not exists after creating" % (lv_dev))

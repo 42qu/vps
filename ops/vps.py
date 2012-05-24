@@ -6,14 +6,15 @@ import os
 import _env
 from string import Template
 import vps_common
-import os_image
 from ops.vps_store import VPSStoreImage, VPSStoreLV
+from ops.vps_netinf import VPSNetInf
 
 
 import conf
 assert conf.XEN_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
+assert conf.DEFAULT_FS_TYPE
 import xen
 import time
 
@@ -33,53 +34,77 @@ class XenVPS (object):
     vcpu = None
     mem_m = None
     disk_g = None
-    swp_g = None
-    mac = None
-    ip = None
-    netmask = None
+    ip = None # main ip
+    netmask = None # main ip netmask
     gateway = None
     template_image = None
-    os_type = None
-    os_version = None
     root_pw = None
+    data_disks = None
+    os_id = None
 
     def __init__ (self, _id):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_root" % self.name)
-            self.swap_store = VPSStoreLV (conf.VPS_LVM_VGNAME, "%s_swap" % self.name)
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/')
+            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none')
         else:
-            self.root_store = VPSStoreImage (conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name)
-            self.swap_store = VPSStoreImage (conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name)
+            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name, None, '/')
+            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 'swap', 'none')
 
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
+        self.data_disks = {}
+        self.data_disks[self.root_store.xen_dev] = self.root_store
+        self.vifs = {}
 
-    def setup (self, os_id, vcpu, mem_m, disk_g, ip, netmask, gateway, root_pw, mac=None, swp_g=None):
+    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw, gateway=None, ip=None, netmask=None, swp_g=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
-        assert ip and netmask is not None and gateway and isinstance (netmask, basestring)
         self.has_all_attr = True
+        self.os_id = os_id
         self.vcpu = vcpu
         self.mem_m = mem_m
-        self.disk_g = disk_g
         if swp_g:
-            self.swp_g = swp_g
+            swp_g = swp_g
         else:
             if self.mem_m >= 2000:
-                self.swp_g = 2
+                swp_g = 2
             else:
-                self.swp_g = 1
-        self.mac = mac or vps_common.gen_mac ()
-        self.ip = ip
-        self.netmask = netmask
-        self.gateway = gateway
+                swp_g = 1
+
+        self.root_store.size_g = disk_g
+        self.swap_store.size_g = swp_g
+        
         self.root_pw = root_pw
-        self.template_image, self.os_type, self.os_version = os_image.find_os_image (os_id)
+        self.gateway = gateway
+        if ip:
+            assert ip and netmask is not None and gateway and isinstance (netmask, basestring)
+            self.ip = ip
+            self.netmask = netmask
+            self.add_netinf (self.name, ip, netmask, bridge=self.xen_bridge, mac=None)
+        
+
+    def add_extra_storage (self, disk_id, size_g, fs_type=conf.DEFAULT_FS_TYPE):
+        assert disk_id > 0
+        assert size_g > 0
+        xen_dev = "xvdc%d" % (disk_id)
+        mount_point = '/mnt/data%d' % (disk_id)
+        if conf.USE_LVM:
+            assert conf.VPS_LVM_VGNAME
+            lv_name = "%s_data%s" % (self.name, disk_id)
+            self.data_disks[xen_dev] = VPSStoreLV (xen_dev, conf.VPS_LVM_VGNAME, lv_name, fs_type, mount_point, size_g)
+        else:
+            filename = "%s_data%s.img" % (self.name, disk_id)
+            self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
+
+    def add_netinf (self, name, ip, netmask, bridge, mac):
+        mac = mac or vps_common.gen_mac ()
+        self.vifs[name] = VPSNetInf (name=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+
 
     def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """
@@ -107,14 +132,14 @@ class XenVPS (object):
         assert self.has_all_attr
         # must called after setup ()
 
-        t = Template ("""
+        all_t = Template ("""
 bootloader = "/usr/bin/pygrub"
 name = "$name"
 vcpus = "$vcpu"
 maxmem = "$mem"
 memory = "$mem"
-vif = [ "vifname=$name,mac=$mac,ip=$ip,bridge=$bridge" ]
-disk = [ "$root_path,xvda1,w","$swap_path,xvda2,w" ]
+vif = [ $vifs ]
+disk = [ $disks ]
 root = "/dev/xvda1"
 extra = "fastboot independent_wallclock=1"
 on_shutdown = "destroy"
@@ -122,9 +147,27 @@ on_poweroff = "destroy"
 on_reboot = "restart"
 on_crash = "restart"
 """ )
-        xen_config = t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
-                root_path=self.root_store.xen_path, swap_path=self.swap_store.xen_path,
-                ip=self.ip, bridge=self.xen_bridge, mac=str(self.mac))
+
+        vif_t = Template ("""  "vifname=$ifname,mac=$mac,ip=$ip,bridge=$bridge"  """)
+        disk_t = Template (""" "$path,$dev,$mod" """)
+        disks = []
+        vifs = []
+        disk_keys = self.data_disks.keys ()
+        disk_keys.sort ()
+        disks.append (disk_t.substitute (path=self.root_store.xen_path, dev=self.root_store.xen_dev, mod="w") )
+        if self.swap_store.size_g > 0:
+            disks.append ( disk_t.substitute (path=self.swap_store.xen_path, dev=self.swap_store.xen_dev, mod="w") )
+        for k in disk_keys:
+            data_disk = self.data_disks[k]
+            if k != self.root_store.xen_dev:
+                disks.append ( disk_t.substitute (path=data_disk.xen_path, dev=data_disk.xen_dev, mod="w") )
+
+        for vif in self.vifs.values ():
+            vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=vif.ip, bridge=vif.bridge) )
+
+        xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
+                    disks=",".join (disks), vifs=",".join (vifs)
+                )
         return xen_config
        
     def is_running (self):
