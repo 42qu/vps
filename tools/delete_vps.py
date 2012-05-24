@@ -17,7 +17,7 @@ def delete_vps (vps_id, forced=False):
     try:
         vps = client.query_vps (vps_id)
     except Exception, e:
-        print "failed to query vps state:" + type(e) + str(e)
+        print "failed to query vps state:" + str(type(e)) + str(e)
         if not forced:
             return
     if not client.vps_is_valid (vps):
