@@ -17,8 +17,8 @@
 +                        ebtables -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
 +                        ebtables -A $dev -p ARP --arp-opcode 2 --arp-ip-src $oneip -j ACCEPT
 +                done
-+                
-+                ebtables -A $dev --log-prefix="arp-drop" --log-arp -j DROP
++                ebtables -A $dev -p IPv6 -j DROP  # drop ipv6 neight discovery packet, but no logging
++                ebtables -A $dev --log-prefix="arp-drop" --log-arp --log-ip --log-ip6 -j DROP
 +        fi
 +                
          ;;
