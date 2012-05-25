@@ -145,6 +145,10 @@ def unpack_tarball (vpsmountpoint, tarball_path):
     finally:
         os.chdir (pwd)
 
+def vg_free_space (vg_name):
+    out = call_cmd ("vgs --noheadings -o vg_free --units g --nosuffix /dev/%s" % (vg_name))
+    out = out.strip ()
+    return int (float (out))
 
 def lv_create (vg_name, lv_name, size_g):
     assert size_g > 0

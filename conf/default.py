@@ -42,7 +42,7 @@ def prepare(o):
     o.VPS_SWAP_DIR = "/data/swp" # no needed when USE_LVM=True
     o.USE_LVM=True
     o.VPS_LVM_VGNAME="main"
-
+    o.LVM_VG_MIN_SPACE = 100 # leave 100G in the VG for temporary needs
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
     o.NETFLOW_COLLECT_INV = 60  # in sec

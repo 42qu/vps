@@ -12,6 +12,8 @@ from zkit.ip import int2ip
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
+import ops.vps_common as vps_common
+from ops.xen import get_xen_inf
 import time
 import re
 import lib.daemon as daemon
@@ -234,6 +236,28 @@ class VPSMgr (object):
             return vps
         return None
 
+    def refresh_host_space (self):
+        if not conf.USE_LVM:
+            return
+        try:
+            extra = 0
+            if "LVM_VG_MIN_SPACE" in dir(conf) and conf.LVM_VG_MIN_SPACE:
+                extra = int(conf.LVM_VG_MIN_SPACE)
+            disk_remain = vps_common.vg_free_space (conf.VPS_LVM_VGNAME) # in g
+            disk_remain -= extra
+            if disk_remain < 0:
+                disk_remain = 0
+            xen_inf = get_xen_inf ()
+            mem_remain = xen_inf.mem_free () # in m
+            trans, client = self.get_client ()
+            trans.open ()
+            try:
+                client.host_refresh (self.host_id, disk_remain, mem_remain)
+            finally:
+                trans.close ()
+            self.logger.info ("send host remain disk:%dG, mem:%dM" % (disk_remain, mem_remain))
+        except Exception, e:
+            self.logger.exception (e)
 
     def _vps_delete (self, vps_id):
         try:
