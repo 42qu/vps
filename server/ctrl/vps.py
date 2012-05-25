@@ -4,6 +4,7 @@ from saas.ttypes import Cmd, Vps
 from server.model.vps import task_by_host_id, task_done
 from server.model.plot import plot 
 from model.vps_sell import VpsOne
+from model.vps_host import VpsHost
 from model.vps_netflow import netflow_save
 from model.sms import sms_send_mq 
 import logging
@@ -28,6 +29,16 @@ class Handler(object):
     def sms(self, number_list, txt):
         for i in number_list:
             sms_send_mq(i, txt)        
+
+    def host_refresh(self, host_id, hd_remain, ram_remain, hd_total, ram_total):
+        host = VpsHost.get(host_id)
+        if not host:
+            return
+        host.hd_remain = hd_remain
+        host.ram_remain = ram_remain
+        host.hd_count = hd_total
+        host.ram_count = ram_total
+        host.save()
 
     def vps(self, vps_id):
         try:
