@@ -30,14 +30,12 @@ class Handler(object):
         for i in number_list:
             sms_send_mq(i, txt)        
 
-    def host_refresh(self, host_id, hd_remain, ram_remain, hd_total, ram_total):
+    def host_refresh(self, host_id, hd_remain, ram_remain):
         host = VpsHost.get(host_id)
         if not host:
             return
         host.hd_remain = hd_remain
         host.ram_remain = ram_remain
-        host.hd_count = hd_total
-        host.ram_count = ram_total
         host.save()
 
     def vps(self, vps_id):

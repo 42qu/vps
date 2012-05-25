@@ -70,14 +70,12 @@ class Iface:
     """
     pass
 
-  def host_refresh(self, host_id, hd_remain, ram_remain, hd_total, ram_total):
+  def host_refresh(self, host_id, hd_remain, ram_remain):
     """
     Parameters:
      - host_id
      - hd_remain
      - ram_remain
-     - hd_total
-     - ram_total
     """
     pass
 
@@ -283,26 +281,22 @@ class Client(Iface):
       return result.success
     raise TApplicationException(TApplicationException.MISSING_RESULT, "sms failed: unknown result");
 
-  def host_refresh(self, host_id, hd_remain, ram_remain, hd_total, ram_total):
+  def host_refresh(self, host_id, hd_remain, ram_remain):
     """
     Parameters:
      - host_id
      - hd_remain
      - ram_remain
-     - hd_total
-     - ram_total
     """
-    self.send_host_refresh(host_id, hd_remain, ram_remain, hd_total, ram_total)
+    self.send_host_refresh(host_id, hd_remain, ram_remain)
     self.recv_host_refresh()
 
-  def send_host_refresh(self, host_id, hd_remain, ram_remain, hd_total, ram_total):
+  def send_host_refresh(self, host_id, hd_remain, ram_remain):
     self._oprot.writeMessageBegin('host_refresh', TMessageType.CALL, self._seqid)
     args = host_refresh_args()
     args.host_id = host_id
     args.hd_remain = hd_remain
     args.ram_remain = ram_remain
-    args.hd_total = hd_total
-    args.ram_total = ram_total
     args.write(self._oprot)
     self._oprot.writeMessageEnd()
     self._oprot.trans.flush()
@@ -418,7 +412,7 @@ class Processor(Iface, TProcessor):
     args.read(iprot)
     iprot.readMessageEnd()
     result = host_refresh_result()
-    self._handler.host_refresh(args.host_id, args.hd_remain, args.ram_remain, args.hd_total, args.ram_total)
+    self._handler.host_refresh(args.host_id, args.hd_remain, args.ram_remain)
     oprot.writeMessageBegin("host_refresh", TMessageType.REPLY, seqid)
     result.write(oprot)
     oprot.writeMessageEnd()
@@ -1234,8 +1228,6 @@ class host_refresh_args:
    - host_id
    - hd_remain
    - ram_remain
-   - hd_total
-   - ram_total
   """
 
   thrift_spec = (
@@ -1243,16 +1235,12 @@ class host_refresh_args:
     (1, TType.I64, 'host_id', None, None, ), # 1
     (2, TType.I16, 'hd_remain', None, None, ), # 2
     (3, TType.I64, 'ram_remain', None, None, ), # 3
-    (4, TType.I64, 'hd_total', None, None, ), # 4
-    (5, TType.I64, 'ram_total', None, None, ), # 5
   )
 
-  def __init__(self, host_id=None, hd_remain=None, ram_remain=None, hd_total=None, ram_total=None,):
+  def __init__(self, host_id=None, hd_remain=None, ram_remain=None,):
     self.host_id = host_id
     self.hd_remain = hd_remain
     self.ram_remain = ram_remain
-    self.hd_total = hd_total
-    self.ram_total = ram_total
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -1278,16 +1266,6 @@ class host_refresh_args:
           self.ram_remain = iprot.readI64();
         else:
           iprot.skip(ftype)
-      elif fid == 4:
-        if ftype == TType.I64:
-          self.hd_total = iprot.readI64();
-        else:
-          iprot.skip(ftype)
-      elif fid == 5:
-        if ftype == TType.I64:
-          self.ram_total = iprot.readI64();
-        else:
-          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -1309,14 +1287,6 @@ class host_refresh_args:
     if self.ram_remain is not None:
       oprot.writeFieldBegin('ram_remain', TType.I64, 3)
       oprot.writeI64(self.ram_remain)
-      oprot.writeFieldEnd()
-    if self.hd_total is not None:
-      oprot.writeFieldBegin('hd_total', TType.I64, 4)
-      oprot.writeI64(self.hd_total)
-      oprot.writeFieldEnd()
-    if self.ram_total is not None:
-      oprot.writeFieldBegin('ram_total', TType.I64, 5)
-      oprot.writeI64(self.ram_total)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()
