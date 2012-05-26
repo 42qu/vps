@@ -7,7 +7,7 @@ from config import MYSQL_PORT, MYSQL_HOST, MYSQL_MAIN, MYSQL_USER, MYSQL_PASSWD
 from _mysql_exceptions import ProgrammingError
 from time import time
 
-SQLSTORE = sqlstore.SqlStore(MYSQL_HOST , MYSQL_PORT, MYSQL_USER, MYSQL_PASSWD, db='zplot', charset='utf8')
+SQLSTORE = sqlstore.SqlStore(MYSQL_HOST , MYSQL_PORT, MYSQL_USER, MYSQL_PASSWD, db='zpage_plot', charset='utf8')
 
 PLOT_CID_VPS_NETFLOW_RX_1MIN ,\
 PLOT_CID_VPS_NETFLOW_TX_1MIN,\
@@ -53,7 +53,7 @@ def plot( cid, rid, value):
             cursor = SQLSTORE.cursor()
             cursor.execute(
 """
-CREATE TABLE  `zplot`.`%s` (
+CREATE TABLE  `zpage_plot`.`%s` (
 `id` int(10) unsigned NOT NULL auto_increment,
 `value` bigint unsigned NOT NULL,
 `time` bigint unsigned NOT NULL,
