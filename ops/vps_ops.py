@@ -5,11 +5,18 @@ import _env
 import os
 import re
 import time
-
+try:
+    import json
+except ImportError:
+    import simplejson as json
 import vps_common
 import os_image
 from vps import XenVPS
 import conf
+
+assert conf.DEFAULT_FS_TYPE
+assert conf.VPS_METADATA_DIR
+
 from os_init import os_init
 
 class VPSOps (object):
@@ -35,6 +42,35 @@ class VPSOps (object):
             f.close ()
         vps.create_autolink ()
         self.loginfo (vps, "created link to xen auto")
+
+    @staticmethod
+    def _meta_path (vps_id):
+        if not os.path.isdir (conf.VPS_METADATA_DIR):
+            raise Exception ("directory %s is not exists" % (conf.VPS_METADATA_DIR))
+        return os.path.join (conf.VPS_METADATA_DIR, "vps%d.json" % (vps_id))
+
+    def load_vps_meta (self, vps_id):
+        meta_path = self._meta_path (vps_id)
+        f = open (meta_path, "r")
+        data = None
+        try:
+            data = json.load (f)
+        finally:
+            f.close ()
+        xv = XenVPS.from_meta (data)
+        return xv
+
+    def save_vps_meta (self, xv):
+        data = xv.to_meta ()
+        if data is None:
+            raise Exception ("error in XenVPS.to_meta ()")
+        meta_path = self._meta_path (xv.vps_id)
+        f = open (meta_path, "w")
+        try:
+            json.dump (data, f, indent=2, sort_keys=True)
+        finally:
+            f.close ()
+        
     
     def _boot_and_test (self, vps, is_new=True):
         self.loginfo (vps, "booting")
@@ -160,7 +196,6 @@ class VPSOps (object):
             self.create_xen_config (vps)
             self._boot_and_test (vps, is_new=False)
             self.loginfo (vps, "done vps creation")
-
 
 
 
