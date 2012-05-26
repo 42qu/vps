@@ -40,6 +40,7 @@ class VPSMgr (object):
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
         self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.send_netflow)
+        self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
 
@@ -215,7 +216,7 @@ class VPSMgr (object):
         self.logger.info ("to modify vif rate for vps %s" % (vps.id))
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_xen_config ()
+            vpsops.create_xen_config (vps)
         except Exception, e:
             self.logger.exception (e)
             self.done_task (Cmd.BANDWIDTH, vps.id, False, "exception %s" % (str(e)))
