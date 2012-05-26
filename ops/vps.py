@@ -6,7 +6,7 @@ import os
 import _env
 from string import Template
 import vps_common
-from ops.vps_store import VPSStoreImage, VPSStoreLV
+from ops.vps_store import VPSStoreImage, VPSStoreLV, VPSStoreBase
 from ops.vps_netinf import VPSNetInf
 
 
@@ -43,32 +43,67 @@ class XenVPS (object):
     os_id = None
 
     def __init__ (self, _id):
+        self.vps_id = _id
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
-        if conf.USE_LVM:
-            assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/')
-            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none')
-        else:
-            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name, None, '/')
-            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 'swap', 'none')
-
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
         self.data_disks = {}
-        self.data_disks[self.root_store.xen_dev] = self.root_store
         self.vifs = {}
 
-    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw, gateway=None, ip=None, netmask=None, swp_g=None):
+    def to_meta (self):
+        data = {}
+        data['vps_id'] = self.vps_id
+        data['os_id'] = self.os_id
+        data['vcpu'] = self.vcpu
+        data['mem_m'] = self.mem_m
+        data['root_size_g'] = self.root_store.size_g
+        data['swap_size_g'] = self.swap_store.size_g
+        data['root_xen_dev'] = self.root_store.xen_dev
+        data['gateway'] = self.gateway
+        data['ip'] = self.ip
+        data['netmask'] = self.netmask
+        disks = []
+        for disk in self.data_disks.itervalues ():
+            if disk.xen_dev != self.root_store.xen_dev:
+                disk_data = disk.to_meta ()
+                assert disk_data
+                disks.append (disk_data)
+        data['data_disks'] = disks
+        vifs = []
+        for vif in self.vifs.itervalues ():
+            if vif.ip != self.ip:
+                vif_data = vif.to_meta ()
+                assert vif_data
+                vifs.append (vif_data)
+        data['vifs'] = vifs
+        return data
+
+    @classmethod
+    def from_meta (cls, data):
+        assert data
+        self = cls (data['vps_id'])
+        self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
+                data['gateway'], data['ip'], data['netmask'], data['swap_size_g'])
+        for _disk in data['data_disks']:
+            disk = VPSStoreBase.from_meta (_disk)
+            assert disk
+            self.data_disks[disk.xen_dev] = disk
+        for _vif in data['vifs']:
+            vif = VPSNetInf.from_meta (_vif)
+            self.vifs[vif.ifname] = vif
+        return self
+
+    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, gateway=None, ip=None, netmask=None, swp_g=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
         self.has_all_attr = True
         self.os_id = os_id
         self.vcpu = vcpu
         self.mem_m = mem_m
-        if swp_g:
+        if swp_g is not None:
             swp_g = swp_g
         else:
             if self.mem_m >= 2000:
@@ -76,9 +111,18 @@ class XenVPS (object):
             else:
                 swp_g = 1
 
-        self.root_store.size_g = disk_g
-        self.swap_store.size_g = swp_g
-        
+        if conf.USE_LVM:
+            assert conf.VPS_LVM_VGNAME
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', disk_g)
+            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none', swp_g)
+        else:
+            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
+                    None, '/', disk_g)
+            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 
+                    'swap', 'none', swp_g)
+
+        self.data_disks[self.root_store.xen_dev] = self.root_store
+
         self.root_pw = root_pw
         self.gateway = gateway
         if ip:
@@ -103,7 +147,7 @@ class XenVPS (object):
 
     def add_netinf (self, name, ip, netmask, bridge, mac):
         mac = mac or vps_common.gen_mac ()
-        self.vifs[name] = VPSNetInf (name=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+        self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
 
 
     def check_resource_avail (self, ignore_trash=False):

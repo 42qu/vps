@@ -14,6 +14,7 @@ from ops.vps_ops import VPSOps
 from lib.log import Log
 import ops.vps_common as vps_common
 from ops.xen import get_xen_inf
+import saas.const.vps as vps_const
 import time
 import re
 import lib.daemon as daemon
@@ -40,6 +41,7 @@ class VPSMgr (object):
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
         self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.send_netflow)
+        #self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
 
@@ -156,8 +158,14 @@ class VPSMgr (object):
         ip_inter = vps.ipv4_inter is not None  and int2ip (vps.ipv4_inter) or None
         netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
         gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
-        return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s" % (vps.host_id, vps.id, vps.state, vps.os, vps.cpu, vps.ram, vps.hd, \
-            ip, netmask, gateway, ip_inter
+        if vps.state is not None:
+            state = "%s(%s)" % (vps.state, vps_const.VPS_STATE2CN[vps.state])
+        else:
+            state = None
+        return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
+                vps.host_id, vps.id, state, 
+                vps.os, vps.cpu, vps.ram, vps.hd, 
+                ip, netmask, gateway, ip_inter, vps.bandwidth,
             )
 
     def setup_vps (self, xenvps, vps):
@@ -215,7 +223,7 @@ class VPSMgr (object):
         self.logger.info ("to modify vif rate for vps %s" % (vps.id))
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_xen_config ()
+            vpsops.create_xen_config (vps)
         except Exception, e:
             self.logger.exception (e)
             self.done_task (Cmd.BANDWIDTH, vps.id, False, "exception %s" % (str(e)))
