@@ -24,7 +24,7 @@ def delete_vps (vps_id, forced=False):
         print "not backend data for vps %s" % (vps_id)
         if not forced:
             return
-    if vps and vps.state != vps_const.VPS_STATE_RM: 
+    if vps and vps.host_id == conf.HOST_ID, vps.state != vps_const.VPS_STATE_RM: 
         print "vps %s state=%s, is not to be deleted" % (vps_id, vps_const.VPS_STATE2CN[vps.state])
         if not forced:
             return

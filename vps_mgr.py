@@ -191,10 +191,20 @@ class VPSMgr (object):
         vpsops = VPSOps (self.logger)
         try:
             self.setup_vps (xv, vps)
-            if vps.state == vps_const.VPS_STATE_PAY:
+            if xv.is_running ():
+                msg = "vps %s is running" % (vps.id)
+                self.logger_err.error (msg)
+                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                return
+            if vps.state in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
                 vpsops.create_vps (xv, vps_image, is_new)
             elif vps.state == vps_const.VPS_STATE_CLOSE:
                 vpsops.reopen_vps (vps.id, xv)
+            else:
+                msg = "vps%s state is %s(%s)" % (str(vps.id), vps.state, vps_const.VPS_STATE2CN[vps.state])
+                self.logger_err.error (msg)
+                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                return
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
