@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import _env
 
 import os
 import re
@@ -9,9 +8,11 @@ try:
     import json
 except ImportError:
     import simplejson as json
-import vps_common
-import os_image
-from vps import XenVPS
+import ops.vps_common as vps_common
+import ops.os_image as os_image
+from ops.vps import XenVPS
+
+import ops._env
 import conf
 
 assert conf.DEFAULT_FS_TYPE
@@ -269,11 +270,12 @@ class VPSOps (object):
         if os.path.exists (meta_path):
             os.remove (meta_path)
             self.loginfo (vps, "removed %s" % (meta_path))
-            self.save_vps_meta (vps, is_trash=False, is_deleted=True)
         if os.path.exists (trash_meta_path):
             os.remove (trash_meta_path)
             self.loginfo (vps, "removed %s" % (trash_meta_path))
             self.save_vps_meta (vps, is_trash=True, is_deleted=True)
+        else:
+            self.save_vps_meta (vps, is_trash=False, is_deleted=True)
         self.loginfo (vps, "deleted")
 
     def reboot_vps (self, vps):
