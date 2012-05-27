@@ -280,7 +280,10 @@ class VPSMgr (object):
     def _vps_delete (self, vps_id, vps=None):
         try:
             vpsops = VPSOps (self.logger)
-            vpsops.delete_vps (vps_id, vps)
+            xv = XenVPS (vps.id)
+            if vps:
+                self.setup_vps (xv, vps)
+            vpsops.delete_vps (vps_id, xv)
         except Exception, e:
             self.logger_err.exception (e)
             raise e
