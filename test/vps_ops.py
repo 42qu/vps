@@ -63,57 +63,48 @@ class TestVPSOPS (unittest.TestCase):
         print "create vps00"
         logger = Log ("test", config=conf)
         vpsops = VPSOps (logger)
-        vps = XenVPS (0)
+        xv = XenVPS (0)
         try:
-            #vps.setup (os_id=50001, vcpu=1, mem_m=512, disk_g=7, ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1", root_pw="fdfdfd")
-            vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1", root_pw="fdfdfd")
-            vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
-            #vps.setup (os_id=10002, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=2, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=10000, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=10003, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            #vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
-            print vps.gen_xenpv_config ()
-            vpsops.create_vps (vps)
+            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1", root_pw="fdfdfd")
+            xv.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
+            print xv.gen_xenpv_config ()
+            vpsops.create_vps (xv)
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (vps.is_running ())
-        print "vps00 started"
+        self.assert_ (xv.is_running ())
         try:
-            print "test check resources again, expect ip not available"
-            vps.check_resource_avail ()
+            logger.debug ("test check resources again, expect ip not available")
+            xv.check_resource_avail ()
         except Exception, e:
-            print "expected exception caught: %s" % (e)
-        print  "now test shutting it down"
-        vps.stop ()
-        self.assert_ (not vps.is_running ())
+            logger.debug ("expected exception caught: %s" % (e))
+        logger.debug ("now test shutting it down")
+        xv.stop ()
+        self.assert_ (not xv.is_running ())
 
         try:
-            print "test reopen without moving to trash"
-            vpsops.reopen_vps (vps)
+            logger.debug ("test reopen without moving to trash")
+            vpsops.reopen_vps (xv.vps_id, xv)
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (vps.is_running ())
+        self.assert_ (xv.is_running ())
         try:
-            print "close vps0"
-            vpsops.close_vps (vps)
+            logger.debug ("close vps0")
+            vpsops.close_vps (xv.vps_id, xv)
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (not vps.is_running ())
-        self.assert_ (vps.root_store.trash_exists ())
-        self.assert_ (vps.data_disks['xvdc1'].trash_exists ())
-        self.assert_ (not vps.root_store.exists ())
+        self.assert_ (not xv.is_running ())
+        self.assert_ (xv.root_store.trash_exists ())
+        self.assert_ (xv.data_disks['xvdc1'].trash_exists ())
+        self.assert_ (not xv.root_store.exists ())
         try:
-            print "reopen vps0"
-            vpsops.reopen_vps (vps)
-            status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
+            logger.debug ("reopen vps0")
+            vpsops.reopen_vps (xv.vps_id, xv)
+            status, out, err = vps_common.call_cmd_via_ssh (xv.ip, user="root", password=xv.root_pw, cmd="free|grep Swap")
             if status == 0:
-                if vps.swap_store.size_g > 0:
+                if xv.swap_store.size_g > 0:
                     swap_size = int (out.split ()[1])
                     if swap_size == 0:
                         raise Exception ("it seems swap has not properly configured, please check") 
@@ -122,42 +113,26 @@ class TestVPSOPS (unittest.TestCase):
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (vps.is_running ())
-        self.assert_ (vps.root_store.exists ())
-        self.assert_ (vps.data_disks['xvdc1'].exists ())
+        self.assert_ (xv.is_running ())
+        self.assert_ (xv.root_store.exists ())
+        self.assert_ (xv.data_disks['xvdc1'].exists ())
         try:
-            print "delete vps0"
-            vpsops.delete_vps (vps)
+            logger.debug ("delete vps0")
+            vpsops.delete_vps (xv.vps_id, xv)
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (not vps.root_store.exists ())
-        self.assert_ (not os.path.exists (vps.config_path))
-        self.assert_ (not os.path.exists (vps.auto_config_path))
-        self.assert_ (not vps.data_disks['xvdc1'].exists ())
-        try:
-            print "reopen vps0 == create vps0"
-            vpsops.reopen_vps (vps)
-            self.assert_ (vps.is_running ())
-            self.assert_ (vps.root_store.exists ())
-            self.assert_ (vps.data_disks['xvdc1'].exists ())
-            print "close vps0"
-            vpsops.close_vps (vps)
-            print "delete vps0"
-            vpsops.delete_vps (vps)
-        except Exception, e:
-            logger.exception (e)
-            raise e
-        self.assert_ (not vps.root_store.exists ())
-        self.assert_ (not os.path.exists (vps.config_path))
-        self.assert_ (not os.path.exists (vps.auto_config_path))
+        self.assert_ (not xv.root_store.exists ())
+        self.assert_ (not os.path.exists (xv.config_path))
+        self.assert_ (not os.path.exists (xv.auto_config_path))
+        self.assert_ (not xv.data_disks['xvdc1'].exists ())
 
 
 def main():
     runner = unittest.TextTestRunner ()
     runner.run (TestVPSOPS ("test_meta"))
-#    runner.run (TestVPSOPS ("test_mem_too_big"))
-#    runner.run (TestVPSOPS ("test_vps0"))
+    runner.run (TestVPSOPS ("test_mem_too_big"))
+    runner.run (TestVPSOPS ("test_vps0"))
 
 
 if "__main__" == __name__:

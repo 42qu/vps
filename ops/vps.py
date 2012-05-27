@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 
-import re
 import os
+import time
 
-import _env
 from string import Template
-import vps_common
 from ops.vps_store import VPSStoreImage, VPSStoreLV, VPSStoreBase
 from ops.vps_netinf import VPSNetInf
-
-
+import ops.vps_common as vps_common
+import ops.xen as xen
+import lib.diff as diff
+import ops._env
 import conf
 assert conf.XEN_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
-import xen
-import time
 
 
 
@@ -51,6 +49,7 @@ class XenVPS (object):
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
         self.data_disks = {}
+        self.trash_disks = {}
         self.vifs = {}
 
     def to_meta (self):
@@ -74,10 +73,9 @@ class XenVPS (object):
         data['data_disks'] = disks
         vifs = []
         for vif in self.vifs.itervalues ():
-            if vif.ip != self.ip:
-                vif_data = vif.to_meta ()
-                assert vif_data
-                vifs.append (vif_data)
+            vif_data = vif.to_meta ()
+            assert vif_data
+            vifs.append (vif_data)
         data['vifs'] = vifs
         return data
 
@@ -122,7 +120,6 @@ class XenVPS (object):
                     'swap', 'none', swp_g)
 
         self.data_disks[self.root_store.xen_dev] = self.root_store
-
         self.root_pw = root_pw
         self.gateway = gateway
         if ip:
@@ -131,11 +128,13 @@ class XenVPS (object):
             self.netmask = netmask
             self.add_netinf (self.name, ip, netmask, bridge=self.xen_bridge, mac=None)
         
+    def get_xendev_by_id (self, disk_id):
+        return "xvdc%d" % (disk_id)
 
     def add_extra_storage (self, disk_id, size_g, fs_type=conf.DEFAULT_FS_TYPE):
         assert disk_id > 0
         assert size_g > 0
-        xen_dev = "xvdc%d" % (disk_id)
+        xen_dev = self.get_xendev_by_id (disk_id)
         mount_point = '/mnt/data%d' % (disk_id)
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
@@ -144,6 +143,36 @@ class XenVPS (object):
         else:
             filename = "%s_data%s.img" % (self.name, disk_id)
             self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
+
+    def dump_storage_to_trash (self, disk):
+        res = False
+        # TODO , store the date in meta
+        if disk.exists ():
+            disk.dump_trash ()
+            res = True
+        try:
+            del self.data_disks[disk.xen_dev]
+        except KeyError:
+            pass
+        self.trash_disks[disk.xen_dev] = disk
+        return res
+        
+    def recover_storage_from_trash (self, disk):
+        res = False
+        if disk.trash_exists ():
+            disk.restore_from_trash ()
+            res = True
+        elif disk.exists ():
+            pass
+        else:
+            raise Exception ("disk %d not found in trash" % (str(disk)))
+        self.data_disks[disk.xen_dev] = disk
+        try:
+            del self.trash_disks[disk.xen_dev]
+        except KeyError:
+            pass
+        return res
+
 
     def add_netinf (self, name, ip, netmask, bridge, mac):
         mac = mac or vps_common.gen_mac ()
@@ -286,7 +315,36 @@ on_crash = "restart"
             else:
                 raise Exception ("a non link file %s is blocking link creation" % (self.auto_config_path))
         os.symlink(self.config_path, self.auto_config_path)
-                
+
+    def check_storage_integrity (self):
+        for disk in self.data_disks.values ():
+            if not disk.exists ():
+                raise Exception ("disk %s not exists" % (str(disk)))
+        if self.swap_store.size_g > 0:
+            if not self.swap_store.exists ():
+                raise Exception ("disk %s not exists" % (str(self.swap_store)))
+        for trash_disk in self.trash_disks.values ():
+            if not trash_disk.trash_exists ():
+                raise Exception ("trash_disk %s not exists" % (str(trash_disk)))
+
+    def check_xen_config (self):
+        if not os.path.exists (self.config_path):
+            raise Exception ("%s not found" % self.config_path)
+        f = open (self.config_path, "r")
+        content = None
+        try:
+            content = "".join (f.readlines ())
+        finally:
+            f.close ()
+        regular_xen_config = self.gen_xenpv_config ()
+        diff_res = diff.readable_unified (content, regular_xen_config, name1=self.config_path, name2="generated_xen_config")
+        if diff_res != "":
+            raise Exception ("xen config not regular: [%s]" % diff_res)
+
+
+        
+
+        
             
 
 

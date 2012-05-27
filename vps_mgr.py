@@ -14,7 +14,6 @@ from ops.vps_ops import VPSOps
 from lib.log import Log
 import ops.vps_common as vps_common
 from ops.xen import get_xen_inf
-import saas.const.vps as vps_const
 import time
 import re
 import lib.daemon as daemon
@@ -194,7 +193,7 @@ class VPSMgr (object):
             if vps.state == vps_const.VPS_STATE_PAY:
                 vpsops.create_vps (xv, vps_image, is_new)
             elif vps.state == vps_const.VPS_STATE_CLOSE:
-                vpsops.reopen_vps (xv)
+                vpsops.reopen_vps (vps.id, xv)
         except Exception, e:
             self.logger.exception ("for %s: %s" % (str(vps.id), str(e)))
             self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
@@ -267,11 +266,10 @@ class VPSMgr (object):
         except Exception, e:
             self.logger.exception (e)
 
-    def _vps_delete (self, vps_id):
+    def _vps_delete (self, vps_id, vps=None):
         try:
             vpsops = VPSOps (self.logger)
-            xv = XenVPS (vps_id)
-            vpsops.delete_vps (xv)
+            vpsops.delete_vps (vps_id, vps)
         except Exception, e:
             self.logger.exception (e)
             raise e
@@ -282,7 +280,7 @@ class VPSMgr (object):
             vpsops = VPSOps (self.logger)
             xv = XenVPS (vps.id)
             self.setup_vps (xv, vps)
-            vpsops.close_vps (xv)
+            vpsops.close_vps (vps.id, xv)
         except Exception, e:
             self.logger.exception (e)
             self.done_task (Cmd.CLOSE, vps.id, False, "exception %s" % (str(e)))

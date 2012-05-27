@@ -36,7 +36,7 @@ def delete_vps (vps_id, forced=False):
     time.sleep(10)
     print "begin"
     try:
-        client._vps_delete (vps_id)
+        client._vps_delete (vps_id, vps)
         print "done"
     except Exception, e:
         print type(e), e
