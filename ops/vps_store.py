@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 import os
-import vps_common
+import ops.vps_common as vps_common
 import shutil
 
 class VPSStoreBase (object):

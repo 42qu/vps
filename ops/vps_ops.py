@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import _env
 
 import os
 import re
@@ -9,9 +8,11 @@ try:
     import json
 except ImportError:
     import simplejson as json
-import vps_common
-import os_image
-from vps import XenVPS
+import ops.vps_common as vps_common
+import ops.os_image as os_image
+from ops.vps import XenVPS
+
+import ops._env
 import conf
 
 assert conf.DEFAULT_FS_TYPE
@@ -44,13 +45,17 @@ class VPSOps (object):
         self.loginfo (vps, "created link to xen auto")
 
     @staticmethod
-    def _meta_path (vps_id):
+    def _meta_path (vps_id, is_trash=False, is_deleted=False):
         if not os.path.isdir (conf.VPS_METADATA_DIR):
             raise Exception ("directory %s is not exists" % (conf.VPS_METADATA_DIR))
-        return os.path.join (conf.VPS_METADATA_DIR, "vps%d.json" % (vps_id))
+        filename = "vps%d.json" % (vps_id)
+        if is_trash:
+            filename += ".trash"
+        if is_deleted:
+            filename += ".delete"
+        return os.path.join (conf.VPS_METADATA_DIR, filename)
 
-    def load_vps_meta (self, vps_id):
-        meta_path = self._meta_path (vps_id)
+    def _load_vps_meta (self, meta_path):
         f = open (meta_path, "r")
         data = None
         try:
@@ -60,19 +65,26 @@ class VPSOps (object):
         xv = XenVPS.from_meta (data)
         return xv
 
-    def save_vps_meta (self, xv):
-        data = xv.to_meta ()
+    def load_vps_meta (self, vps_id, is_trash=False):
+        meta_path = self._meta_path (vps_id, is_trash=is_trash)
+        return self._load_vps_meta (meta_path)
+
+    def save_vps_meta (self, vps, is_trash=False, is_deleted=False):
+        assert isinstance (vps, XenVPS)
+        data = vps.to_meta ()
         if data is None:
             raise Exception ("error in XenVPS.to_meta ()")
-        meta_path = self._meta_path (xv.vps_id)
+        meta_path = self._meta_path (vps.vps_id, is_trash=is_trash, is_deleted=is_deleted)
         f = open (meta_path, "w")
         try:
             json.dump (data, f, indent=2, sort_keys=True)
         finally:
             f.close ()
+        self.loginfo (vps, "meta saved to %s" % (meta_path))
         
     
     def _boot_and_test (self, vps, is_new=True):
+        assert isinstance (vps, XenVPS)
         self.loginfo (vps, "booting")
         status = None
         out = None
@@ -145,14 +157,23 @@ class VPSOps (object):
             vps_common.umount_tmp (vps_mountpoint)
         
         self._boot_and_test (vps, is_new=is_new)
+        self.save_vps_meta (vps)
         self.loginfo (vps, "done vps creation")
 
-    def close_vps (self, vps):
+    def close_vps (self, vps_id, _vps=None):
+        meta_path = self._meta_path (vps_id, is_trash=False)
+        if os.path.exists (meta_path):
+            vps = self._load_vps_meta (meta_path)
+            self.loginfo (vps, "loaded %s" % (meta_path))
+        elif _vps:
+            vps = _vps
+        else:
+            raise Exception ("param error")
         if vps.stop ():
-            self.loginfo (vps, "vps stopped, going to move data to trash")
+            self.loginfo (vps, "vps stopped")
         else:
             vps.destroy ()
-            self.loginfo (vps, "vps cannot shutdown, destroyed it, going to delete data")
+            self.loginfo (vps, "vps cannot shutdown, destroyed it")
         for disk in vps.data_disks.values ():
             if disk.exists ():
                 disk.dump_trash ()
@@ -166,40 +187,66 @@ class VPSOps (object):
         if os.path.exists (vps.auto_config_path):
             os.remove (vps.auto_config_path)
             self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
+        if os.path.exists (meta_path):
+            os.remove (meta_path)
+            self.loginfo (vps, "removed %s" % (meta_path))
+        self.save_vps_meta (vps, is_trash=True)
+        self.loginfo (vps, "closed")
 
 
-    def reopen_vps (self, vps):
-        assert isinstance (vps, XenVPS)
-        assert vps.has_all_attr
-        if not vps.root_store.trash_exists () and not vps.root_store.exists ():
-            self.loginfo (vps, "not trash found for root partition, cleanup first and create it")
-            self.delete_vps (vps)
-            return self.create_vps (vps)
+    def reopen_vps (self, vps_id, _vps=None):
+        meta_path = self._meta_path (vps_id)
+        trash_meta_path = self._meta_path (vps_id, is_trash=True)
+        if os.path.exists (trash_meta_path):
+            vps = self._load_vps_meta (trash_meta_path)
+            self.loginfo (vps, "loaded %s" % (trash_meta_path))
+        elif os.path.exists (meta_path):
+            vps = self._load_vps_meta (meta_path)
+            self.loginfo (vps, "seems vps was not closed")
+            vps.check_storage_integrity ()
+            vps.check_xen_config ()
+            if not vps.is_running ():
+                self._boot_and_test (vps, is_new=False)
+            return
+        elif _vps:
+            vps = _vps
         else:
-            vps.check_resource_avail (ignore_trash=True)
-            # TODO if resource not available on this host, we must allow moving the vps elsewhere
-            for disk in vps.data_disks.values ():
-                if disk.trash_exists ():
-                    disk.restore_from_trash ()
-                    self.loginfo (vps, "%s restored from trash" % (str(disk)))
-                else:
-                    if not disk.exists ():
-                        Exception ("%s missing" % (str(disk)))
-            if vps.swap_store.exists ():
-                pass
-            elif vps.swap_store.trash_exists ():
-                vps.swap_store.restore_from_trash () 
-                self.loginfo (vps, "%s restored from trash" % (str (vps.swap_store)))
-            elif vps.swap_store.size_g > 0:
-                vps.swap_store.create ()
-                self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
-            self.create_xen_config (vps)
-            self._boot_and_test (vps, is_new=False)
-            self.loginfo (vps, "done vps creation")
+            raise Exception ("error")
 
+        vps.check_resource_avail (ignore_trash=True)
+        # TODO if resource not available on this host, we must allow moving the vps elsewhere
+        for disk in vps.data_disks.values ():
+            if disk.trash_exists ():
+                disk.restore_from_trash ()
+                self.loginfo (vps, "%s restored from trash" % (str(disk)))
+            elif not disk.exists ():
+                raise Exception ("%s missing" % (str(disk)))
+        if vps.swap_store.trash_exists ():
+            vps.swap_store.restore_from_trash ()
+            self.loginfo (vps, "%s restored from trash" % (str (vps.swap_store)))
+        elif vps.swap_store.size_g > 0:
+            vps.swap_store.create ()
+            self.loginfo (vps, "swap image %s created" % (str(vps.swap_store)))
 
+        vps.check_storage_integrity ()
+        self.create_xen_config (vps)
+        self._boot_and_test (vps, is_new=False)
+        self.loginfo (vps, "done vps creation")
 
-    def delete_vps (self, vps):
+        
+    def delete_vps (self, vps_id, _vps=None):
+        meta_path = self._meta_path (vps_id)
+        trash_meta_path = self._meta_path (vps_id, is_trash=True)
+        if os.path.exists (meta_path):
+            vps = self._load_vps_meta (meta_path)
+            self.loginfo (vps, "loaded %s" % (meta_path))
+        elif os.path.exists (trash_meta_path):
+            vps = self._load_vps_meta (trash_meta_path)
+            self.loginfo (vps, "loaded %s" % (trash_meta_path))
+        elif _vps:
+            vps = _vps
+        else:
+            raise Exception ("param error")
         if vps.stop ():
             self.loginfo (vps, "vps stopped, going to delete data")
         else:
@@ -208,6 +255,10 @@ class VPSOps (object):
         for disk in vps.data_disks.values ():
             disk.delete ()
             self.loginfo (vps, "deleted %s" % (str(disk)))
+        for disk in vps.trash_disks.values ():
+            disk.delete ()
+            self.loginfo (vps, "deleted %s" % (str(disk)))
+
         vps.swap_store.delete ()
         self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
         if os.path.exists (vps.config_path):
@@ -216,9 +267,19 @@ class VPSOps (object):
         if os.path.exists (vps.auto_config_path):
             os.remove (vps.auto_config_path)
             self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
+        if os.path.exists (meta_path):
+            os.remove (meta_path)
+            self.loginfo (vps, "removed %s" % (meta_path))
+        if os.path.exists (trash_meta_path):
+            os.remove (trash_meta_path)
+            self.loginfo (vps, "removed %s" % (trash_meta_path))
+            self.save_vps_meta (vps, is_trash=True, is_deleted=True)
+        else:
+            self.save_vps_meta (vps, is_trash=False, is_deleted=True)
         self.loginfo (vps, "deleted")
 
     def reboot_vps (self, vps):
+        assert vps.has_all_attr
         if vps.stop ():
             self.loginfo (vps, "stopped")
         else:
