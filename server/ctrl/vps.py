@@ -34,6 +34,8 @@ class Handler(object):
         host = VpsHost.get(host_id)
         if not host:
             return
+        #print hd_remain
+        #print ram_remain
         host.hd_remain = hd_remain
         host.ram_remain = ram_remain
         host.save()
