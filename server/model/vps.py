@@ -46,6 +46,10 @@ def task_by_host_id(host_id, cmd):
     #print "cmd", ".............."
     return 0
 
+def vps_saas_cmd_os(host_id, id):
+    if host_id:
+        return _vps_saas_cmd_new(Cmd.OS, host_id, id)
+
 def vps_saas_cmd_reboot(host_id, id):
     if host_id:
         return _vps_saas_cmd_new(Cmd.REBOOT, host_id, id)
