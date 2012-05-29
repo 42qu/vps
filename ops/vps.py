@@ -1,22 +1,20 @@
 #!/usr/bin/env python
 
-import re
 import os
+import time
 
-import _env
 from string import Template
-import vps_common
-from ops.vps_store import VPSStoreImage, VPSStoreLV
+from ops.vps_store import VPSStoreImage, VPSStoreLV, VPSStoreBase
 from ops.vps_netinf import VPSNetInf
-
-
+import ops.vps_common as vps_common
+import ops.xen as xen
+import lib.diff as diff
+import ops._env
 import conf
 assert conf.XEN_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
-import xen
-import time
 
 
 
@@ -43,32 +41,67 @@ class XenVPS (object):
     os_id = None
 
     def __init__ (self, _id):
+        self.vps_id = _id
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
-        if conf.USE_LVM:
-            assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/')
-            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none')
-        else:
-            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name, None, '/')
-            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 'swap', 'none')
-
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
         self.data_disks = {}
-        self.data_disks[self.root_store.xen_dev] = self.root_store
+        self.trash_disks = {}
         self.vifs = {}
 
-    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw, gateway=None, ip=None, netmask=None, swp_g=None):
+    def to_meta (self):
+        data = {}
+        data['vps_id'] = self.vps_id
+        data['os_id'] = self.os_id
+        data['vcpu'] = self.vcpu
+        data['mem_m'] = self.mem_m
+        data['root_size_g'] = self.root_store.size_g
+        data['swap_size_g'] = self.swap_store.size_g
+        data['root_xen_dev'] = self.root_store.xen_dev
+        data['gateway'] = self.gateway
+        data['ip'] = self.ip
+        data['netmask'] = self.netmask
+        disks = []
+        for disk in self.data_disks.itervalues ():
+            if disk.xen_dev != self.root_store.xen_dev:
+                disk_data = disk.to_meta ()
+                assert disk_data
+                disks.append (disk_data)
+        data['data_disks'] = disks
+        vifs = []
+        for vif in self.vifs.itervalues ():
+            vif_data = vif.to_meta ()
+            assert vif_data
+            vifs.append (vif_data)
+        data['vifs'] = vifs
+        return data
+
+    @classmethod
+    def from_meta (cls, data):
+        assert data
+        self = cls (data['vps_id'])
+        self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
+                data['gateway'], data['ip'], data['netmask'], data['swap_size_g'])
+        for _disk in data['data_disks']:
+            disk = VPSStoreBase.from_meta (_disk)
+            assert disk
+            self.data_disks[disk.xen_dev] = disk
+        for _vif in data['vifs']:
+            vif = VPSNetInf.from_meta (_vif)
+            self.vifs[vif.ifname] = vif
+        return self
+
+    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, gateway=None, ip=None, netmask=None, swp_g=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
         self.has_all_attr = True
         self.os_id = os_id
         self.vcpu = vcpu
         self.mem_m = mem_m
-        if swp_g:
+        if swp_g is not None:
             swp_g = swp_g
         else:
             if self.mem_m >= 2000:
@@ -76,9 +109,17 @@ class XenVPS (object):
             else:
                 swp_g = 1
 
-        self.root_store.size_g = disk_g
-        self.swap_store.size_g = swp_g
-        
+        if conf.USE_LVM:
+            assert conf.VPS_LVM_VGNAME
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', disk_g)
+            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none', swp_g)
+        else:
+            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
+                    None, '/', disk_g)
+            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 
+                    'swap', 'none', swp_g)
+
+        self.data_disks[self.root_store.xen_dev] = self.root_store
         self.root_pw = root_pw
         self.gateway = gateway
         if ip:
@@ -87,11 +128,13 @@ class XenVPS (object):
             self.netmask = netmask
             self.add_netinf (self.name, ip, netmask, bridge=self.xen_bridge, mac=None)
         
+    def get_xendev_by_id (self, disk_id):
+        return "xvdc%d" % (disk_id)
 
     def add_extra_storage (self, disk_id, size_g, fs_type=conf.DEFAULT_FS_TYPE):
         assert disk_id > 0
         assert size_g > 0
-        xen_dev = "xvdc%d" % (disk_id)
+        xen_dev = self.get_xendev_by_id (disk_id)
         mount_point = '/mnt/data%d' % (disk_id)
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
@@ -101,9 +144,39 @@ class XenVPS (object):
             filename = "%s_data%s.img" % (self.name, disk_id)
             self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
 
+    def dump_storage_to_trash (self, disk):
+        res = False
+        # TODO , store the date in meta
+        if disk.exists ():
+            disk.dump_trash ()
+            res = True
+        try:
+            del self.data_disks[disk.xen_dev]
+        except KeyError:
+            pass
+        self.trash_disks[disk.xen_dev] = disk
+        return res
+        
+    def recover_storage_from_trash (self, disk):
+        res = False
+        if disk.trash_exists ():
+            disk.restore_from_trash ()
+            res = True
+        elif disk.exists ():
+            pass
+        else:
+            raise Exception ("disk %d not found in trash" % (str(disk)))
+        self.data_disks[disk.xen_dev] = disk
+        try:
+            del self.trash_disks[disk.xen_dev]
+        except KeyError:
+            pass
+        return res
+
+
     def add_netinf (self, name, ip, netmask, bridge, mac):
         mac = mac or vps_common.gen_mac ()
-        self.vifs[name] = VPSNetInf (name=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+        self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
 
 
     def check_resource_avail (self, ignore_trash=False):
@@ -242,7 +315,36 @@ on_crash = "restart"
             else:
                 raise Exception ("a non link file %s is blocking link creation" % (self.auto_config_path))
         os.symlink(self.config_path, self.auto_config_path)
-                
+
+    def check_storage_integrity (self):
+        for disk in self.data_disks.values ():
+            if not disk.exists ():
+                raise Exception ("disk %s not exists" % (str(disk)))
+        if self.swap_store.size_g > 0:
+            if not self.swap_store.exists ():
+                raise Exception ("disk %s not exists" % (str(self.swap_store)))
+        for trash_disk in self.trash_disks.values ():
+            if not trash_disk.trash_exists ():
+                raise Exception ("trash_disk %s not exists" % (str(trash_disk)))
+
+    def check_xen_config (self):
+        if not os.path.exists (self.config_path):
+            raise Exception ("%s not found" % self.config_path)
+        f = open (self.config_path, "r")
+        content = None
+        try:
+            content = "".join (f.readlines ())
+        finally:
+            f.close ()
+        regular_xen_config = self.gen_xenpv_config ()
+        diff_res = diff.readable_unified (content, regular_xen_config, name1=self.config_path, name2="generated_xen_config")
+        if diff_res != "":
+            raise Exception ("xen config not regular: [%s]" % diff_res)
+
+
+        
+
+        
             
 
 
