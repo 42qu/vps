@@ -46,6 +46,7 @@ enum Cmd{
   REBOOT      = 3,
   RM          = 4,
   BANDWIDTH   = 5, //调整带宽
+  OS          = 6, //更换操作系统
 }
 
 

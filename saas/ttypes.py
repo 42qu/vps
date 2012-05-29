@@ -23,6 +23,7 @@ class Cmd:
   REBOOT = 3
   RM = 4
   BANDWIDTH = 5
+  OS = 6
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -31,6 +32,7 @@ class Cmd:
     3: "REBOOT",
     4: "RM",
     5: "BANDWIDTH",
+    6: "OS",
   }
 
   _NAMES_TO_VALUES = {
@@ -40,6 +42,7 @@ class Cmd:
     "REBOOT": 3,
     "RM": 4,
     "BANDWIDTH": 5,
+    "OS": 6,
   }
 
 
