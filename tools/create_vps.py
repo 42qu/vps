@@ -18,7 +18,7 @@ def create_vps (vps_id, vps_image=None, is_new=True):
     except Exception, e:
         print "failed to query vps state:" + type(e) + str(e)
         return
-    if not client.vps_is_valid (vps):
+    if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
     if vps.state not in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
@@ -45,8 +45,6 @@ if __name__ == '__main__':
     if len (args) < 1:
         usage ()
         os._exit (0)
-
-    #TODO file system type
 
     vps_id = int (args[0])
     for opt, v in optlist:

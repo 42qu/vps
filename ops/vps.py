@@ -71,6 +71,7 @@ class XenVPS (object):
                 assert disk_data
                 disks.append (disk_data)
         data['data_disks'] = disks
+        data['trash_disks'] = map (lambda disk:disk.to_meta (), self.trash_disks.values ())
         vifs = []
         for vif in self.vifs.itervalues ():
             vif_data = vif.to_meta ()
@@ -85,10 +86,16 @@ class XenVPS (object):
         self = cls (data['vps_id'])
         self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
                 data['gateway'], data['ip'], data['netmask'], data['swap_size_g'])
-        for _disk in data['data_disks']:
-            disk = VPSStoreBase.from_meta (_disk)
-            assert disk
-            self.data_disks[disk.xen_dev] = disk
+        if data.has_key ('data_disks'):
+            for _disk in data['data_disks']:
+                disk = VPSStoreBase.from_meta (_disk)
+                assert disk
+                self.data_disks[disk.xen_dev] = disk
+        if data.has_key ('trash_disks'):
+            for _trash in data['trash_disks']:
+                trash = VPSStoreBase.from_meta (_trash)
+                assert _trash
+                self.trash_disks[trash.xen_dev] = trash
         for _vif in data['vifs']:
             vif = VPSNetInf.from_meta (_vif)
             self.vifs[vif.ifname] = vif
@@ -144,7 +151,7 @@ class XenVPS (object):
             filename = "%s_data%s.img" % (self.name, disk_id)
             self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
 
-    def dump_storage_to_trash (self, disk):
+    def dump_storage_to_trash (self, disk, expire_days=10):
         res = False
         # TODO , store the date in meta
         if disk.exists ():
@@ -156,6 +163,18 @@ class XenVPS (object):
             pass
         self.trash_disks[disk.xen_dev] = disk
         return res
+
+    def renew_root_storage (self, expire_days=5):
+        old_root = self.root_store
+        old_root.dump_trash (expire_days)
+        self.trash_disks[old_root.xen_dev] = old_root
+        if conf.USE_LVM:
+            assert conf.VPS_LVM_VGNAME
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', old_root.size_g)
+        else:
+            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
+                    None, '/', old_root.size_g)
+        self.data_disks[self.root_store.xen_dev] = self.root_store
         
     def recover_storage_from_trash (self, disk):
         res = False

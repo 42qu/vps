@@ -4,6 +4,7 @@
 import os
 import re
 import time
+import socket
 try:
     import json
 except ImportError:
@@ -11,14 +12,16 @@ except ImportError:
 import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
+import ops.os_init as os_init
 
 import ops._env
 import conf
+from lib.command import call_cmd
 
 assert conf.DEFAULT_FS_TYPE
 assert conf.VPS_METADATA_DIR
+assert conf.CLOSE_EXPIRE_DAYS
 
-from os_init import os_init
 
 class VPSOps (object):
 
@@ -93,18 +96,27 @@ class VPSOps (object):
         if not vps.wait_until_reachable (60):
             raise Exception ("the vps started, seems not reachable")
         if is_new:
-            self.loginfo (vps, "started and reachable, wait for ssh connection")
-            time.sleep (5)
-            status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
-            self.loginfo (vps, "ssh login ok")
-            if status == 0:
-                if vps.swap_store.size_g > 0:
-                    swap_size = int (out.split ()[1])
-                    if swap_size == 0:
-                        raise Exception ("it seems swap has not properly configured, please check") 
-                    self.loginfo (vps, "checked swap size is %d" % (swap_size))
-            else:
-                raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
+            _e = None
+            for i in xrange (0, 5):
+                self.loginfo (vps, "started and reachable, wait for ssh connection")
+                time.sleep (5)
+                try:
+                    status, out, err = vps_common.call_cmd_via_ssh (vps.ip, user="root", password=vps.root_pw, cmd="free|grep Swap")
+                    self.loginfo (vps, "ssh login ok")
+                    if status == 0:
+                        if vps.swap_store.size_g > 0:
+                            swap_size = int (out.split ()[1])
+                            if swap_size == 0:
+                                raise Exception ("it seems swap has not properly configured, please check") 
+                            self.loginfo (vps, "checked swap size is %d" % (swap_size))
+                    else:
+                        raise Exception ("cmd 'free' on via returns %s %s" % (out, err))
+                    return
+                except socket.error, e:
+                    _e = e
+                    continue
+            if _e:
+                raise _e
         else: # if it's recoverd os, passwd is likely to be changed by user
             self.loginfo (vps, "started and reachable")
 
@@ -151,13 +163,13 @@ class VPSOps (object):
             self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
             
             self.loginfo (vps, "begin to init os")
-            os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=is_new)
+            os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=is_new)
             self.loginfo (vps, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
         
-        self._boot_and_test (vps, is_new=is_new)
         self.save_vps_meta (vps)
+        self._boot_and_test (vps, is_new=is_new)
         self.loginfo (vps, "done vps creation")
 
     def close_vps (self, vps_id, _vps=None):
@@ -168,7 +180,7 @@ class VPSOps (object):
         elif _vps:
             vps = _vps
         else:
-            raise Exception ("param error")
+            raise Exception ("missing metadata or backend data")
         if vps.stop ():
             self.loginfo (vps, "vps stopped")
         else:
@@ -176,7 +188,7 @@ class VPSOps (object):
             self.loginfo (vps, "vps cannot shutdown, destroyed it")
         for disk in vps.data_disks.values ():
             if disk.exists ():
-                disk.dump_trash ()
+                disk.dump_trash (conf.CLOSE_EXPIRE_DAYS)
                 self.loginfo (vps, "%s moved to trash" % (str(disk)))
         if vps.swap_store.exists ():
             vps.swap_store.delete ()
@@ -211,7 +223,7 @@ class VPSOps (object):
         elif _vps:
             vps = _vps
         else:
-            raise Exception ("error")
+            raise Exception ("missing metadata or backend data")
 
         vps.check_resource_avail (ignore_trash=True)
         # TODO if resource not available on this host, we must allow moving the vps elsewhere
@@ -230,7 +242,14 @@ class VPSOps (object):
 
         vps.check_storage_integrity ()
         self.create_xen_config (vps)
+
+        if os.path.exists (trash_meta_path):
+            os.remove (trash_meta_path)
+            self.loginfo (vps, "removed %s" % (trash_meta_path))
+        self.save_vps_meta (vps)
+
         self._boot_and_test (vps, is_new=False)
+
         self.loginfo (vps, "done vps creation")
 
         
@@ -246,7 +265,7 @@ class VPSOps (object):
         elif _vps:
             vps = _vps
         else:
-            raise Exception ("param error")
+            raise Exception ("missing metadata or backend data")
         if vps.stop ():
             self.loginfo (vps, "vps stopped, going to delete data")
         else:
@@ -258,7 +277,6 @@ class VPSOps (object):
         for disk in vps.trash_disks.values ():
             disk.delete ()
             self.loginfo (vps, "deleted %s" % (str(disk)))
-
         vps.swap_store.delete ()
         self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
         if os.path.exists (vps.config_path):
@@ -290,6 +308,77 @@ class VPSOps (object):
             raise Exception ("the vps started, seems not reachable")
         self.loginfo (vps, "started")
 
+    def reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
+        meta_path = self._meta_path (vps_id, is_trash=False)
+        if os.path.exists (meta_path):
+            vps = self._load_vps_meta (meta_path)
+            if _vps: 
+                vps.os_id = _vps.os_id
+            elif os_id:
+                vps.os_id = os_id
+            else:
+                raise Exception ("missing os_id")
+        elif _vps:
+            vps = _vps
+        else:
+            raise Exception ("missing vps metadata")
+        _vps_image, os_type, os_version = os_image.find_os_image (vps.os_id)
+        if not vps_image:
+            vps_image = _vps_image
+        if not vps_image:
+            raise Exception ("no template image configured for os_type=%s, os_id=%s" % (os_type, vps.os_id))
+        if not os.path.exists (vps_image):
+            raise Exception ("image %s not exists" % (vps_image))
+        #fs_type is tied to the image
+        fs_type = vps_common.get_fs_from_tarball_name (vps_image)
+        if not fs_type:
+            fs_type = conf.DEFAULT_FS_TYPE
+
+        assert vps.has_all_attr
+        if vps.stop ():
+            self.loginfo (vps, "stopped")
+        else:
+            vps.destroy ()
+            self.loginfo (vps, "force destroy")
+        root_store_trash = vps.root_store
+        vps.renew_root_storage (5)
+        vps.root_store.create (fs_type)
+        self.loginfo (vps, "create new root")
+
+        vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
+        try:
+            vps_mountpoint = vps.root_store.mount_tmp ()
+            self.loginfo (vps, "mounted vps image %s" % (str(vps.root_store)))
+        
+            try:
+                if re.match (r'.*\.img$', vps_image):
+                    vps_common.sync_img (vps_mountpoint, vps_image)
+                else:
+                    vps_common.unpack_tarball (vps_mountpoint, vps_image)
+                self.loginfo (vps, "synced vps os to %s" % (str(vps.root_store)))
+                
+                for sync_dir in ['home', 'root']:
+                    dir_org = os.path.join (vps_mountpoint_bak, sync_dir)
+                    dir_now = os.path.join (vps_mountpoint, sync_dir)
+                    if os.path.exists (dir_org):
+                        call_cmd ("rsync -a --exclude='.bash*'  '%s/' '%s/'" % (dir_org, dir_now))
+                        self.loginfo (vps, "sync dir /%s to new os" % (sync_dir))
+
+                self.loginfo (vps, "begin to init os")
+                os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                os_init.migrate_users (vps, vps_mountpoint, vps_mountpoint_bak)
+                self.loginfo (vps, "done init os")
+            finally:
+                vps_common.umount_tmp (vps_mountpoint)
+        finally:
+            vps_common.umount_tmp (vps_mountpoint_bak)
+        
+        self.save_vps_meta (vps)
+        self._boot_and_test (vps, is_new=False)
+        self.loginfo (vps, "done vps reinstall")
+
+
+       
 
 
 

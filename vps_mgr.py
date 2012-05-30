@@ -37,6 +37,7 @@ class VPSMgr (object):
             Cmd.OPEN: self.__class__.vps_open,
             Cmd.REBOOT: self.__class__.vps_reboot,
             Cmd.CLOSE: self.__class__.vps_close,
+            Cmd.OS: self.__class__.vps_reinstall_os,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -83,7 +84,6 @@ class VPSMgr (object):
                 trans.close ()
         except Exception, e:
             self.logger_misc.exception ("cannot send netflow data: %s" % (str(e)))
-
 
 
     def run_once (self, cmd):
@@ -212,6 +212,33 @@ class VPSMgr (object):
         self.done_task (Cmd.OPEN, vps.id, True)
         return True
 
+    def vps_reinstall_os (self, vps):
+        self.logger.info ("to reinstall vps %s, os=%s" % (vps.id, vps.os))
+        if vps.host_id != self.host_id:
+            msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, self.host_id)
+            self.logger.error (msg)
+            self.done_task (Cmd.OS, vps.id, False, msg)
+            return
+        return self._reinstall_os (vps.id, vps)
+
+    def _reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
+        try:
+            vpsops = VPSOps (self.logger)
+            xv = None
+            if _vps:
+                xv = XenVPS (_vps.id)
+                self.setup_vps (xv, _vps)
+            vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
+            if _vps:
+                self.done_task (Cmd.OS, vps_id, True)
+            return True
+        except Exception, e:
+            self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+            if _vps:
+                self.done_task (Cmd.OS, vps_id, False, "error," +str(e))
+            return False
+
+
 
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
@@ -280,8 +307,9 @@ class VPSMgr (object):
     def _vps_delete (self, vps_id, vps=None):
         try:
             vpsops = VPSOps (self.logger)
-            xv = XenVPS (vps.id)
+            xv = None
             if vps:
+                xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps)
             vpsops.delete_vps (vps_id, xv)
         except Exception, e:
