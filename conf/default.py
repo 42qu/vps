@@ -59,7 +59,7 @@ def prepare(o):
         10001: {'os': 'Ubuntu', 'version': '10.04-amd64', 'image': 'ubuntu-10.04-amd64.tar.gz'},
         20001: {'os': 'Debian', 'version': '6.0-amd64', 'image': 'debian-6.0-amd64.tar.gz'},
         30001: {'os': 'Arch', 'image': 'arch-2011.08.19-i386-fs-ext3.tar.gz'},
-        50001: {'os':'Gentoo', 'image':'gentoo-2012.02-amd64.tar.gz'},
+        50001: {'os':'Gentoo', 'image':'gentoo-2012.05.31-amd64.tar.gz'},
         60001: {'os': 'Fedora'},
         70001: {'os': 'OpenSUSE'},
         80001: {'os':'Slackware'},
