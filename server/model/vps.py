@@ -96,11 +96,7 @@ if __name__ == '__main__':
     #from time import time
     #task_done(1,Cmd.OPEN, 36,0,"")
     pass
-    #print task_by_host_id(2, Cmd.REBOOT)
-#    from model.vps_sell import vps_order_open_by_vps_id
-#    vps_order_open_by_vps_id(id)
-    for i in redis.keys("VpsSaasCmd:*"):
-        print i
-        redis.delete(i)
 
+    from model.vps_sell import vps_order_open_by_vps_id
+    vps_order_open_by_vps_id(128)
 
