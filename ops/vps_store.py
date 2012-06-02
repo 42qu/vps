@@ -3,6 +3,21 @@
 import os
 import ops.vps_common as vps_common
 import shutil
+import datetime
+import re
+
+def _parse_date (s):
+    if s is None:
+        return None
+    assert isinstance (s, basestring)
+    om = re.match (r'^(\d{1,4})-(\d{1,2})-(\d{1,2})', s)
+    if not om:
+        raise Exception ('%s is not date format' % (s))
+    year = int (om.group (1))
+    mon = int (om.group (2))
+    day = int (om.group (3))
+    return datetime.date (year, mon, day)
+
 
 class VPSStoreBase (object):
 
@@ -10,6 +25,8 @@ class VPSStoreBase (object):
     size_g = None
     xen_path = None
     fs_type = None
+    trash_date = None
+    expire_date = None
     
     def __init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g):
         self.size_g = size_g
@@ -18,6 +35,14 @@ class VPSStoreBase (object):
         self.xen_path = xen_path
         self.mount_point = mount_point
 
+    def _set_expire_days (self, days):
+        if days > 0:
+            self.trash_date = datetime.date.today ()
+            self.expire_date = self.trash_date + datetime.timedelta (days=days)
+        else:
+            self.trash_date = None
+            self.expire_date = None
+        
 
     def create (self, fs_type=None):
         raise NotImplementedError ()
@@ -32,7 +57,11 @@ class VPSStoreBase (object):
         """ return mountpoint """
         raise NotImplementedError ()
 
-    def dump_trash (self):
+    def mount_trash_temp (self, readonly=False):
+        """ return mountpoint """
+        raise NotImplementedError ()
+
+    def dump_trash (self, expire_days):
         raise NotImplementedError ()
 
     def restore_from_trash (self):
@@ -44,7 +73,16 @@ class VPSStoreBase (object):
         data["fs_type"] = self.fs_type
         data["xen_dev"] = self.xen_dev
         data["xen_path"] = self.xen_path
+        t_format = "%Y-%m-%d"
         data["mount_point"] = self.mount_point
+        if self.trash_date:
+            data['trash_date'] = self.trash_date.strftime (t_format)
+        else:
+            data['trash_date'] = None
+        if self.expire_date:
+            data['expire_date']  = self.expire_date.strftime (t_format)
+        else:
+            self.expire_date = None
         return data
 
     @classmethod
@@ -52,10 +90,20 @@ class VPSStoreBase (object):
         assert data
         _class = data['__class__']
         if _class == VPSStoreImage.__name__:
-            return VPSStoreImage.from_meta (data)
-        if _class == VPSStoreLV.__name__:
-            return VPSStoreLV.from_meta (data)
-        raise TypeError (_class)
+            self = VPSStoreImage.from_meta (data)
+        elif _class == VPSStoreLV.__name__:
+            self = VPSStoreLV.from_meta (data)
+        else:
+            raise TypeError (_class)
+        if data.has_key ('trash_date'):
+            self.trash_date = _parse_date (data['trash_date'])
+        else:
+            self.trash_date = None
+        if data.has_key ('expire_date'):
+            self.expire_date = _parse_date (data['expire_date'])
+        else:
+            self.expire_date = None
+        return self
 
     
 class VPSStoreImage (VPSStoreBase):
@@ -120,16 +168,22 @@ class VPSStoreImage (VPSStoreBase):
     def mount_tmp (self, readonly=False):
         return vps_common.mount_loop_tmp (self.file_path, readonly)
 
-    def dump_trash (self):
+    def mount_trash_temp (self, readonly=False):
+        return vps_common.mount_loop_tmp (self.trash_path, readonly)
+
+    def dump_trash (self, expire_days):
         if not os.path.exists (self.file_path):
-            return
+            raise Exception ("%s not exist" % (self.file_path))
         if os.path.exists (self.trash_path):
             os.remove (self.trash_path)
         shutil.move (self.file_path, self.trash_path)
+        self._set_expire_days (expire_days)
 
     def restore_from_trash (self):
+        if not os.path.exists (self.trash_path):
+            raise Exception ("%s not exist" % (self.trash_path))
         shutil.move (self.trash_path, self.file_path)
-
+        self._set_expire_days (None)
 
 
 class VPSStoreLV (VPSStoreBase):
@@ -181,15 +235,19 @@ class VPSStoreLV (VPSStoreBase):
     def trash_exists (self):
         return os.path.exists (self.trash_dev)
 
-    def dump_trash (self):
+    def dump_trash (self, expire_days):
         if not os.path.exists (self.dev):
-            return
+            raise Exception ("%s not exist" % (self.dev))
         if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
         vps_common.lv_rename (self.dev, self.trash_dev)
+        self._set_expire_days (expire_days)
 
     def restore_from_trash (self):
+        if not os.path.exists (self.trash_dev):
+            raise Exception ("%s not exist" % (self.trash_dev))
         vps_common.lv_rename (self.trash_dev, self.dev)
+        self._set_expire_days (None)
 
 
     def delete (self):
@@ -202,7 +260,8 @@ class VPSStoreLV (VPSStoreBase):
     def mount_tmp (self, readonly=False):
         return vps_common.mount_partition_tmp (self.dev, readonly)
 
-
+    def mount_trash_temp (self, readonly=False):
+        return vps_common.mount_partition_tmp (self.trash_dev, readonly)
 
 
 

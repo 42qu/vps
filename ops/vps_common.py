@@ -130,7 +130,7 @@ def sync_img (vpsmountpoint, template_img_path):
     if template_mount[-1] != '/':
         template_mount += "/"
     try:
-        call_cmd ("rsync -a '%s' '%s'" % (template_mount, vpsmountpoint)) 
+        call_cmd ("rsync -a '%s/' '%s/'" % (template_mount, vpsmountpoint)) 
     finally:
         umount_tmp (template_mount)
 

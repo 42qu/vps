@@ -20,7 +20,7 @@ def delete_vps (vps_id, forced=False):
         print "failed to query vps state:" + str(type(e)) + str(e)
         if not forced:
             return
-    if not client.vps_is_valid (vps):
+    if not vps:
         print "not backend data for vps %s" % (vps_id)
         if not forced:
             return
@@ -32,8 +32,8 @@ def delete_vps (vps_id, forced=False):
     if answer != 'CONFIRM':
         print "aborted"
         return
-    print "going to delete vps %s, you have 10 second to regret" % (vps_id)
-    time.sleep(10)
+    print "going to delete vps %s, you have 5 seconds to regret" % (vps_id)
+    time.sleep(5)
     print "begin"
     try:
         client._vps_delete (vps_id, vps)

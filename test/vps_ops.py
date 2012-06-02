@@ -22,6 +22,9 @@ class TestVPSOPS (unittest.TestCase):
         vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
         vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
         vps.add_netinf ('vps0_inter', "10.10.3.2", '255.255.255.0', 'xenbr0', None)
+        vps.data_disks['xvdc1']._set_expire_days (1)
+        print "trash_date", vps.data_disks['xvdc1'].trash_date
+        print "expire_date", vps.data_disks['xvdc1'].expire_date
         vpsops.save_vps_meta (vps)
         _vps = vpsops.load_vps_meta (0)
         self.assertEqual (_vps.vps_id, vps.vps_id)
@@ -37,13 +40,22 @@ class TestVPSOPS (unittest.TestCase):
         self.assertEqual (_vps.data_disks['xvdc1'].fs_type, 'ext3')
         self.assertEqual (_vps.data_disks['xvdc1'].mount_point, '/mnt/data1')
         self.assertEqual (_vps.data_disks['xvdc1'].xen_dev, 'xvdc1')
+        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, vps.data_disks['xvdc1'].trash_date)
+        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, vps.data_disks['xvdc1'].expire_date)
         print _vps.data_disks['xvdc1'].__class__.__name__
         self.assertEqual (len (_vps.vifs.values ()), 2)
         self.assertEqual (_vps.vifs['vps0_inter'].ip, '10.10.3.2')
         self.assertEqual (_vps.vifs['vps0_inter'].netmask, '255.255.255.0')
         self.assertEqual (_vps.vifs['vps0_inter'].bridge, 'xenbr0')
         self.assertEqual (_vps.vifs['vps0_inter'].mac, vps.vifs['vps0_inter'].mac)
-
+        print "test trash expire date None"
+        vps.data_disks['xvdc1']._set_expire_days (None)
+        self.assertEqual (vps.data_disks['xvdc1'].trash_date, None)
+        self.assertEqual (vps.data_disks['xvdc1'].expire_date, None)
+        vpsops.save_vps_meta (vps)
+        _vps = vpsops.load_vps_meta (0)
+        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, None)
+        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, None)
 
 
     def test_mem_too_big (self):
@@ -131,7 +143,7 @@ class TestVPSOPS (unittest.TestCase):
 def main():
     runner = unittest.TextTestRunner ()
     runner.run (TestVPSOPS ("test_meta"))
-    runner.run (TestVPSOPS ("test_mem_too_big"))
+#    runner.run (TestVPSOPS ("test_mem_too_big"))
     runner.run (TestVPSOPS ("test_vps0"))
 
 

@@ -141,7 +141,77 @@ class XenXL (IXen):
             return None
         else:
             raise CommandException (cmd, msg=out, status=status)
-            
+
+
+class XenStore (object):
+
+    @staticmethod
+    def _list (path):
+        out = call_cmd ("xenstore-list %s" % (path))
+        return out.split ("\n")
+
+    @staticmethod
+    def _read (path):
+        return call_cmd ("xenstore-read %s" % (path))
+
+    @staticmethod
+    def _get_tree (path):
+        """ return a dict , parsed from xenstore-ls """
+        cmd = "xenstore-ls %s" % (path)
+        out = call_cmd (cmd)
+        lines = out.split ("\n")
+        _static = {
+                'node': {},
+                'last_key': None,
+                'last_value': None,
+                'last_space': 0,
+        }
+        stack = []
+        def __process (space, key, value):
+            print _static['last_space'], space, _static['last_key'], _static['last_value'], key, value
+            if _static['last_key'] is None:
+                _static['last_space'] = 0
+            elif _static['last_value'] == "" and _static['last_space'] + 1 == space:
+                _static['node'][_static['last_key']] = {} 
+                stack.append (_static['node'])
+                _static['node'] = _static['node'][_static['last_key']]
+            elif _static['last_space'] > space:
+                _static['node'][_static['last_key']] = _static['last_value']
+                for i in xrange (0, _static['last_space'] - space):
+                    _static['node'] = stack.pop ()
+            else:
+                assert _static['last_space'] == space
+                _static['node'][_static['last_key']] = _static['last_value']
+            _static['last_key'] = key
+            _static['last_value'] = value
+            _static['last_space'] = space
+            return
+                
+        reg_key_value = re.compile (r"^(\s*)([\w\-]+)\s*=\s*\"(.*)\".*$")
+        for line in lines:
+            om = re.match (reg_key_value, line)
+            if not om:
+                raise Exception ("unexpect format: %s" % (line))
+            space = len (om.group (1))
+            key = om.group (2)
+            value = om.group (3)
+            __process (space, key, value)
+        __process (0, None, None)
+        return _static['node']
+        
+
+    @classmethod
+    def domain_name_id_map (cls):
+        domain_list = cls._list ("/local/domain") 
+        result_dict = {}
+        for domain_id in domain_list:
+            name = cls._read ("/local/domain/%s/name" % (domain_id))
+            name = name.strip ("\r\n")
+            result_dict[name] = int(domain_id)
+        return result_dict
+
+
+
 
 if __name__ == '__main__':
     import unittest

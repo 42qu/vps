@@ -2,10 +2,11 @@
 
 import re
 import os
-import _env
+import ops._env
 from lib.command import call_cmd
-from vps import XenVPS
+from ops.vps import XenVPS
 import string
+import time
 
 def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
     assert isinstance (vps, XenVPS)
@@ -24,11 +25,92 @@ def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
         set_root_passwd (vps, vps_mountpoint)
     gen_fstab (vps, vps_mountpoint)
 
+def migrate_users (vps, vps_mountpoint, vps_mountpoint_old):
+    passwd_path_old = os.path.join (vps_mountpoint_old, "etc", "passwd")
+    shadow_path_old = os.path.join (vps_mountpoint_old, "etc", "shadow")
+    group_path_old = os.path.join (vps_mountpoint_old, "etc", "group")
+    passwd_path = os.path.join (vps_mountpoint, "etc", "passwd")
+    shadow_path = os.path.join (vps_mountpoint, "etc", "shadow")
+    group_path = os.path.join (vps_mountpoint, "etc", "group")
+    passwd_data = {}
+    shadow_data = {}
+    group_data = {}
+    root_shadow = None
+    lines = None
+
+    def __parse (filepath, data_dict):
+        f = open (filepath, "r")
+        try:
+            lines = f.readlines ()
+        finally:
+            f.close ()
+        for line in lines: 
+            line = line.strip ("\n")
+            arr = line.split (":")
+            if arr[2]:
+                ugid = int(arr[2])
+                if  ugid >= 500 and ugid != 65534: # non-system users/groups are copied
+                    data_dict[arr[0]] = line
+        return
+    __parse (passwd_path_old, passwd_data)
+    __parse (group_path_old, group_data)
+    
+    f = open (shadow_path_old, "r")
+    try:
+        lines = f.readlines ()
+    finally:
+        f.close ()
+    for line in lines:
+        line = line.strip ("\n")
+        arr = line.split (":")
+        if arr[0] == 'root':
+            root_shadow = arr[1]
+        elif passwd_data.has_key (arr[0]):
+            shadow_data[arr[0]] = line
+    
+    def __append_data (filepath, data_dict):
+        f = open (filepath, "a")
+        try:
+            for line in data_dict.itervalues ():
+                f.write (line + '\n')
+        finally:
+            f.close()
+        return
+    #write passwd & group
+    __append_data (passwd_path, passwd_data)
+    __append_data (group_path, group_data)
+    
+    f = open (shadow_path, "r")
+    shadow_arr = []
+    try:
+        lines = f.readlines()
+    finally:
+        f.close ()
+    for line in lines:
+        line = line.strip ("\n")
+        arr = line.split (":")
+        if arr[0] == 'root':
+            arr[1] = root_shadow
+            arr[2] = str(int(time.time ()))
+            shadow_arr.append (":".join (arr))
+        else:
+            shadow_arr.append (line)
+    shadow_arr += shadow_data.values ()
+    s = os.stat (shadow_path)
+    old_mode = s.st_mode
+    #write shadow
+    f = open (shadow_path, "w")
+    try:
+        f.write ("\n".join (shadow_arr))
+    finally:
+        f.close ()
+    os.chmod (shadow_path, old_mode)
+    
 
 def gen_fstab (vps, vps_mountpoint):
 
-    fstab_t = string.Template ("""
-/dev/$root_xen_dev		 /                      $root_fs_type    defaults,noatime        1 1
+    fstab_t = string.Template (
+"""/dev/$root_xen_dev		 /                      $root_fs_type    defaults,noatime        1 1
 tmpfs                   /dev/shm                tmpfs   defaults        0 0
 devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 sysfs                   /sys                    sysfs   defaults        0 0
@@ -53,6 +135,9 @@ proc                    /proc                   proc    defaults        0 0
         f.close ()
 
 def set_root_passwd (vps, vps_mountpoint):
+    if not vps.root_pw:
+        print "orz, root passwd is empty, skip"
+        return
     sh_script = """
 echo 'root:%s' | /usr/sbin/chpasswd
 """ % (vps.root_pw)

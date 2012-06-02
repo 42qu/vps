@@ -21,7 +21,7 @@ def close_vps (vps_id):
     except Exception, e:
         print "failed to query vps state:" + type(e) + str(e)
         return
-    if not client.vps_is_valid (vps):
+    if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
     if vps.state != vps_const.VPS_STATE_CLOSE:
