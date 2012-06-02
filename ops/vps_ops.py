@@ -72,12 +72,14 @@ class VPSOps (object):
         meta_path = self._meta_path (vps_id, is_trash=is_trash)
         return self._load_vps_meta (meta_path)
 
-    def save_vps_meta (self, vps, is_trash=False, is_deleted=False):
+    def save_vps_meta (self, vps, is_trash=False, is_deleted=False, override=True):
         assert isinstance (vps, XenVPS)
         data = vps.to_meta ()
         if data is None:
             raise Exception ("error in XenVPS.to_meta ()")
         meta_path = self._meta_path (vps.vps_id, is_trash=is_trash, is_deleted=is_deleted)
+        if os.path.exists (meta_path) and override is False:
+            return
         f = open (meta_path, "w")
         try:
             json.dump (data, f, indent=2, sort_keys=True)
