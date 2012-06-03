@@ -18,12 +18,19 @@ def gen_meta (vps_mgr, domain_dict, vps_id):
     domain_id = domain_dict[xv.name]
     vif_datas = XenStore.get_vif_by_domain_id (domain_id)
     vps_mgr.setup_vps (xv, vps)
+    vpsops = VPSOps (vps_mgr.logger)
     if len (vif_datas.values ()) == 1:
         vif_data = vif_datas.values()[0]
         if vif_data['online'] == '1':
-            xv.vifs[vif_data['vifname']].mac = vif_data['mac']
-            vpsops = VPSOps (vps_mgr.logger)
-            vpsops.save_vps_meta (xv, override=False)
+            if vif_data.has_key ('vifname'):
+                xv.vifs[vif_data['vifname']].mac = vif_data['mac']
+            else:
+                vif_id = vif_datas.items ()[0][0]
+                vif_name = 'vif%s.%s' % (domain_id, vif_id)
+                del xv.vifs[xv.name]
+                xv.add_netinf (name=vif_name, ip=xv.ip, netmask=xv.netmask,bridge=vif_data['bridge'], mac=vif_data['mac'])
+        #vpsops.create_xen_config (xv)
+        vpsops.save_vps_meta (xv, override=True)
 
 
 def main ():
