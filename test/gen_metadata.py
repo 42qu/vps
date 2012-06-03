@@ -30,7 +30,7 @@ def gen_meta (vps_mgr, domain_dict, vps_id):
                 del xv.vifs[xv.name]
                 xv.add_netinf (name=vif_name, ip=xv.ip, netmask=xv.netmask,bridge=vif_data['bridge'], mac=vif_data['mac'])
         #vpsops.create_xen_config (xv)
-        vpsops.save_vps_meta (xv, override=True)
+        vpsops.save_vps_meta (xv, override=False)
 
 
 def main ():
