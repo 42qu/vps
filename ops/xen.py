@@ -168,7 +168,7 @@ class XenStore (object):
         }
         stack = []
         def __process (space, key, value):
-            print _static['last_space'], space, _static['last_key'], _static['last_value'], key, value
+            #print _static['last_space'], space, _static['last_key'], _static['last_value'], key, value
             if _static['last_key'] is None:
                 _static['last_space'] = 0
             elif _static['last_value'] == "" and _static['last_space'] + 1 == space:
@@ -210,7 +210,10 @@ class XenStore (object):
             result_dict[name] = int(domain_id)
         return result_dict
 
-
+    @classmethod
+    def get_vif_by_domain_id (cls, domain_id):
+        return cls._get_tree ("/local/domain/0/backend/vif/%s" % (domain_id))
+        
 
 
 if __name__ == '__main__':
