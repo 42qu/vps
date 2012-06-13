@@ -96,7 +96,7 @@ if __name__ == '__main__':
     #from time import time
     #task_done(1,Cmd.OPEN, 36,0,"")
     pass
-
-    from model.vps_sell import vps_order_open_by_vps_id
-    vps_order_open_by_vps_id(128)
-
+    
+    
+    
+    #vps_saas_cmd_reboot(3, 95)
