@@ -70,27 +70,38 @@ KEY `index_2` (`rid`)
 
 if __name__ == '__main__':
     pass
-    
-
-    
 
 
-    #print 'plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)'
-    #print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)
-    #print ''
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 4, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 4, 100, 1024*1024/8)
-    print ''
-    
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)'
-    print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 100, 1024*1024/8)
-    print ''
-    
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1/8.0)'
-    print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 100, 1024*1024/8)])
-    print ''
-    
-    print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)'
-    print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 100, 1024*1024/8)])
-    print ''
-    #print ''
+    for i in xrange(1, 110):
+        netflow = plot_point(PLOT_CID_VPS_NETFLOW_1MIN, i, 1440, 1024*1024/8)
+        if netflow and netflow[0] > 1:
+            print i
+            print " ".join(["%.2f"%i for i in netflow])
+            print ""
+
+    for i in xrange(2,5):
+        print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, %s, 1440, 1024*1024/8)'%i
+        print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, i, 20, 1024*1024/8)])
+        print ''
+
+
+#print 'plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)'
+#print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 2, 1440, 1024*1024/8)
+#print ''
+#print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 4, 1440, 1024*1024/8)'
+#print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 4, 100, 1024*1024/8)
+#print ''
+#
+#print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 1440, 1024*1024/8)'
+#print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, 3, 100, 1024*1024/8)
+#print ''
+
+#
+#print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 1440, 1/8.0)'
+#print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 95, 100, 1024*1024/8)])
+#print ''
+#
+#print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 1440, 1024*1024/8)'
+#print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN, 14, 100, 1024*1024/8)])
+#print ''
+#print ''
