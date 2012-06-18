@@ -73,7 +73,7 @@ if __name__ == '__main__':
 
 
     for i in xrange(1, 110):
-        netflow = plot_point(PLOT_CID_VPS_NETFLOW_1MIN, i, 1440, 1024*1024/8)
+        netflow = plot_point(PLOT_CID_VPS_NETFLOW_1MIN, i, 20, 1024*1024/8)
         if netflow and netflow[0] > 1:
             print i
             print " ".join(["%.2f"%i for i in netflow])
