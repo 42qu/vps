@@ -18,6 +18,7 @@ def gen_meta (vps_mgr, domain_dict, vps_id):
     domain_id = domain_dict[xv.name]
     vif_datas = XenStore.get_vif_by_domain_id (domain_id)
     vps_mgr.setup_vps (xv, vps)
+    #xv.add_extra_storage (1, 964) #TEST
     vpsops = VPSOps (vps_mgr.logger)
     if len (vif_datas.values ()) == 1:
         vif_data = vif_datas.values()[0]
@@ -41,6 +42,7 @@ def main ():
         if om:
             print int(om.group(1))
             gen_meta (vps_mgr, domain_dict, int(om.group (1)))
+#    gen_meta (vps_mgr, domain_dict, 166)
 
 if __name__ == '__main__':
     main ()
