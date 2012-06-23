@@ -48,6 +48,7 @@ def prepare(o):
     o.XEN_AUTO_DIR = "/etc/xen/auto"
     o.NETFLOW_COLLECT_INV = 60  # in sec
     o.XEN_BRIDGE = "xenbr0"
+    o.XEN_INTERNAL_BRIDGE = "xenbr1"
 
     o.DEFAULT_FS_TYPE = 'ext4'
     o.CLOSE_EXPIRE_DAYS = 15

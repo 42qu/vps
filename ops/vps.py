@@ -12,6 +12,7 @@ import lib.diff as diff
 import ops._env
 import conf
 assert conf.XEN_BRIDGE
+assert conf.XEN_INTERNAL_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
@@ -192,11 +193,22 @@ class XenVPS (object):
             pass
         return res
 
+    def has_netinf (self, vifname):
+        return self.vifs.has_key (vifname)
 
-    def add_netinf (self, name, ip, netmask, bridge, mac):
+    def add_netinf (self, name, ip, netmask, bridge, mac=None):
         mac = mac or vps_common.gen_mac ()
         self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+        return self.vifs[name]
 
+    def add_netinf_ext (self, name, ip, netmask):
+        return self.add_netinf (name, ip, netmask, conf.XEN_BRIDGE)
+
+    def add_netinf_int (self, name, ip, netmask):
+        return self.add_netinf (name, ip, netmask, conf.XEN_INTERNAL_BRIDGE)
+
+    def del_netinf (self, vifname):
+        del self.vifs[vifname]
 
     def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """

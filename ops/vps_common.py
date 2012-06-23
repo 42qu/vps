@@ -207,6 +207,12 @@ def get_fs_from_tarball_name (tarball_path):
     fs_type = om.group (1)
     return fs_type
 
+def xm_network_attach (domain, vifname, mac, ip, bridge):
+    call_cmd ("xm network-attach %s mac=%s ip=%s vifname=%s bridge=%s" % (domain, mac, ip, vifname, bridge))
+
+def xm_network_detach (domain, mac):
+    call_cmd ("xm network-detach %s %s" % (domain, mac))
+
 #def check_loop (img_path):
 #    "return loop device name matching img_path. return None when not found"
 #    _out = subprocess.check_output (["losetup", "-a"])
