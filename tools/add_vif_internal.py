@@ -17,7 +17,7 @@ def add_vif_int (vps_id, ip, netmask):
     vpsmgr = VPSMgr ()
     vpsops = VPSOps (vpsmgr.logger)
     try:
-        vpsops.add_vif_int (vps_id, ip, netmask)
+        vpsops.set_vif_int (vps_id, ip, netmask)
     except Exception, e:
         vpsmgr.logger.exception (e)
         raise e
@@ -30,7 +30,7 @@ if __name__ == '__main__':
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
                  "help", 
                  ])
-    vps_id = args[0]
+    vps_id = int(args[0])
     ip = args[1]
     netmask = args[2]
     for opt, v in optlist:

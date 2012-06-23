@@ -265,8 +265,10 @@ on_crash = "restart"
             data_disk = self.data_disks[k]
             if k != self.root_store.xen_dev:
                 disks.append ( disk_t.substitute (path=data_disk.xen_path, dev=data_disk.xen_dev, mod="w") )
-
-        for vif in self.vifs.values ():
+        vif_keys = self.vifs.keys ()
+        vif_keys.sort ()
+        for k in vif_keys:
+            vif = self.vifs[k]
             vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=vif.ip, bridge=vif.bridge) )
 
         xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 

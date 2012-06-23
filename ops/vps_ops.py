@@ -379,7 +379,7 @@ class VPSOps (object):
         self._boot_and_test (vps, is_new=False)
         self.loginfo (vps, "done vps reinstall")
 
-    def add_vif_int (self, vps_id, vifname, ip, netmask):
+    def set_vif_int (self, vps_id, ip, netmask):
         meta_path = self._meta_path (vps_id, is_trash=False)
         vps = None
         if os.path.exists (meta_path):
@@ -394,6 +394,7 @@ class VPSOps (object):
         vif = vps.add_netinf_int (vifname, ip, netmask)
         vps_common.xm_network_attach (vps.name, vifname, vif.mac, ip, vif.bridge)
         self.save_vps_meta (vps)
+        self.create_xen_config (vps)
         self.loginfo (vps, "added internal vif ip=%s" % (ip))
 
 
