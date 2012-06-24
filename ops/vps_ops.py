@@ -387,11 +387,13 @@ class VPSOps (object):
         else:
             raise Exception ("cannot find meta data for vps %s" % (vps_id))
         vifname = "%sint" % (vps.name)
+        mac = None
         if vps.has_netinf (vifname):
             self.loginfo (vps, "removing existing vif %s" % (vifname))
-            vps_common.xm_network_detach (vps.name, vps.vifs[vifname].mac)
+            mac = vps.vifs[vifname].mac
+            vps_common.xm_network_detach (vps.name, mac)
             vps.del_netinf (vifname)
-        vif = vps.add_netinf_int (vifname, ip, netmask)
+        vif = vps.add_netinf_int (vifname, ip, netmask, mac)
         vps_common.xm_network_attach (vps.name, vifname, vif.mac, ip, vif.bridge)
         self.save_vps_meta (vps)
         self.create_xen_config (vps)

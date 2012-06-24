@@ -201,11 +201,11 @@ class XenVPS (object):
         self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
         return self.vifs[name]
 
-    def add_netinf_ext (self, name, ip, netmask):
-        return self.add_netinf (name, ip, netmask, conf.XEN_BRIDGE)
+    def add_netinf_ext (self, name, ip, netmask, mac=None):
+        return self.add_netinf (name, ip, netmask, conf.XEN_BRIDGE, mac)
 
-    def add_netinf_int (self, name, ip, netmask):
-        return self.add_netinf (name, ip, netmask, conf.XEN_INTERNAL_BRIDGE)
+    def add_netinf_int (self, name, ip, netmask, mac=None):
+        return self.add_netinf (name, ip, netmask, conf.XEN_INTERNAL_BRIDGE, mac)
 
     def del_netinf (self, vifname):
         del self.vifs[vifname]
