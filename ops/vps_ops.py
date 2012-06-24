@@ -389,16 +389,27 @@ class VPSOps (object):
             raise Exception ("cannot find meta data for vps %s" % (vps_id))
         vifname = "%sint" % (vps.name)
         mac = None
+        is_ip_available = not vps_common.ping (ip)
         if vps.has_netinf (vifname):
             self.loginfo (vps, "removing existing vif %s" % (vifname))
             mac = vps.vifs[vifname].mac
+            p_ip = vps.vifs[vifname].mac
+            if p_ip == ip and not is_ip_available:
+                self.loginfo (vps, "no need to change vif %s, ip is the same" % (vifname))
+                return False
+            if not is_ip_available:
+                raise Exception ("ip %s is in use" % (ip))
             vps_common.xm_network_detach (vps.name, mac)
             vps.del_netinf (vifname)
+        elif not is_ip_available:
+            raise Exception ("ip %s is in use" % (ip))
+
         vif = vps.add_netinf_int (vifname, ip, netmask, mac)
         vps_common.xm_network_attach (vps.name, vifname, vif.mac, ip, vif.bridge)
         self.save_vps_meta (vps)
         self.create_xen_config (vps)
         self.loginfo (vps, "added internal vif ip=%s" % (ip))
+        return True
 
 
 

@@ -16,6 +16,9 @@ from lib.command import call_cmd
 #    if res != 0:
 #        raise Exception ("%s exit with %d" % (cmd, res))
 
+def ping (ip):
+    return 0 == os.system ("ping -c2 -W1 %s >/dev/null" % (ip))
+
 def call_cmd_via_ssh (ip, user, password, cmd):
     import paramiko
     client = paramiko.SSHClient()
