@@ -380,6 +380,7 @@ class VPSOps (object):
         self.loginfo (vps, "done vps reinstall")
 
     def set_vif_int (self, vps_id, ip, netmask):
+        # if run again, vif's MAC is the same with previous one
         meta_path = self._meta_path (vps_id, is_trash=False)
         vps = None
         if os.path.exists (meta_path):
