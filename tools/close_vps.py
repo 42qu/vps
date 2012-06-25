@@ -39,10 +39,11 @@ if __name__ == '__main__':
     if len (sys.argv) <= 1:
         usage ()
         os._exit (0)
-    vps_id = int (sys.argv[1])
     optlist, args = getopt.gnu_getopt (sys.argv[2:], "", [
                  "help", 
                  ])
+
+    vps_id = int (args[0])
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
