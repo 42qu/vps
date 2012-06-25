@@ -310,6 +310,57 @@ class VPSOps (object):
             raise Exception ("the vps started, seems not reachable")
         self.loginfo (vps, "started")
 
+    def upgrade_vps (self, vps_new):
+        vps_id = vps_new.vps_id
+        meta_path = self._meta_path (vps_id, is_trash=False)
+        vps = self._load_vps_meta (meta_path)
+        #fs_type is tied to the image
+
+        vps.os_id = vps_new.os_id
+        _vps_image, os_type, os_version = os_image.find_os_image (vps_new.os_id)
+        vps.vcpu = vps_new.vcpu
+        vps.mem_m = vps_new.mem_m
+
+        assert vps.has_all_attr
+        if vps.stop ():
+            self.loginfo (vps, "stopped")
+        else:
+            vps.destroy ()
+            self.loginfo (vps, "force destroy")
+        root_store_trash = vps.root_store
+        if vps.ip != vps_new.ip:
+            # just in case when ip changed
+            vps.add_netinf (vps.name, vps_new.ip, vps_new.netmask, vps.xen_bridge)
+        
+        vps.renew_root_storage (new_size=vps_new.root_store.size_g)
+
+        vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
+        self.loginfo (vps, "mounted vps old root %s" % (str(root_store_trash)))
+        try:
+            fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint_bak)
+            vps.root_store.create (fs_type)
+            self.loginfo (vps, "create new root")
+            vps_mountpoint = vps.root_store.mount_tmp ()
+            self.loginfo (vps, "mounted vps new root %s" % (str(vps.root_store)))
+        
+            try:
+                call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
+                self.loginfo (vps, "synced old root to new root")
+                # TODO:  uncomment this when os_init can deal with multiple net address
+                #self.loginfo (vps, "begin to init os")
+                #os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                #self.loginfo (vps, "done init os")
+            finally:
+                vps_common.umount_tmp (vps_mountpoint)
+        finally:
+            vps_common.umount_tmp (vps_mountpoint_bak)
+        
+        self.save_vps_meta (vps)
+        self._boot_and_test (vps, is_new=False)
+        self.loginfo (vps, "done vps upgrade")
+
+
+
     def reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
         if os.path.exists (meta_path):

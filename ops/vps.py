@@ -165,16 +165,18 @@ class XenVPS (object):
         self.trash_disks[disk.xen_dev] = disk
         return res
 
-    def renew_root_storage (self, expire_days=5):
+    def renew_root_storage (self, expire_days=5, new_size=None):
         old_root = self.root_store
         old_root.dump_trash (expire_days)
         self.trash_disks[old_root.xen_dev] = old_root
+        if not new_size:
+            new_size = old_root.size_g
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', old_root.size_g)
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', new_size)
         else:
             self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
-                    None, '/', old_root.size_g)
+                    None, '/', new_size)
         self.data_disks[self.root_store.xen_dev] = self.root_store
         
     def recover_storage_from_trash (self, disk):

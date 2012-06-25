@@ -238,6 +238,19 @@ class VPSMgr (object):
                 self.done_task (Cmd.OS, vps_id, False, "error," +str(e))
             return False
 
+    def vps_upgrade (self, vps):
+        self.logger.info ("to upgrade vps %s" % (vps.id))
+        #TODO done task
+        try:
+            vpsops = VPSOps (self.logger)
+            xv = XenVPS (vps.id)
+            self.setup_vps (xv, vps)
+            vpsops.upgrade_vps (xv)
+            return True
+        except Exception, e:
+            self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+            #TODO done task
+            return False
 
 
     def vps_reboot (self, vps):
