@@ -11,6 +11,7 @@ def prepare(o):
     o.OS_IMAGE_DIR = "/vps/images/"
     o.VPS_TRASH_DIR = "/vps/trash" 
     o.XEN_BRIDGE = "xenbr0"
+    o.XEN_INTERNAL_BRIDGE = "xenbr0"
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

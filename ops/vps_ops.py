@@ -310,6 +310,57 @@ class VPSOps (object):
             raise Exception ("the vps started, seems not reachable")
         self.loginfo (vps, "started")
 
+    def upgrade_vps (self, vps_new):
+        assert vps_new.has_all_attr
+        vps_id = vps_new.vps_id
+        meta_path = self._meta_path (vps_id, is_trash=False)
+        vps = self._load_vps_meta (meta_path)
+
+        vps.os_id = vps_new.os_id
+        _vps_image, os_type, os_version = os_image.find_os_image (vps_new.os_id)
+        vps.vcpu = vps_new.vcpu
+        vps.mem_m = vps_new.mem_m
+
+        if vps.stop ():
+            self.loginfo (vps, "stopped")
+        else:
+            vps.destroy ()
+            self.loginfo (vps, "force destroy")
+        root_store_trash = vps.root_store
+        if vps.ip != vps_new.ip:
+            # just in case when ip changed
+            vps.add_netinf (vps.name, vps_new.ip, vps_new.netmask, vps.xen_bridge)
+        
+        vps.renew_root_storage (new_size=vps_new.root_store.size_g)
+
+        vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
+        self.loginfo (vps, "mounted vps old root %s" % (str(root_store_trash)))
+        try:
+            fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint_bak)
+            vps.root_store.create (fs_type)
+            self.loginfo (vps, "create new root")
+            vps_mountpoint = vps.root_store.mount_tmp ()
+            self.loginfo (vps, "mounted vps new root %s" % (str(vps.root_store)))
+        
+            try:
+                call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
+                self.loginfo (vps, "synced old root to new root")
+                # TODO:  uncomment this when os_init can deal with multiple net address
+                #self.loginfo (vps, "begin to init os")
+                #os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                #self.loginfo (vps, "done init os")
+            finally:
+                vps_common.umount_tmp (vps_mountpoint)
+        finally:
+            vps_common.umount_tmp (vps_mountpoint_bak)
+        
+        self.save_vps_meta (vps)
+        self.create_xen_config (vps)
+        self._boot_and_test (vps, is_new=False)
+        self.loginfo (vps, "done vps upgrade")
+
+
+
     def reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
         if os.path.exists (meta_path):
@@ -379,9 +430,37 @@ class VPSOps (object):
         self._boot_and_test (vps, is_new=False)
         self.loginfo (vps, "done vps reinstall")
 
+    def set_vif_int (self, vps_id, ip, netmask):
+        # if run again, vif's MAC is the same with previous one
+        meta_path = self._meta_path (vps_id, is_trash=False)
+        vps = None
+        if os.path.exists (meta_path):
+            vps = self._load_vps_meta (meta_path)
+        else:
+            raise Exception ("cannot find meta data for vps %s" % (vps_id))
+        vifname = "%sint" % (vps.name)
+        mac = None
+        is_ip_available = not vps_common.ping (ip)
+        if vps.has_netinf (vifname):
+            self.loginfo (vps, "removing existing vif %s" % (vifname))
+            mac = vps.vifs[vifname].mac
+            p_ip = vps.vifs[vifname].mac
+            if p_ip == ip and not is_ip_available:
+                self.loginfo (vps, "no need to change vif %s, ip is the same" % (vifname))
+                return False
+            if not is_ip_available:
+                raise Exception ("ip %s is in use" % (ip))
+            vps_common.xm_network_detach (vps.name, mac)
+            vps.del_netinf (vifname)
+        elif not is_ip_available:
+            raise Exception ("ip %s is in use" % (ip))
 
-       
-
+        vif = vps.add_netinf_int (vifname, ip, netmask, mac)
+        vps_common.xm_network_attach (vps.name, vifname, vif.mac, ip, vif.bridge)
+        self.save_vps_meta (vps)
+        self.create_xen_config (vps)
+        self.loginfo (vps, "added internal vif ip=%s" % (ip))
+        return True
 
 
 

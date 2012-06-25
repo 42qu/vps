@@ -12,6 +12,7 @@ import lib.diff as diff
 import ops._env
 import conf
 assert conf.XEN_BRIDGE
+assert conf.XEN_INTERNAL_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
@@ -164,16 +165,19 @@ class XenVPS (object):
         self.trash_disks[disk.xen_dev] = disk
         return res
 
-    def renew_root_storage (self, expire_days=5):
+    def renew_root_storage (self, expire_days=5, new_size=None):
+        # move old root to trash
         old_root = self.root_store
         old_root.dump_trash (expire_days)
         self.trash_disks[old_root.xen_dev] = old_root
+        if not new_size:
+            new_size = old_root.size_g
         if conf.USE_LVM:
             assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', old_root.size_g)
+            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', new_size)
         else:
             self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
-                    None, '/', old_root.size_g)
+                    None, '/', new_size)
         self.data_disks[self.root_store.xen_dev] = self.root_store
         
     def recover_storage_from_trash (self, disk):
@@ -192,11 +196,22 @@ class XenVPS (object):
             pass
         return res
 
+    def has_netinf (self, vifname):
+        return self.vifs.has_key (vifname)
 
-    def add_netinf (self, name, ip, netmask, bridge, mac):
+    def add_netinf (self, name, ip, netmask, bridge, mac=None):
         mac = mac or vps_common.gen_mac ()
         self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+        return self.vifs[name]
 
+    def add_netinf_ext (self, name, ip, netmask, mac=None):
+        return self.add_netinf (name, ip, netmask, conf.XEN_BRIDGE, mac)
+
+    def add_netinf_int (self, name, ip, netmask, mac=None):
+        return self.add_netinf (name, ip, netmask, conf.XEN_INTERNAL_BRIDGE, mac)
+
+    def del_netinf (self, vifname):
+        del self.vifs[vifname]
 
     def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """
@@ -253,8 +268,10 @@ on_crash = "restart"
             data_disk = self.data_disks[k]
             if k != self.root_store.xen_dev:
                 disks.append ( disk_t.substitute (path=data_disk.xen_path, dev=data_disk.xen_dev, mod="w") )
-
-        for vif in self.vifs.values ():
+        vif_keys = self.vifs.keys ()
+        vif_keys.sort ()
+        for k in vif_keys:
+            vif = self.vifs[k]
             vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=vif.ip, bridge=vif.bridge) )
 
         xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 

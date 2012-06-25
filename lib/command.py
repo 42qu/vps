@@ -22,7 +22,7 @@ class CommandException (Exception):
     def __init__ (self, command, msg, status=None):
         """status is for exit status"""
         Exception.__init__ (self)
-        if not isinstance (command, str):
+        if not isinstance (command, basestring):
             self.command = command.join (" ")
         else:
             self.command = command

@@ -16,6 +16,9 @@ from lib.command import call_cmd
 #    if res != 0:
 #        raise Exception ("%s exit with %d" % (cmd, res))
 
+def ping (ip):
+    return 0 == os.system ("ping -c2 -W1 %s >/dev/null" % (ip))
+
 def call_cmd_via_ssh (ip, user, password, cmd):
     import paramiko
     client = paramiko.SSHClient()
@@ -206,6 +209,12 @@ def get_fs_from_tarball_name (tarball_path):
         return None
     fs_type = om.group (1)
     return fs_type
+
+def xm_network_attach (domain, vifname, mac, ip, bridge):
+    call_cmd ("xm network-attach %s mac=%s ip=%s vifname=%s bridge=%s" % (domain, mac, ip, vifname, bridge))
+
+def xm_network_detach (domain, mac):
+    call_cmd ("xm network-detach %s %s" % (domain, mac))
 
 #def check_loop (img_path):
 #    "return loop device name matching img_path. return None when not found"
