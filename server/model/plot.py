@@ -79,7 +79,7 @@ if __name__ == '__main__':
             print " ".join(["%.2f"%i for i in netflow])
             print ""
 
-    for i in xrange(2,5):
+    for i in xrange(2,6):
         print 'print plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, %s, 1440, 1024*1024/8)'%i
         print " ".join(["%.2f"%i for i in plot_point(PLOT_CID_VPS_NETFLOW_1MIN_HOST, i, 20, 1024*1024/8)])
         print ''
