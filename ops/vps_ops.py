@@ -311,17 +311,16 @@ class VPSOps (object):
         self.loginfo (vps, "started")
 
     def upgrade_vps (self, vps_new):
+        assert vps_new.has_all_attr
         vps_id = vps_new.vps_id
         meta_path = self._meta_path (vps_id, is_trash=False)
         vps = self._load_vps_meta (meta_path)
-        #fs_type is tied to the image
 
         vps.os_id = vps_new.os_id
         _vps_image, os_type, os_version = os_image.find_os_image (vps_new.os_id)
         vps.vcpu = vps_new.vcpu
         vps.mem_m = vps_new.mem_m
 
-        assert vps.has_all_attr
         if vps.stop ():
             self.loginfo (vps, "stopped")
         else:
@@ -356,6 +355,7 @@ class VPSOps (object):
             vps_common.umount_tmp (vps_mountpoint_bak)
         
         self.save_vps_meta (vps)
+        self.create_xen_config (vps)
         self._boot_and_test (vps, is_new=False)
         self.loginfo (vps, "done vps upgrade")
 

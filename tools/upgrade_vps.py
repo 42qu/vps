@@ -30,10 +30,9 @@ if __name__ == '__main__':
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
         "help", 
         ])
-    if len (args) < 2:
+    if len (args) < 1:
         usage ()
         os._exit (0)
-
     vps_id = int (args[0])
     for opt, v in optlist:
         if opt == '--help': 

@@ -166,6 +166,7 @@ class XenVPS (object):
         return res
 
     def renew_root_storage (self, expire_days=5, new_size=None):
+        # move old root to trash
         old_root = self.root_store
         old_root.dump_trash (expire_days)
         self.trash_disks[old_root.xen_dev] = old_root
