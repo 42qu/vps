@@ -115,6 +115,8 @@ class VPSStoreImage (VPSStoreBase):
     def __init__ (self, xen_dev, img_dir, trash_dir, img_name, fs_type=None, mount_point=None, size_g=None):
         self.file_path = os.path.join (img_dir, img_name)
         self.trash_path = os.path.join (trash_dir, img_name)
+        self.img_dir = img_dir
+	self.img_name = img_name
         self.trash_dir = trash_dir
         xen_path = "file:" + self.file_path
         VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
@@ -122,7 +124,9 @@ class VPSStoreImage (VPSStoreBase):
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
         data['file_path'] = self.file_path
+	data['img_dir'] = self.img_dir
         data['trash_dir'] = self.trash_dir
+	data['img_name'] = self.img_name
         data['__class__'] = self.__class__.__name__
         return data
 
