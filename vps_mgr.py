@@ -13,7 +13,7 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
 import ops.vps_common as vps_common
-from ops.xen import get_xen_inf
+from ops.xen import get_xen_inf, XenStore
 import time
 import re
 import lib.daemon as daemon
@@ -254,7 +254,7 @@ class VPSMgr (object):
             vpsops.upgrade_vps (xv)
             return True
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+            self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
             #TODO done task
             return False
 
