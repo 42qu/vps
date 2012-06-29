@@ -190,6 +190,12 @@ class VPSMgr (object):
         xv = XenVPS (vps.id)
         vpsops = VPSOps (self.logger)
         try:
+            domain_dict = XenStore.domain_name_id_map ()
+            msg = "vps open: cannot open more than 39 vps"
+            if len (domain_dict.keys ()) >= 39:
+                self.logger.error (msg)
+                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                return
             self.setup_vps (xv, vps)
             if xv.is_running ():
                 msg = "vps %s is running" % (vps.id)
