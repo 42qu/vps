@@ -32,6 +32,7 @@ class VPSMgr (object):
         self.logger = Log ("vps_mgr", config=conf)
         self.logger_err = Log ("vps_mgr_err", config=conf)
         self.logger_misc = Log ("misc", config=conf) 
+        self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
@@ -47,7 +48,8 @@ class VPSMgr (object):
         self.running = False
 
     def get_client (self):
-        return get_client (VPS)
+        transport, client = get_client (VPS, timeout_ms=5000)
+        return transport, client
 
     def send_netflow (self):
         result = None
@@ -94,7 +96,7 @@ class VPSMgr (object):
             trans.open ()
             try:
                 vps_id = client.todo (self.host_id, cmd)
-                print cmd, vps_id
+                self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                 if vps_id > 0:
                     vps = client.vps (vps_id)
                     if not self.vps_is_valid (vps):
@@ -127,10 +129,11 @@ class VPSMgr (object):
         while self.running:
             try:
                 if self.run_once (cmd):
+                    time.sleep (0.5)
                     continue
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
-            time.sleep (2)
+            time.sleep (3)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):

@@ -10,8 +10,9 @@ from thrift.protocol import TBinaryProtocol
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TSSLSocket import TSSLSocket 
 
-def get_client (saas, host=SAAS_HOST, port=SAAS_PORT):
+def get_client (saas, host=SAAS_HOST, port=SAAS_PORT, timeout_ms=5000):
     sock = TSSLSocket(host, port, ca_certs=None, validate=False)
+    sock.setTimeout (timeout_ms)
 #    sock = TSocket(SAAS_HOST, SAAS_PORT)
 #    transport = TTransport.TBufferedTransport(sock)
     transport = TTransport.TFramedTransport (sock)
