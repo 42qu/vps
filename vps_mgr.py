@@ -127,13 +127,13 @@ class VPSMgr (object):
     def run_loop (self, cmd):
         self.logger.info ("worker for %s started" % (str(cmd)))
         while self.running:
+            time.sleep(1)
             try:
                 if self.run_once (cmd):
-                    time.sleep (0.5)
                     continue
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
-            time.sleep (3)
+            time.sleep (1)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
