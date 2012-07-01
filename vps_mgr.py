@@ -133,7 +133,12 @@ class VPSMgr (object):
                     continue
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
-            time.sleep (1)
+            if self.running:
+                time.sleep (1)
+            if self.running:
+                time.sleep (1)
+            if self.running:
+                time.sleep (1)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
