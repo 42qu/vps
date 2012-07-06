@@ -20,7 +20,7 @@ def reinstall_os (vps_id, os_id=None, vps_image=None):
     try:
         vps = client.query_vps (vps_id)
     except Exception, e:
-        print "failed to query vps state:" + type(e) + str(e)
+        print "failed to query vps state:" % (type(e), str(e))
     if not client._reinstall_os (vps_id, vps, os_id, vps_image):
         print "error occured, pls check the error log"
 
