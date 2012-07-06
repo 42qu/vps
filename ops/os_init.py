@@ -176,7 +176,6 @@ def set_root_passwd_2 (vps, vps_mountpoint):
             shadow_arr.append (":".join (arr))
         else:
             shadow_arr.append (line)
-    shadow_arr += shadow_data.values ()
     s = os.stat (shadow_path)
     old_mode = s.st_mode
     #write shadow
