@@ -7,6 +7,7 @@ from lib.command import call_cmd
 from ops.vps import XenVPS
 import string
 import time
+import crypt
 
 def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
     assert isinstance (vps, XenVPS)
@@ -22,7 +23,7 @@ def os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True):
     else:
         raise NotImplementedError ()
     if to_init_passwd:
-        set_root_passwd (vps, vps_mountpoint)
+        set_root_passwd_2 (vps, vps_mountpoint)
     gen_fstab (vps, vps_mountpoint)
 
 def migrate_users (vps, vps_mountpoint, vps_mountpoint_old):
@@ -153,7 +154,38 @@ echo 'root:%s' | /usr/sbin/chpasswd
     finally:
         if os.path.exists (user_data):
             os.remove (user_data)
+
+def generate_shadow_hash (passwd):
+    return crypt.crypt(passwd, '\$5\$SA213LTsalt\$')
     
+def set_root_passwd_2 (vps, vps_mountpoint):
+    root_shadow = generate_shadow_hash (vps.root_pw)
+    shadow_path = os.path.join (vps_mountpoint, "etc", "shadow")
+    f = open (shadow_path, "r")
+    shadow_arr = []
+    try:
+        lines = f.readlines()
+    finally:
+        f.close ()
+    for line in lines:
+        line = line.strip ("\n")
+        arr = line.split (":")
+        if arr[0] == 'root':
+            arr[1] = root_shadow
+            arr[2] = str(int(time.time ()))
+            shadow_arr.append (":".join (arr))
+        else:
+            shadow_arr.append (line)
+    shadow_arr += shadow_data.values ()
+    s = os.stat (shadow_path)
+    old_mode = s.st_mode
+    #write shadow
+    f = open (shadow_path, "w")
+    try:
+        f.write ("\n".join (shadow_arr))
+    finally:
+        f.close ()
+    os.chmod (shadow_path, old_mode)
 
 def gentoo_init (vps, vps_mountpoint):
     vm_net_config_content = string.Template ("""
