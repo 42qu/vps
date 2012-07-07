@@ -1,0 +1,69 @@
+--- /etc/xen/scripts/vif-bridge.orig	2012-05-13 02:22:59.686677359 +0800
++++ /etc/xen/scripts/vif-bridge	2012-07-07 14:46:07.380048942 +0800
+@@ -79,6 +79,9 @@
+     fatal "Could not find bridge device $bridge"
+ fi
+ 
++touch /var/lock/ebtables
++EBTABLES="flock /var/lock/ebtables ebtables"
++
+ case "$command" in
+     online)
+         setup_virtual_bridge_port "$dev"
+@@ -88,16 +91,56 @@
+                 ip link set $dev mtu $mtu || :
+         fi
+         add_to_bridge "$bridge" "$dev"
++
++        $EBTABLES -N $dev
++        $EBTABLES -P $dev DROP
++        $EBTABLES -A INPUT -i $dev -j $dev
++        $EBTABLES -A FORWARD -i $dev -j $dev
++        $EBTABLES -A $dev -p ARP --arp-opcode 1 -j ACCEPT
++        $EBTABLES -A $dev -p IPv6 -j DROP  # drop ipv6 neight discovery packet, but no logging
++        
++        if [ ! -z $ip ]; then
++                for oneip in $ip; do
++                        $EBTABLES -A $dev -p IPv4 --ip-src $oneip -j ACCEPT
++                        $EBTABLES -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
++                        $EBTABLES -A $dev -p ARP --arp-opcode 2 --arp-ip-src $oneip -j ACCEPT
++                done
++        fi
++	$EBTABLES -A $dev --log-prefix="arp-drop" --log-arp --log-ip -j DROP
++                
+         ;;
+ 
+     offline)
+         do_without_error brctl delif "$bridge" "$dev"
+         do_without_error ifconfig "$dev" down
++        
++        do_without_error $EBTABLES -D INPUT -i $dev -j $dev
++        do_without_error $EBTABLES -D FORWARD -i $dev -j $dev
++        do_without_error $EBTABLES -F $dev
++        do_without_error $EBTABLES -X $dev
++
+         ;;
+ 
+     add)
+         setup_virtual_bridge_port "$dev"
+         add_to_bridge "$bridge" "$dev"
++
++	$EBTABLES -N $dev
++        $EBTABLES -P $dev DROP
++        $EBTABLES -A INPUT -i $dev -j $dev
++        $EBTABLES -A FORWARD -i $dev -j $dev
++        $EBTABLES -A $dev -p ARP --arp-opcode 1 -j ACCEPT
++        $EBTABLES -A $dev -p IPv6 -j DROP  # drop ipv6 neight discovery packet, but no logging
++        
++        if [ ! -z $ip ]; then
++                for oneip in $ip; do
++                        $EBTABLES -A $dev -p IPv4 --ip-src $oneip -j ACCEPT
++                        $EBTABLES -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
++                        $EBTABLES -A $dev -p ARP --arp-opcode 2 --arp-ip-src $oneip -j ACCEPT
++                done
++        fi
++	$EBTABLES -A $dev --log-prefix="arp-drop" --log-arp --log-ip -j DROP
++        
+         ;;
+ esac
+ 

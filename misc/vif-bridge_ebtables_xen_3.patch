@@ -1,0 +1,41 @@
+--- /etc/xen/scripts/vif-bridge.old	2012-07-07 03:20:43.000000000 +0800
++++ /etc/xen/scripts/vif-bridge	2012-07-07 22:14:49.000000000 +0800
+@@ -53,15 +53,38 @@
+     fatal "Could not find bridge device $bridge"
+ fi
+ 
++touch /var/lock/ebtables
++EBTABLES="flock /var/lock/ebtables ebtables"
++
+ case "$command" in
+     online)
+ 	setup_bridge_port "$vif"
+ 	add_to_bridge "$bridge" "$vif"
++
++	$EBTABLES -N $vif
++	$EBTABLES -P $vif DROP
++	$EBTABLES -A INPUT -i $vif -j $vif
++	$EBTABLES -A FORWARD -i $vif -j $vif
++	$EBTABLES -A $vif -p ARP --arp-opcode 1 -j ACCEPT
++	$EBTABLES -A $vif -p IPv6 -j DROP
++	if [ ! -z $ip ]; then
++		for oneip in $ip; do
++			$EBTABLES -A $vif -p IPv4 --ip-src $oneip -j ACCEPT
++			$EBTABLES -A $vif -p IPv4 --ip-dst $oneip -j ACCEPT
++			$EBTABLES -A $vif -p ARP --arp-opcode 2 --arp-ip-src $oneip -j ACCEPT
++		done
++		$EBTABLES -A $vif --log-prefix="arp-drop" --log-arp --log-ip -j DROP
++	fi
++
+         ;;
+ 
+     offline)
+         do_without_error brctl delif "$bridge" "$vif"
+         do_without_error ifconfig "$vif" down
++	do_without_error $EBTABLES -D INPUT -i $vif -j $vif
++	do_without_error $EBTABLES -D FORWARD -i $vif -j $vif
++	do_without_error $EBTABLES -F $vif
++	do_without_error $EBTABLES -X $vif
+         ;;
+ esac
+ 

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 #coding:utf-8
 
 import sys
@@ -13,7 +13,7 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
 import ops.vps_common as vps_common
-from ops.xen import get_xen_inf
+from ops.xen import get_xen_inf, XenStore
 import time
 import re
 import lib.daemon as daemon
@@ -32,6 +32,7 @@ class VPSMgr (object):
         self.logger = Log ("vps_mgr", config=conf)
         self.logger_err = Log ("vps_mgr_err", config=conf)
         self.logger_misc = Log ("misc", config=conf) 
+        self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
@@ -47,7 +48,8 @@ class VPSMgr (object):
         self.running = False
 
     def get_client (self):
-        return get_client (VPS)
+        transport, client = get_client (VPS, timeout_ms=5000)
+        return transport, client
 
     def send_netflow (self):
         result = None
@@ -94,7 +96,7 @@ class VPSMgr (object):
             trans.open ()
             try:
                 vps_id = client.todo (self.host_id, cmd)
-                print cmd, vps_id
+                self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                 if vps_id > 0:
                     vps = client.vps (vps_id)
                     if not self.vps_is_valid (vps):
@@ -125,12 +127,18 @@ class VPSMgr (object):
     def run_loop (self, cmd):
         self.logger.info ("worker for %s started" % (str(cmd)))
         while self.running:
+            time.sleep(1)
             try:
                 if self.run_once (cmd):
                     continue
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
-            time.sleep (2)
+            if self.running:
+                time.sleep (1)
+            if self.running:
+                time.sleep (1)
+            if self.running:
+                time.sleep (1)
         self.logger.info ("worker for %s stop" % (str(cmd)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
@@ -190,6 +198,12 @@ class VPSMgr (object):
         xv = XenVPS (vps.id)
         vpsops = VPSOps (self.logger)
         try:
+            domain_dict = XenStore.domain_name_id_map ()
+            msg = "vps open: cannot open more than 39 vps"
+            if len (domain_dict.keys ()) >= 40:
+                self.logger.error (msg)
+                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                return
             self.setup_vps (xv, vps)
             if xv.is_running ():
                 msg = "vps %s is running" % (vps.id)
@@ -248,7 +262,7 @@ class VPSMgr (object):
             vpsops.upgrade_vps (xv)
             return True
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+            self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
             #TODO done task
             return False
 

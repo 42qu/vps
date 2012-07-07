@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 import sys
 import os
@@ -19,7 +19,7 @@ def close_vps (vps_id):
     try:
         vps = client.query_vps (vps_id)
     except Exception, e:
-        print "failed to query vps state:" + type(e) + str(e)
+        print "failed to query vps state: [%s] %s" % (type(e), str(e))
         return
     if not vps:
         print "not backend data for vps %s" % (vps_id)

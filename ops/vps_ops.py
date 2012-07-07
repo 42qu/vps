@@ -195,12 +195,12 @@ class VPSOps (object):
         if vps.swap_store.exists ():
             vps.swap_store.delete ()
             self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
+        if os.path.exists (vps.auto_config_path):  # if link target deleted, link will not exists
+            os.remove (vps.auto_config_path)
+            self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
         if os.path.exists (vps.config_path):
             os.remove (vps.config_path)
             self.loginfo (vps, "deleted %s" % (vps.config_path))
-        if os.path.exists (vps.auto_config_path):
-            os.remove (vps.auto_config_path)
-            self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
         if os.path.exists (meta_path):
             os.remove (meta_path)
             self.loginfo (vps, "removed %s" % (meta_path))
@@ -363,6 +363,7 @@ class VPSOps (object):
 
     def reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
+        vps = None
         if os.path.exists (meta_path):
             vps = self._load_vps_meta (meta_path)
             if _vps: 
@@ -371,8 +372,6 @@ class VPSOps (object):
                 vps.os_id = os_id
             else:
                 raise Exception ("missing os_id")
-        elif _vps:
-            vps = _vps
         else:
             raise Exception ("missing vps metadata")
         _vps_image, os_type, os_version = os_image.find_os_image (vps.os_id)
@@ -418,8 +417,12 @@ class VPSOps (object):
                         self.loginfo (vps, "sync dir /%s to new os" % (sync_dir))
 
                 self.loginfo (vps, "begin to init os")
-                os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=False)
-                os_init.migrate_users (vps, vps_mountpoint, vps_mountpoint_bak)
+                if _vps:
+                    vps.root_pw = _vps.root_pw
+                    os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=True)
+                else: # if no user data provided from backend
+                    os_init.os_init (vps, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                    os_init.migrate_users (vps, vps_mountpoint, vps_mountpoint_bak)
                 self.loginfo (vps, "done init os")
             finally:
                 vps_common.umount_tmp (vps_mountpoint)
