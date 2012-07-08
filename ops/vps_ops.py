@@ -284,7 +284,7 @@ class VPSOps (object):
         if os.path.exists (vps.config_path):
             os.remove (vps.config_path)
             self.loginfo (vps, "deleted %s" % (vps.config_path))
-        if os.path.exists (vps.auto_config_path):
+        if os.path.islink (vps.auto_config_path):
             os.remove (vps.auto_config_path)
             self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
         if os.path.exists (meta_path):
