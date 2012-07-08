@@ -34,6 +34,7 @@ class VPSMgr (object):
         self.logger_misc = Log ("misc", config=conf) 
         self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
+        self.vpsops = VPSOps (self.logger)
         self.handlers = {
             Cmd.OPEN: self.__class__.vps_open,
             Cmd.REBOOT: self.__class__.vps_reboot,
@@ -196,7 +197,6 @@ class VPSMgr (object):
             self.done_task (Cmd.OPEN, vps.id, False, "invalid vps data")
             return
         xv = XenVPS (vps.id)
-        vpsops = VPSOps (self.logger)
         try:
             domain_dict = XenStore.domain_name_id_map ()
             msg = "vps open: cannot open more than 39 vps"
@@ -211,9 +211,9 @@ class VPSMgr (object):
                 self.done_task (Cmd.OPEN, vps.id, False, msg)
                 return
             if vps.state in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
-                vpsops.create_vps (xv, vps_image, is_new)
+                self.vpsops.create_vps (xv, vps_image, is_new)
             elif vps.state == vps_const.VPS_STATE_CLOSE:
-                vpsops.reopen_vps (vps.id, xv)
+                self.vpsops.reopen_vps (vps.id, xv)
             else:
                 msg = "vps%s state is %s(%s)" % (str(vps.id), vps.state, vps_const.VPS_STATE2CN[vps.state])
                 self.logger_err.error (msg)
@@ -237,12 +237,11 @@ class VPSMgr (object):
 
     def _reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
         try:
-            vpsops = VPSOps (self.logger)
             xv = None
             if _vps:
                 xv = XenVPS (_vps.id)
                 self.setup_vps (xv, _vps)
-            vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
+            self.vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
             if _vps:
                 self.done_task (Cmd.OS, vps_id, True)
             return True
@@ -256,10 +255,9 @@ class VPSMgr (object):
         self.logger.info ("to upgrade vps %s" % (vps.id))
         #TODO done task
         try:
-            vpsops = VPSOps (self.logger)
             xv = XenVPS (vps.id)
             self.setup_vps (xv, vps)
-            vpsops.upgrade_vps (xv)
+            self.vpsops.upgrade_vps (xv)
             return True
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
@@ -270,10 +268,9 @@ class VPSMgr (object):
     def vps_reboot (self, vps):
         xv = XenVPS (vps.id) 
         self.logger.info ("to reboot vps %s" % (vps.id))
-        vpsops = VPSOps (self.logger)
         try:
             self.setup_vps (xv, vps)
-            vpsops.reboot_vps (xv)
+            self.vpsops.reboot_vps (xv)
         except Exception, e:
             self.logger_err.exception (e)
             self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e)))
@@ -283,11 +280,10 @@ class VPSMgr (object):
 
     def modify_vif_rate (self, vps):
         xv = XenVPS (vps.id)
-        vpsops = VPSOps (self.logger)
         self.logger.info ("to modify vif rate for vps %s" % (vps.id))
         try:
             self.setup_vps (xv, vps)
-            vpsops.create_xen_config (vps)
+            self.vpsops.create_xen_config (vps)
         except Exception, e:
             self.logger_err.exception (e)
             self.done_task (Cmd.BANDWIDTH, vps.id, False, "exception %s" % (str(e)))
@@ -333,12 +329,11 @@ class VPSMgr (object):
 
     def _vps_delete (self, vps_id, vps=None):
         try:
-            vpsops = VPSOps (self.logger)
             xv = None
             if vps:
                 xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps)
-            vpsops.delete_vps (vps_id, xv)
+            self.vpsops.delete_vps (vps_id, xv)
         except Exception, e:
             self.logger_err.exception (e)
             raise e
@@ -346,10 +341,9 @@ class VPSMgr (object):
     def vps_close (self, vps):
         try:
             assert vps.state == vps_const.VPS_STATE_CLOSE
-            vpsops = VPSOps (self.logger)
             xv = XenVPS (vps.id)
             self.setup_vps (xv, vps)
-            vpsops.close_vps (vps.id, xv)
+            self.vpsops.close_vps (vps.id, xv)
         except Exception, e:
             self.logger_err.exception (e)
             self.done_task (Cmd.CLOSE, vps.id, False, "exception %s" % (str(e)))
