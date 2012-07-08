@@ -195,7 +195,7 @@ class VPSOps (object):
         if vps.swap_store.exists ():
             vps.swap_store.delete ()
             self.loginfo (vps, "deleted %s" % (str(vps.swap_store)))
-        if os.path.exists (vps.auto_config_path):  # if link target deleted, link will not exists
+        if os.path.islink (vps.auto_config_path): 
             os.remove (vps.auto_config_path)
             self.loginfo (vps, "deleted %s" % (vps.auto_config_path))
         if os.path.exists (vps.config_path):

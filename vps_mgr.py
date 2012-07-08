@@ -136,9 +136,10 @@ class VPSMgr (object):
                     res = self.run_once (cmd)
                     if not self.running:
                         break
-                    time.sleep (1)
-                if self.running:
-                    time.sleep (1)
+                    if not res:
+                        time.sleep (1.5)
+                    else:
+                        time.sleep (1)
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
         self.logger.info ("worker for %s stop" % (str(cmds)))
