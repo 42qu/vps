@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2.6
 
 import glob
 import re
@@ -9,6 +9,7 @@ import saas.const.vps as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
+from ops.xen import XenStore
 import ops.vps_common as vps_common
 
 def check_via_meta (client, vpsops, vps_id, vps_info):
@@ -65,6 +66,10 @@ def check_all_vps ():
         vps_id = int(om.group (1))
         all_ids.append (vps_id)
     all_ids.sort ()
+    domain_dict = XenStore.domain_name_id_map ()
+    del domain_dict['Domain-0']
+    print ""
+    print "xen_config: %d, running: %d"  % (len(all_ids), len(domain_dict))
     for vps_id in all_ids:
         checked, vps_info = check_via_backend (client, vps_id)
         if checked:
