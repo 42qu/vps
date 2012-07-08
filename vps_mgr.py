@@ -91,7 +91,7 @@ class VPSMgr (object):
 
     def run_once (self, cmd):
         vps_id = None
-        vps = None
+        vps_info = None
         try:
             trans, client = self.get_client ()
             trans.open ()
@@ -99,29 +99,29 @@ class VPSMgr (object):
                 vps_id = client.todo (self.host_id, cmd)
                 self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                 if vps_id > 0:
-                    vps = client.vps (vps_id)
-                    if not self.vps_is_valid (vps):
-                        self.logger.error ("invalid vps data received, cmd=%s, vps_id=%s" % (cmd, vps_id))
-                        self.done_task(cmd, vps_id, False, "invalid data")
-                        vps = None
+                    vps_info = client.vps (vps_id)
+                    if not self.vps_is_valid (vps_info):
+                        self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
+                        self.done_task(cmd, vps_id, False, "invalid vpsinfo")
+                        vps_info = None
             finally:
                 trans.close ()
         except Exception, e:
             self.logger_err.exception (e)
             return False
-        if not vps:
+        if not vps_info:
             return False
         h = self.handlers.get (cmd)
         if callable (h):
             try:
-                h (self, vps)
+                h (self, vps_info)
                 return True
             except Exception, e:
-                self.logger_err.exception ("vps %s, uncaught exception: %s" % (vps.id, str(e)))
+                self.logger_err.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
                 #TODO notify maintainments
                 return False
         else:
-            self.logger.warn ("no handler for cmd %s, vps: %s" % (str(cmd), self.dump_vps_info(vps)))
+            self.logger.warn ("no handler for cmd %s, vps: %s" % (str(cmd), self.dump_vps_info(vps_info)))
             self.done_task (cmd, vps_id, False, "not implemented")
             return False
 
@@ -158,150 +158,150 @@ class VPSMgr (object):
             self.logger_err.exception (e)
 
     @staticmethod
-    def vps_is_valid (vps):
-        return vps is not None and vps.id > 0 
+    def vps_is_valid (vps_info):
+        if vps_info is None or vps_info.id <= 0:
+            return None
+        if not vps_info.ipv4 or not vps_info.ipv4_gateway or vps_info.cpu <= 0 or vps_info.ram <= 0 or vps_info.hd <= 0 or not vps_info.password:
+            return None
+        return vps_info
 
     @staticmethod
-    def dump_vps_info (vps):
-        ip = vps.ipv4 is not None and int2ip (vps.ipv4) or None
-        ip_inter = vps.ipv4_inter is not None  and int2ip (vps.ipv4_inter) or None
-        netmask = vps.ipv4_netmask is not None and int2ip (vps.ipv4_netmask) or None
-        gateway = vps.ipv4_gateway is not None and int2ip (vps.ipv4_gateway) or None
-        if vps.state is not None:
-            state = "%s(%s)" % (vps.state, vps_const.VPS_STATE2CN[vps.state])
+    def dump_vps_info (vps_info):
+        ip = vps_info.ipv4 is not None and int2ip (vps_info.ipv4) or None
+        ip_inter = vps_info.ipv4_inter is not None  and int2ip (vps_info.ipv4_inter) or None
+        netmask = vps_info.ipv4_netmask is not None and int2ip (vps_info.ipv4_netmask) or None
+        gateway = vps_info.ipv4_gateway is not None and int2ip (vps_info.ipv4_gateway) or None
+        if vps_info.state is not None:
+            state = "%s(%s)" % (vps_info.state, vps_const.VPS_STATE2CN[vps_info.state])
         else:
             state = None
         return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
-                vps.host_id, vps.id, state, 
-                vps.os, vps.cpu, vps.ram, vps.hd, 
-                ip, netmask, gateway, ip_inter, vps.bandwidth,
+                vps_info.host_id, vps_info.id, state, 
+                vps_info.os, vps_info.cpu, vps_info.ram, vps_info.hd, 
+                ip, netmask, gateway, ip_inter, vps_info.bandwidth,
             )
 
-    def setup_vps (self, xenvps, vps):
-        xenvps.setup (os_id=vps.os, vcpu=vps.cpu, mem_m=vps.ram, disk_g=vps.hd, root_pw=vps.password, 
-                ip=int2ip (vps.ipv4), 
-                netmask=int2ip (vps.ipv4_netmask), 
-                gateway=int2ip (vps.ipv4_gateway),
+    def setup_vps (self, xenvps, vps_info):
+        xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram, disk_g=vps_info.hd, root_pw=vps_info.password, 
+                ip=int2ip (vps_info.ipv4), 
+                netmask=int2ip (vps_info.ipv4_netmask), 
+                gateway=int2ip (vps_info.ipv4_gateway),
                 )
 
 
-    def vps_open (self, vps, vps_image=None, is_new=True): 
-        self.logger.info ("to open vps %s" % (vps.id))
-        if vps.host_id != self.host_id:
-            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, self.host_id)
+    def vps_open (self, vps_info, vps_image=None, is_new=True): 
+        self.logger.info ("to open vps %s" % (vps_info.id))
+        if vps_info.host_id != self.host_id:
+            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps.id, False, msg)
+            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
             return
-        if not vps.ipv4 or not vps.ipv4_gateway or vps.cpu <= 0 or vps.ram <= 0 or vps.hd <= 0 or not vps.password:
-            self.logger.error ("vps open: invalid vps data received: %s" % (self.dump_vps_info (vps)))
-            self.done_task (Cmd.OPEN, vps.id, False, "invalid vps data")
-            return
-        xv = XenVPS (vps.id)
+        xv = XenVPS (vps_info.id)
         try:
             domain_dict = XenStore.domain_name_id_map ()
             msg = "vps open: cannot open more than 39 vps"
             if len (domain_dict.keys ()) >= 40:
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
-            self.setup_vps (xv, vps)
+            self.setup_vps (xv, vps_info)
             if xv.is_running ():
-                msg = "vps %s is running" % (vps.id)
+                msg = "vps %s is running" % (vps_info.id)
                 self.logger_err.error (msg)
-                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
-            if vps.state in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
+            if vps_info.state in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
                 self.vpsops.create_vps (xv, vps_image, is_new)
-            elif vps.state == vps_const.VPS_STATE_CLOSE:
-                self.vpsops.reopen_vps (vps.id, xv)
+            elif vps_info.state == vps_const.VPS_STATE_CLOSE:
+                self.vpsops.reopen_vps (vps_info.id, xv)
             else:
-                msg = "vps%s state is %s(%s)" % (str(vps.id), vps.state, vps_const.VPS_STATE2CN[vps.state])
+                msg = "vps%s state is %s(%s)" % (str(vps_info.id), vps_info.state, vps_const.VPS_STATE2CN[vps_info.state])
                 self.logger_err.error (msg)
-                self.done_task (Cmd.OPEN, vps.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
-            self.done_task (Cmd.OPEN, vps.id, False, "error, " + str(e))
+            self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
+            self.done_task (Cmd.OPEN, vps_info.id, False, "error, " + str(e))
             return
-        self.done_task (Cmd.OPEN, vps.id, True)
+        self.done_task (Cmd.OPEN, vps_info.id, True)
         return True
 
-    def vps_reinstall_os (self, vps):
-        self.logger.info ("to reinstall vps %s, os=%s" % (vps.id, vps.os))
-        if vps.host_id != self.host_id:
-            msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps.id, vps.host_id, self.host_id)
+    def vps_reinstall_os (self, vps_info):
+        self.logger.info ("to reinstall vps %s, os=%s" % (vps_info.id, vps_info.os))
+        if vps_info.host_id != self.host_id:
+            msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OS, vps.id, False, msg)
+            self.done_task (Cmd.OS, vps_info.id, False, msg)
             return
-        return self._reinstall_os (vps.id, vps)
+        return self._reinstall_os (vps_info.id, vps_info)
 
-    def _reinstall_os (self, vps_id, _vps=None, os_id=None, vps_image=None):
+    def _reinstall_os (self, vps_id, vps_info=None, os_id=None, vps_image=None):
         try:
             xv = None
-            if _vps:
-                xv = XenVPS (_vps.id)
-                self.setup_vps (xv, _vps)
+            if vps_info:
+                xv = XenVPS (vps_info.id)
+                self.setup_vps (xv, vps_info)
             self.vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
-            if _vps:
+            if vps_info:
                 self.done_task (Cmd.OS, vps_id, True)
             return True
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
-            if _vps:
+            if vps_info:
                 self.done_task (Cmd.OS, vps_id, False, "error," +str(e))
             return False
 
-    def vps_upgrade (self, vps):
-        self.logger.info ("to upgrade vps %s" % (vps.id))
+    def vps_upgrade (self, vps_info):
+        self.logger.info ("to upgrade vps %s" % (vps_info.id))
         #TODO done task
         try:
-            xv = XenVPS (vps.id)
-            self.setup_vps (xv, vps)
+            xv = XenVPS (vps_info.id)
+            self.setup_vps (xv, vps_info)
             self.vpsops.upgrade_vps (xv)
             return True
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps.id), str(e)))
+            self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
             #TODO done task
             return False
 
 
-    def vps_reboot (self, vps):
-        xv = XenVPS (vps.id) 
-        self.logger.info ("to reboot vps %s" % (vps.id))
+    def vps_reboot (self, vps_info):
+        xv = XenVPS (vps_info.id) 
+        self.logger.info ("to reboot vps %s" % (vps_info.id))
         try:
-            self.setup_vps (xv, vps)
+            self.setup_vps (xv, vps_info)
             self.vpsops.reboot_vps (xv)
         except Exception, e:
             self.logger_err.exception (e)
-            self.done_task (Cmd.REBOOT, vps.id, False, "exception %s" % (str(e)))
+            self.done_task (Cmd.REBOOT, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.REBOOT, vps.id, True)
+        self.done_task (Cmd.REBOOT, vps_info.id, True)
         return True
 
-    def modify_vif_rate (self, vps):
-        xv = XenVPS (vps.id)
-        self.logger.info ("to modify vif rate for vps %s" % (vps.id))
+    def modify_vif_rate (self, vps_info):
+        xv = XenVPS (vps_info.id)
+        self.logger.info ("to modify vif rate for vps %s" % (vps_info.id))
         try:
-            self.setup_vps (xv, vps)
-            self.vpsops.create_xen_config (vps)
+            self.setup_vps (xv, vps_info)
+            self.vpsops.create_xen_config (vps_info)
         except Exception, e:
             self.logger_err.exception (e)
-            self.done_task (Cmd.BANDWIDTH, vps.id, False, "exception %s" % (str(e)))
+            self.done_task (Cmd.BANDWIDTH, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.BANDWIDTH, vps.id, True)
+        self.done_task (Cmd.BANDWIDTH, vps_info.id, True)
         return True
 
 
     def query_vps (self, vps_id):
         trans, client = self.get_client ()
         trans.open ()
-        vps = None
+        vps_info = None
         try:
-            vps = client.vps (vps_id)
+            vps_info = client.vps (vps_id)
         finally:
             trans.close ()
-        if VPSMgr.vps_is_valid (vps):
-            return vps
+        if VPSMgr.vps_is_valid (vps_info):
+            return vps_info
         return None
 
     def refresh_host_space (self):
@@ -327,28 +327,28 @@ class VPSMgr (object):
         except Exception, e:
             self.logger_err.exception (e)
 
-    def _vps_delete (self, vps_id, vps=None):
+    def _vps_delete (self, vps_id, vps_info=None):
         try:
             xv = None
-            if vps:
+            if vps_info:
                 xv = XenVPS (vps_id)
-                self.setup_vps (xv, vps)
+                self.setup_vps (xv, vps_info)
             self.vpsops.delete_vps (vps_id, xv)
         except Exception, e:
             self.logger_err.exception (e)
             raise e
 
-    def vps_close (self, vps):
+    def vps_close (self, vps_info):
         try:
-            assert vps.state == vps_const.VPS_STATE_CLOSE
-            xv = XenVPS (vps.id)
-            self.setup_vps (xv, vps)
-            self.vpsops.close_vps (vps.id, xv)
+            assert vps_info.state == vps_const.VPS_STATE_CLOSE
+            xv = XenVPS (vps_info.id)
+            self.setup_vps (xv, vps_info)
+            self.vpsops.close_vps (vps_info.id, xv)
         except Exception, e:
             self.logger_err.exception (e)
-            self.done_task (Cmd.CLOSE, vps.id, False, "exception %s" % (str(e)))
+            self.done_task (Cmd.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.CLOSE, vps.id, True)
+        self.done_task (Cmd.CLOSE, vps_info.id, True)
         return True
 
             
