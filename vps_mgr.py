@@ -125,22 +125,23 @@ class VPSMgr (object):
             self.done_task (cmd, vps_id, False, "not implemented")
             return False
 
-    def run_loop (self, cmd):
-        self.logger.info ("worker for %s started" % (str(cmd)))
+    def run_loop (self, *cmds):
+        self.logger.info ("worker for %s started" % (str(cmds)))
         while self.running:
-            time.sleep(1)
+            time.sleep(0.5)
             try:
-                if self.run_once (cmd):
-                    continue
+                for cmd in cmds:
+                    if not self.running:
+                        break
+                    res = self.run_once (cmd)
+                    if not self.running:
+                        break
+                    time.sleep (1)
+                if self.running:
+                    time.sleep (1)
             except Exception, e:
                 self.logger_err.exception ("uncaught exception: " + str(e))
-            if self.running:
-                time.sleep (1)
-            if self.running:
-                time.sleep (1)
-            if self.running:
-                time.sleep (1)
-        self.logger.info ("worker for %s stop" % (str(cmd)))
+        self.logger.info ("worker for %s stop" % (str(cmds)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
         state = 0
@@ -362,19 +363,22 @@ class VPSMgr (object):
             th.join ()
         self.logger.info ("all stopped")
 
+    def start_worker (self, *cmds):
+        th = threading.Thread (target=self.run_loop, args=cmds)
+        try:
+            th.setDaemon (1)
+            th.start ()
+            self.workers.append (th)
+        except Exception, e:
+            self.logger_err.info ("failed to start worker for cmd %s, %s" % (str(cmds), str(e)))
+
     def start (self):
         if self.running:
             return
         self.running = True
-        for cmd in self.handlers.keys ():
-            th = threading.Thread (target=self.run_loop, args=(cmd, ))
-            try:
-                th.setDaemon (1)
-                th.start ()
-                self.workers.append (th)
-            except Exception, e:
-                self.logger_err.info ("failed to start worker for cmd %s, %s" % (str(cmd), str(e)))
-        self.timer.start ()  
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS)
+        self.start_worker (Cmd.REBOOT)
+        self.timer.start ()
         self.logger.info ("timer started")
 
     def stop (self):
