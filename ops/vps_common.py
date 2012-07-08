@@ -49,9 +49,19 @@ def gen_mac ():
     out = call_cmd (cmd)
     return s + out
 
+def mkdtemp (prefix=None):
+    # tempfile.mkdtemp on some system (like centos5) is buggy,  but this implement is not protected against race condition either 
+    for i in xrange (0, 3):
+        tmp_mount = tempfile.mkdtemp (prefix=prefix)
+        if os.path.isdir (tmp_mount):
+            return tmp_mount
+        time.sleep (0.2)
+    raise Exception ("cannot create temporary mountpoint")
+            
+
 def mount_loop_tmp (img_path, readonly=False):
     """ create temporary mount point and mount loop file """
-    tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
+    tmp_mount = mkdtemp ("mpl")
     try:
         if readonly:
             call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
@@ -63,7 +73,7 @@ def mount_loop_tmp (img_path, readonly=False):
     return tmp_mount
 
 def mount_partition_tmp (dev_path, readonly=False):
-    tmp_mount = tempfile.mkdtemp (prefix='mountpoint')
+    tmp_mount = mkdtemp ("mp")
     try:
         if readonly:
             call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
