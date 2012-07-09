@@ -31,6 +31,7 @@ def reopen_vps (vps_id):
         xv = XenVPS (vps_info.id)
         client.setup_vps (xv, vps_info)
         client.vpsops.reopen_vps (vps_id, xv)
+        client.done_task (Cmd.OPEN, vps_id, True)
         return True
     except Exception, e:
         client.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
