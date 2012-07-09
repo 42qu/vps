@@ -43,11 +43,16 @@ class VPSStoreBase (object):
             self.trash_date = None
             self.expire_date = None
         
+    def trash_str (self):
+        raise NotImplementedError ()
 
     def create (self, fs_type=None):
         raise NotImplementedError ()
 
     def delete (self):
+        raise NotImplementedError ()
+
+    def delete_trash (self):
         raise NotImplementedError ()
 
     def exists (self):
@@ -145,6 +150,9 @@ class VPSStoreImage (VPSStoreBase):
     def __str__ (self):
         return self.file_path
 
+    def trash_str (self):
+        return self.trash_path
+
     def exists (self):
         return os.path.isfile (self.file_path)
 
@@ -161,13 +169,14 @@ class VPSStoreImage (VPSStoreBase):
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.file_path)
 
+    def delete_trash (self):
+        if os.path.exists (self.trash_path):
+            os.remove (self.trash_path)
 
     def delete (self):
         #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.file_path):
             os.remove (self.file_path)
-        if os.path.exists (self.trash_path):
-            os.remove (self.trash_path)
 
     def mount_tmp (self, readonly=False):
         return vps_common.mount_loop_tmp (self.file_path, readonly)
@@ -207,6 +216,9 @@ class VPSStoreLV (VPSStoreBase):
 
     def __str__ (self):
         return self.dev
+
+    def trash_str (self):
+        return self.trash_dev
 
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
@@ -253,13 +265,15 @@ class VPSStoreLV (VPSStoreBase):
         vps_common.lv_rename (self.trash_dev, self.dev)
         self._set_expire_days (None)
 
+    def delete_trash (self):
+        #TODO check whether in use !!!!!!!!!
+        if os.path.exists (self.trash_dev):
+            vps_common.lv_delete (self.trash_dev)
 
     def delete (self):
         #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.dev):
             vps_common.lv_delete (self.dev)
-        if os.path.exists (self.trash_dev):
-            vps_common.lv_delete (self.trash_dev)
 
     def mount_tmp (self, readonly=False):
         return vps_common.mount_partition_tmp (self.dev, readonly)
