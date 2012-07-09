@@ -245,12 +245,12 @@ class VPSMgr (object):
                 self.setup_vps (xv, vps_info)
             self.vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
             if vps_info:
-                self.done_task (Cmd.OS, vps_id, True)
+                self.done_task (Cmd.OS, vps_id, True, "os=%s" % (vps_info.os))
             return True
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
             if vps_info:
-                self.done_task (Cmd.OS, vps_id, False, "error," +str(e))
+                self.done_task (Cmd.OS, vps_id, False, "os=%s error, %s "% (vps_info.os,  str(e)))
             return False
 
     def vps_upgrade (self, vps_info):
