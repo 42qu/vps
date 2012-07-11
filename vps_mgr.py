@@ -22,6 +22,7 @@ import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from saas.ttypes import NetFlow
+import conf
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """

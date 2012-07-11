@@ -5,6 +5,9 @@ import ops.vps_common as vps_common
 import shutil
 import datetime
 import re
+import ops._env
+import conf
+assert conf.MOUNT_POINT_DIR and os.path.isdir (conf.MOUNT_POINT_DIR)
 
 def _parse_date (s):
     if s is None:
@@ -72,6 +75,9 @@ class VPSStoreBase (object):
     def restore_from_trash (self):
         raise NotImplementedError ()
 
+    def snapshot (self):
+        raise NotImplementedError ()
+
     def to_meta (self):
         data = {}
         data["size_g"] = self.size_g
@@ -129,9 +135,9 @@ class VPSStoreImage (VPSStoreBase):
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
         data['file_path'] = self.file_path
-	data['img_dir'] = self.img_dir
+        data['img_dir'] = self.img_dir
         data['trash_dir'] = self.trash_dir
-	data['img_name'] = self.img_name
+        data['img_name'] = self.img_name
         data['__class__'] = self.__class__.__name__
         return data
 
@@ -144,7 +150,6 @@ class VPSStoreImage (VPSStoreBase):
                 data['fs_type'],
                 data['mount_point'],
                 data['size_g'])
-
 
 
     def __str__ (self):
@@ -169,6 +174,7 @@ class VPSStoreImage (VPSStoreBase):
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.file_path)
 
+
     def delete_trash (self):
         if os.path.exists (self.trash_path):
             os.remove (self.trash_path)
@@ -179,10 +185,10 @@ class VPSStoreImage (VPSStoreBase):
             os.remove (self.file_path)
 
     def mount_tmp (self, readonly=False):
-        return vps_common.mount_loop_tmp (self.file_path, readonly)
+        return vps_common.mount_loop_tmp (self.file_path, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def mount_trash_temp (self, readonly=False):
-        return vps_common.mount_loop_tmp (self.trash_path, readonly)
+        return vps_common.mount_loop_tmp (self.trash_path, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def dump_trash (self, expire_days):
         if not os.path.exists (self.file_path):
@@ -276,12 +282,15 @@ class VPSStoreLV (VPSStoreBase):
             vps_common.lv_delete (self.dev)
 
     def mount_tmp (self, readonly=False):
-        return vps_common.mount_partition_tmp (self.dev, readonly)
+        return vps_common.mount_partition_tmp (self.dev, readonly=readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def mount_trash_temp (self, readonly=False):
-        return vps_common.mount_partition_tmp (self.trash_dev, readonly)
+        return vps_common.mount_partition_tmp (self.trash_dev, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
-
+    def snapshot (self):
+        snapshot_name = "snap_%s" % self.lv_name
+        snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name) 
+        return snapshot_dev
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

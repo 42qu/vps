@@ -8,7 +8,7 @@ import os
 import tempfile
 import time
 import re
-import _env
+import ops._env
 from lib.command import call_cmd
 
 #def call_cmd (cmd):
@@ -49,19 +49,19 @@ def gen_mac ():
     out = call_cmd (cmd)
     return s + out
 
-def mkdtemp (prefix=None):
+def mkdtemp (prefix=None, temp_dir=None):
     # tempfile.mkdtemp on some system (like centos5) is buggy,  but this implement is not protected against race condition either 
     for i in xrange (0, 3):
-        tmp_mount = tempfile.mkdtemp (prefix=prefix)
+        tmp_mount = tempfile.mkdtemp (prefix=prefix, dir=temp_dir)
         if os.path.isdir (tmp_mount):
             return tmp_mount
         time.sleep (0.2)
     raise Exception ("cannot create temporary mountpoint")
             
 
-def mount_loop_tmp (img_path, readonly=False):
+def mount_loop_tmp (img_path, readonly=False, temp_dir=None):
     """ create temporary mount point and mount loop file """
-    tmp_mount = mkdtemp ("mpl")
+    tmp_mount = mkdtemp ("mpl", temp_dir=temp_dir)
     try:
         if readonly:
             call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
@@ -72,8 +72,8 @@ def mount_loop_tmp (img_path, readonly=False):
         raise e
     return tmp_mount
 
-def mount_partition_tmp (dev_path, readonly=False):
-    tmp_mount = mkdtemp ("mp")
+def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
+    tmp_mount = mkdtemp ("mp", temp_dir=temp_dir)
     try:
         if readonly:
             call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
@@ -178,6 +178,21 @@ def lv_delete (lv_dev):
 def lv_rename (src_dev, dest_dev):
     call_cmd ("lvrename %s %s " % (src_dev, dest_dev))
 
+def lv_getsize (dev):
+    out = call_cmd ("lvs --noheadings -o lv_size --units g %s" % (dev))
+    out = out.strip ()
+    out = out.strip ("G")
+    return int(out)
+
+def lv_snapshot (dev, snapshot_name, vg_name):
+    snapshot_dev = "/dev/%s/%s" % (snapshot_name)
+    if not os.path.exists (dev):
+        raise Exception ("%s not exists" % (dev))
+    if os.path.exists (snapshot_dev):
+        raise Exception ("%s already exists" % (snapshot_dev))
+    size = lv_getsize (dev)
+    call_cmd ("lvcreate --name %s --size %dG -s %s" % (snapshot_name, size, dev))
+    return snapshot_dev
 
 def pack_vps_fs_tarball (img_path, tarball_dir_or_path):
     """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
