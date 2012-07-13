@@ -28,7 +28,7 @@ def check_via_meta (client, vpsops, vps_id, vps_info):
             return
         else:
             client.setup_vps (xv, vps_info)
-            ip_ok = "ip %s " % (xv.ip) +  vps_common.ping (xv.ip) and "reachable" or "timeout"
+            ip_ok = "ip %s " % (xv.ip) +  (vps_common.ping (xv.ip) and "reachable" or "timeout")
             print "vps %s %s %s has no meta_data" % (vps_id, is_running, ip_ok)
             return
 
@@ -49,7 +49,7 @@ def check_via_backend (client, vps_id):
     elif vps_info.state != vps_const.VPS_STATE_RUN:
         is_running = xv.is_running () and "(running)" or "(not running)"
         print "vps %s %s backend state=%s " % (vps_id, is_running, vps_const.VPS_STATE2CN[vps_info.state])
-        print True, None
+        return True, None
     return False, vps_info
 
 def check_all_vps ():
