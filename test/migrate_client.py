@@ -10,7 +10,7 @@ from lib.log import Log
 
 def main():
     logger =  Log ("migrate_client", config=conf)
-    client = migrate.MigrateClient (logger, "127.0.0.1")
+    client = migrate.MigrateClient (logger, "10.10.2.6")
 
     client.sync_partition ("/dev/main/vps274_root")
 

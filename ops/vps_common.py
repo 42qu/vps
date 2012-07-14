@@ -182,7 +182,7 @@ def lv_getsize (dev):
     out = call_cmd ("lvs --noheadings -o lv_size --units g %s" % (dev))
     out = out.strip ()
     out = out.strip ("G")
-    return int(out)
+    return float(out)
 
 def lv_snapshot (dev, snapshot_name, vg_name):
     snapshot_dev = "/dev/%s/%s" % (snapshot_name)
