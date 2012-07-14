@@ -20,5 +20,3 @@ def prepare(o):
     o.RSYNC_CONF_PATH = "/mnt/data/vps/rsync.conf"
     o.XEN_BRIDGE = "br0"
     o.XEN_INTERNAL_BRIDGE = "br0"
-    o.LISTEN_ADDR = "10.10.2.6"
-
