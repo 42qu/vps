@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # @file job_queue.py 
-# @author an.ning@aliyun-inc.com
+# @author frostyplanet@gmail.com
 # @version $Id$
 # @brief
 #

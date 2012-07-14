@@ -197,4 +197,39 @@ def start (func, pid_file, mon_pid_file, log_func=None):
     else:
         daemonize (func, pid_file, mon_pid_file, log_func)
 
+def cmd_wrapper (action, main, usage, logger, log_dir, run_dir, pid_file, mon_pid_file):
+    if not os.path.exists (log_dir):
+        os.makedirs (log_dir, 0700)
+    if not os.path.exists (run_dir):
+        os.makedirs (run_dir, 0700)
+    os.chdir (run_dir)
+
+    def _log_err (msg):
+        print msg
+        logger.error (msg, bt_level=1)
+        return
+
+    def _start ():
+        start (main, pid_file, mon_pid_file, _log_err)
+        return
+
+    def _stop ():
+        stop (signal.SIGTERM, pid_file, mon_pid_file)
+        return
+
+    if action == "start":
+        _start ()
+    elif action == "stop":
+        _stop ()
+    elif action == "restart":
+        _stop ()
+        time.sleep (2)
+        _start ()
+    elif action == "status":
+        status (pid_file, mon_pid_file)
+    elif action == "run":
+        main ()
+    else:
+        usage ()
+
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

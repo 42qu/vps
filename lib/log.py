@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 #
 # @file log.py
-# @author an.ning@aliyun-inc.com
+# @author frostyplanet@gmail.com
 # @version $Id: log.py,v 1.3 2010/04/26 03:41:21 anning Exp $
 # @brief
 #

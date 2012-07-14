@@ -418,45 +418,13 @@ def _main():
 
 if __name__ == "__main__":
 
+    logger = Log ("daemon", config=conf) # to ensure log is permitted to write
+    pid_file = "vps_mgr.pid"
+    mon_pid_file = "vps_mgr_mon.pid"
+    action = sys.argv[1]
+
     if len (sys.argv) <= 1:
         usage ()
     else:
-        log_dir = conf.log_dir
-        if not os.path.exists (log_dir):
-            os.makedirs (log_dir, 0700)
-        run_dir = conf.RUN_DIR
-        if not os.path.exists (run_dir):
-            os.makedirs (run_dir, 0700)
-        logger = Log ("vps_mgr", config=conf) # to ensure log is permitted to write
-        os.chdir (run_dir)
-
-        pid_file = "vps_mgr.pid"
-        mon_pid_file = "vps_mgr_mon.pid"
-
-
-        def _log_err (msg):
-            print msg
-            logger.error (msg, bt_level=1)
-
-        def _start ():
-            daemon.start (_main, pid_file, mon_pid_file, _log_err)
-
-        def _stop ():
-            daemon.stop (signal.SIGTERM, pid_file, mon_pid_file)
-
-        action = sys.argv[1]
-        if action == "start":
-            _start ()
-        elif action == "stop":
-            _stop ()
-        elif action == "restart":
-            _stop ()
-            time.sleep (2)
-            _start ()
-        elif action == "status":
-            daemon.status (pid_file, mon_pid_file)
-        elif action == "run":
-            _main ()
-        else:
-            usage ()
+        daemon.cmd_wrapper (action, _main, usage, logger, conf.log_dir, conf.RUN_DIR, pid_file, mon_pid_file)
 

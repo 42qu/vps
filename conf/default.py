@@ -51,6 +51,9 @@ def prepare(o):
     o.NETFLOW_COLLECT_INV = 60  # in sec
     o.XEN_BRIDGE = "xenbr0"
     o.XEN_INTERNAL_BRIDGE = "xenbr1"
+    o.RSYNC_CONF_PATH = "/data/vps/rsync.conf"
+    o.RSYNC_PORT = 26554
+    o.INF_PORT = 26550
 
     o.DEFAULT_FS_TYPE = 'ext4'
     o.CLOSE_EXPIRE_DAYS = 15
