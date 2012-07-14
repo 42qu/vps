@@ -152,6 +152,9 @@ class XenVPS (object):
             filename = "%s_data%s.img" % (self.name, disk_id)
             self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
 
+    def delete_trash (self, disk):
+        del self.trash_disks[disk.xen_dev]
+
     def dump_storage_to_trash (self, disk, expire_days=10):
         res = False
         # TODO , store the date in meta
@@ -359,9 +362,18 @@ on_crash = "restart"
         if self.swap_store.size_g > 0:
             if not self.swap_store.exists ():
                 raise Exception ("disk %s not exists" % (str(self.swap_store)))
-        for trash_disk in self.trash_disks.values ():
-            if not trash_disk.trash_exists ():
-                raise Exception ("trash_disk %s not exists" % (str(trash_disk)))
+
+    def get_nonexisting_trash (self):
+        result = []
+        for disk in self.trash_disks.values ():
+            if not disk.trash_exists ():
+                result.append (disk)
+        return result
+        
+#    def check_trash_integrity (self):
+#        for trash_disk in self.trash_disks.values ():
+#            if not trash_disk.trash_exists ():
+#                raise Exception ("trash_disk %s not exists" % (str(trash_disk)))
 
     def check_xen_config (self):
         if not os.path.exists (self.config_path):

@@ -5,6 +5,9 @@ import ops.vps_common as vps_common
 import shutil
 import datetime
 import re
+import ops._env
+import conf
+assert conf.MOUNT_POINT_DIR and os.path.isdir (conf.MOUNT_POINT_DIR)
 
 def _parse_date (s):
     if s is None:
@@ -43,11 +46,16 @@ class VPSStoreBase (object):
             self.trash_date = None
             self.expire_date = None
         
+    def trash_str (self):
+        raise NotImplementedError ()
 
     def create (self, fs_type=None):
         raise NotImplementedError ()
 
     def delete (self):
+        raise NotImplementedError ()
+
+    def delete_trash (self):
         raise NotImplementedError ()
 
     def exists (self):
@@ -65,6 +73,9 @@ class VPSStoreBase (object):
         raise NotImplementedError ()
 
     def restore_from_trash (self):
+        raise NotImplementedError ()
+
+    def snapshot (self):
         raise NotImplementedError ()
 
     def to_meta (self):
@@ -124,9 +135,9 @@ class VPSStoreImage (VPSStoreBase):
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
         data['file_path'] = self.file_path
-	data['img_dir'] = self.img_dir
+        data['img_dir'] = self.img_dir
         data['trash_dir'] = self.trash_dir
-	data['img_name'] = self.img_name
+        data['img_name'] = self.img_name
         data['__class__'] = self.__class__.__name__
         return data
 
@@ -141,9 +152,11 @@ class VPSStoreImage (VPSStoreBase):
                 data['size_g'])
 
 
-
     def __str__ (self):
         return self.file_path
+
+    def trash_str (self):
+        return self.trash_path
 
     def exists (self):
         return os.path.isfile (self.file_path)
@@ -162,18 +175,20 @@ class VPSStoreImage (VPSStoreBase):
         vps_common.format_fs (self.fs_type, self.file_path)
 
 
+    def delete_trash (self):
+        if os.path.exists (self.trash_path):
+            os.remove (self.trash_path)
+
     def delete (self):
         #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.file_path):
             os.remove (self.file_path)
-        if os.path.exists (self.trash_path):
-            os.remove (self.trash_path)
 
     def mount_tmp (self, readonly=False):
-        return vps_common.mount_loop_tmp (self.file_path, readonly)
+        return vps_common.mount_loop_tmp (self.file_path, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def mount_trash_temp (self, readonly=False):
-        return vps_common.mount_loop_tmp (self.trash_path, readonly)
+        return vps_common.mount_loop_tmp (self.trash_path, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def dump_trash (self, expire_days):
         if not os.path.exists (self.file_path):
@@ -207,6 +222,9 @@ class VPSStoreLV (VPSStoreBase):
 
     def __str__ (self):
         return self.dev
+
+    def trash_str (self):
+        return self.trash_dev
 
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
@@ -253,21 +271,26 @@ class VPSStoreLV (VPSStoreBase):
         vps_common.lv_rename (self.trash_dev, self.dev)
         self._set_expire_days (None)
 
+    def delete_trash (self):
+        #TODO check whether in use !!!!!!!!!
+        if os.path.exists (self.trash_dev):
+            vps_common.lv_delete (self.trash_dev)
 
     def delete (self):
         #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.dev):
             vps_common.lv_delete (self.dev)
-        if os.path.exists (self.trash_dev):
-            vps_common.lv_delete (self.trash_dev)
 
     def mount_tmp (self, readonly=False):
-        return vps_common.mount_partition_tmp (self.dev, readonly)
+        return vps_common.mount_partition_tmp (self.dev, readonly=readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
     def mount_trash_temp (self, readonly=False):
-        return vps_common.mount_partition_tmp (self.trash_dev, readonly)
+        return vps_common.mount_partition_tmp (self.trash_dev, readonly, temp_dir=conf.MOUNT_POINT_DIR)
 
-
+    def snapshot (self):
+        snapshot_name = "snap_%s" % self.lv_name
+        snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name) 
+        return snapshot_dev
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

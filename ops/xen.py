@@ -7,13 +7,18 @@ import os
 import re
 from lib.command import call_cmd, search_path, Command, CommandException
 
-def get_xen_inf ():
+
+def _get_xen_inf ():
     if XenXM.available():
         return XenXM ()
     elif XenXL.available ():
         return XenXL ()
     else:
         raise Exception ("xm-tools not available")
+
+
+def get_xen_inf ():
+    return _xentool
 
 class IXen (object):
 
@@ -215,6 +220,7 @@ class XenStore (object):
         return cls._get_tree ("/local/domain/0/backend/vif/%s" % (domain_id))
         
 
+_xentool = _get_xen_inf ()  # check xen tools and setup
 
 if __name__ == '__main__':
     import unittest
