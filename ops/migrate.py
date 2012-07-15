@@ -43,11 +43,11 @@ class InteractJob (Job):
         conn = self.conn
         if callable (cb):
             try:
-                self.logger.info ("peer %s, cmd %s" % (conn.peer, cmd))
+                self.migsvr.logger.info ("peer %s, cmd %s" % (conn.peer, cmd))
                 cb (conn, cmd, self.msg_data)
                 self.migsvr.engine.watch_conn (conn)
             except Exception, e:
-                self.migsvr.logger.exception ("peer %s, uncaught exception: " % (conn.peer, str(e)))
+                self.migsvr.logger.exception ("peer %s, uncaught exception: %s" % (conn.peer, str(e)))
                 self.migsvr.engine.close_conn (conn)
             
 RSYNC_SERVER_NAME = "sync_server"
