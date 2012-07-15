@@ -73,13 +73,12 @@ class _BaseServer (object):
     def loop (self):
         while self.is_running:
             self.poll ()
-            time.sleep (1)
 
     def poll (self):
-        if self.is_running:
-            self.engine.poll ()
-            returncode = self._rsync_popen.poll ()
-            if returncode is not None:
+        self.engine.poll ()
+        returncode = self._rsync_popen.poll ()
+        if returncode is not None:
+            if self.is_running:
                 err = "\n".join (self._rsync_popen.stderr.readlines ())
                 self.logger.error ("returncode=%d, error=%s" % (returncode, err)) 
                 self._rsync_popen.stderr.close ()
@@ -219,7 +218,7 @@ class MigrateServer (_BaseServer):
         self._send_response (conn, 0, {"mount_point": mount_point_name})
 
     def _handler_umount (self, conn, cmd, data):
-        mount_point = self._get_req_attr ("mount_point")
+        mount_point = self._get_req_attr (data, "mount_point")
         mount_point_path = os.path.join (conf.MOUNT_POINT_DIR, mount_point)
         try:
             vps_common.umount_tmp (mount_point_path)
@@ -270,8 +269,8 @@ class _BaseClient (object):
 
 class MigrateClient (_BaseClient):
 
-    def __init__ (self, logger, server):
-        _BaseClient.__init__ (self, logger, server)
+    def __init__ (self, logger, server_ip):
+        _BaseClient.__init__ (self, logger, server_ip)
 
     def migrate_sync (self, vps_id):
         xv = self.vpsops.load_vps_meta (vps_id)
@@ -298,17 +297,26 @@ class MigrateClient (_BaseClient):
                 })
             msg = self._recv_response (sock)
             remote_mount_point =  msg['mount_point']
-            self.rsync (mount_point, remote_mount_point)
+            self.logger.info ("remote(%s) mounted" % (remote_mount_point))
+            ret, err = self.rsync (mount_point, remote_mount_point)
+            if ret == 0:
+                print "rsync ok"
+                self.logger.info ("rsync %s to %s ok" % (dev, self.server_ip))
+            else:
+                print "rsync failed", err
+                self.logger.info ("rsync %s to %s error, ret=%s, err=%s" % (dev, self.server_ip, ret, err))
             self._send_msg (sock, "umount", {
                 'mount_point': remote_mount_point,
                 })
             self._recv_response (sock)
+            print "cleaned up"
+            self.logger.info ("remote(%s) umounted" % (remote_mount_point))
             sock.close ()
         except Exception, e:
-            print traceback.print_exc()
-            self.logger.exception (e)
             vps_common.umount_tmp (mount_point)
             sock.close ()
+            print traceback.print_exc()
+            self.logger.exception (e)
             
     def rsync (self, mount_point, remote_mount_point):
         cmd = ("rsync", "-avz", "--delete", "%s/" % (mount_point), 
