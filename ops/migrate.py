@@ -311,8 +311,9 @@ class MigrateClient (_BaseClient):
             sock.close ()
             
     def rsync (self, mount_point, remote_mount_point):
-        cmd = "rsync -avz --delete %s/ rsync://%s:%s/%s/%s/" % (mount_point, self.server_ip, conf.RSYNC_PORT, 
-            RSYNC_SERVER_NAME, remote_mount_point)
+        cmd = ("rsync", "-avz", "--delete", "%s/" % (mount_point), 
+                "rsync://%s:%s/%s/%s/" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, remote_mount_point)
+                )
         p = subprocess.Popen (cmd, stderr=subprocess.PIPE, close_fds=True)
         retcode = p.wait ()
         if retcode:
