@@ -264,7 +264,7 @@ class VPSStoreLV (VPSStoreBase):
         return os.path.exists (self.trash_dev)
 
     def get_mounted_dir (self):
-        return vps_common.get_mountpoint (self.dev)
+        return vps_common.lv_get_mountpoint (self.dev)
 
     def dump_trash (self, expire_days):
         if not os.path.exists (self.dev):

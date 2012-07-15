@@ -73,7 +73,8 @@ def mount_loop_tmp (img_path, readonly=False, temp_dir=None):
     return tmp_mount
 
 def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
-    tmp_mount = mkdtemp ("mp", temp_dir=temp_dir)
+    prefix = "mp" + os.path.basename (dev_path)
+    tmp_mount = mkdtemp (prefix, temp_dir=temp_dir)
     try:
         if readonly:
             call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))

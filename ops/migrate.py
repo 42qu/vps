@@ -48,6 +48,7 @@ class InteractJob (Job):
                 self.migsvr.logger.exception (e)
                 self.migsvr.engine.close_conn (conn)
             
+RSYNC_SERVER_NAME = "sync_server"
 
 class _BaseServer (object):
 
@@ -78,15 +79,22 @@ class _BaseServer (object):
             self.engine.poll ()
             returncode = self._rsync_popen.poll ()
             if returncode is not None:
-                #TODO log the returncode 
+                err = "\n".join (self._rsync_popen.stderr.readlines ())
+                self.logger.error ("returncode=%d, error=%s" % (returncode, err)) 
+                self._rsync_popen.stderr.close ()
                 self.logger.error ("rsync daemon exited, restart it")
                 self.start_rsync ()
 
     def _server_handler (self, conn):
         sock = conn.sock
         data = None
+        head = None
         try:
             head = NetHead.read_head (sock)
+        except socket.error:
+            self.engine.close_conn (conn)
+            return
+        try:
             if head.body_len == 0:
                 self.logger.error ("from peer: %s, zero len head received" % (conn.peer))
                 self.engine.close_conn (conn)
@@ -145,11 +153,11 @@ class _BaseServer (object):
 uid=root
 gid=root
 use chroot=yes
-[sync_server]
+[%s]
     path=%s
     read only=no
     write only=yes
-""" % (conf.MOUNT_POINT_DIR)
+""" % (RSYNC_SERVER_NAME, conf.MOUNT_POINT_DIR)
 
         f = open (conf.RSYNC_CONF_PATH, "w")
         try:
@@ -187,10 +195,11 @@ class MigrateServer (_BaseServer):
     def __init__ (self, logger):
         _BaseServer.__init__ (self, logger)
         self._handlers["alloc_partition"] = self._handler_alloc_partition
+        self._handlers["umount"] = self._handler_umount
 
     def _handler_alloc_partition (self, conn, cmd, data):
         size_g = self._get_req_attr (data, 'size')
-        partition_name = self._get_req_attr (data, 'part_time')
+        partition_name = self._get_req_attr (data, 'part_name')
         fs_type = self._get_req_attr (data, 'fs_type')
         storage = None
         if conf.USE_LVM:
@@ -202,8 +211,21 @@ class MigrateServer (_BaseServer):
         mount_point = storage.get_mounted_dir ()
         if not mount_point:
             mount_point = storage.mount_tmp ()
-        self.logger.info ("mounted %s on %s" % (str(storage), mount_point))
-        self._send_response (conn, 0, {"mount_point": mount_point})
+            self.logger.info ("%s mounted on %s" % (str(storage), mount_point))
+        else:
+            self.logger.info ("%s already mounted on %s" % (str(storage), mount_point))
+        mount_point_name = os.path.basename (mount_point)
+        self._send_response (conn, 0, {"mount_point": mount_point_name})
+
+    def _handler_umount (self, conn, cmd, data):
+        mount_point = self._get_req_attr ("mount_point")
+        mount_point_path = os.path.join (conf.MOUNT_POINT_DIR, mount_point)
+        try:
+            vps_common.umount_tmp (mount_point_path)
+            self._send_response (conn, 0, "")
+        except Exception, e:
+            self._send_response (conn, 1, str(e))
+
 
 class _BaseClient (object):
 
@@ -258,10 +280,14 @@ class MigrateClient (_BaseClient):
         arr = dev.split ("/")
         partition_name = arr[-1]
         size_g = vps_common.lv_getsize (dev)
-        mount_point = vps_common.get_mountpoint (dev)
-        if not mount_point:
+        mount_point = vps_common.lv_get_mountpoint (dev)
+        if mount_point:
+            self.logger.info ("%s already mounted on %s" % (dev, mount_point))
+        else:
             mount_point = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+            self.logger.info ("%s mounted on %s" % (dev, mount_point))
         fs_type = vps_common.get_partition_fs_type (mount_point=mount_point)
+        sock = None
         try:
             sock = self.connect (timeout=20)
             self._send_msg (sock, "alloc_partition", {
@@ -271,8 +297,26 @@ class MigrateClient (_BaseClient):
                 })
             msg = self._recv_response (sock)
             remote_mount_point =  msg['mount_point']
-            print remote_mount_point
+            self.rsync (mount_point, remote_mount_point)
+            self._send_msg (sock, "umount", {
+                'mount_point': remote_mount_point,
+                })
+            self._recv_response (sock)
+            sock.close ()
         except Exception, e:
             print str(e)
             vps_common.umount_tmp (mount_point)
+            sock.close ()
             
+    def rsync (self, mount_point, remote_mount_point):
+        cmd = "rsync -avz --delete %s/ rsync://%s:%s/%s/%s/" % (mount_point, self.server_ip, conf.RSYNC_PORT, 
+            RSYNC_SERVER_NAME, remote_mount_point)
+        p = subprocess.Popen (cmd, stderr=subprocess.PIPE, close_fds=True)
+        retcode = p.wait ()
+        if retcode:
+            stderr = "\n".join (p.stderr.readlines ())
+        else:
+            stderr = None
+        p.stderr.close ()
+        return retcode, stderr
+
