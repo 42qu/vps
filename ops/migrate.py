@@ -111,7 +111,7 @@ class _BaseServer (object):
                 self.logger.error ("from peer: %s, no handler for cmd: %s" % (conn.peer, cmd))
                 self.engine.close_conn (conn)
                 return
-            job = InteractJob (self, conn, cmd, data)
+            job = InteractJob (self, conn, cmd, data.get ("data"))
             self.engine.remove_conn (conn)
             self.jobqueue.put_job (job)
         except Exception, e:
@@ -189,6 +189,7 @@ class MigrateServer (_BaseServer):
         self._handlers["alloc_partition"] = self._handler_alloc_partition
 
     def _handler_alloc_partition (self, conn, cmd, data):
+        print data
         size_g = self._get_req_attr (data, 'size')
         partition_name = self._get_req_attr (data, 'part_time')
         fs_type = self._get_req_attr (data, 'fs_type')
@@ -257,16 +258,19 @@ class MigrateClient (_BaseClient):
         arr = dev.split ("/")
         partition_name = arr[-1]
         size_g = vps_common.lv_getsize (dev)
-        mountpoint = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
-        fs_type = vps_common.get_partition_fs_type (mount_point=mountpoint)
-
-        sock = self.connect (timeout=20)
-        self._send_msg (sock, "alloc_partition", {
-            'part_name': partition_name,
-            'size': size_g,
-            'fs_type': fs_type,
-            })
-        msg = self._recv_response (sock)
-        mount_point =  msg['mount_point']
-        print mount_point
-
+        mount_point = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+        fs_type = vps_common.get_partition_fs_type (mount_point=mount_point)
+        try:
+            sock = self.connect (timeout=20)
+            self._send_msg (sock, "alloc_partition", {
+                'part_name': partition_name,
+                'size': size_g,
+                'fs_type': fs_type,
+                })
+            msg = self._recv_response (sock)
+            remote_mount_point =  msg['mount_point']
+            print remote_mount_point
+        except Exception, e:
+            print str(e)
+            vps_common.umount_tmp (mount_point)
+            
