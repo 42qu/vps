@@ -43,10 +43,11 @@ class InteractJob (Job):
         conn = self.conn
         if callable (cb):
             try:
+                self.logger.info ("peer %s, cmd %s" % (conn.peer, cmd))
                 cb (conn, cmd, self.msg_data)
                 self.migsvr.engine.watch_conn (conn)
             except Exception, e:
-                self.migsvr.logger.exception (e)
+                self.migsvr.logger.exception ("peer %s, uncaught exception: " % (conn.peer, str(e)))
                 self.migsvr.engine.close_conn (conn)
             
 RSYNC_SERVER_NAME = "sync_server"
@@ -222,6 +223,7 @@ class MigrateServer (_BaseServer):
         mount_point_path = os.path.join (conf.MOUNT_POINT_DIR, mount_point)
         try:
             vps_common.umount_tmp (mount_point_path)
+            self.logger.info ("%s umounted" % (mount_point_path))
             self._send_response (conn, 0, "")
         except Exception, e:
             self._send_response (conn, 1, str(e))
