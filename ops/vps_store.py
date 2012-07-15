@@ -61,6 +61,9 @@ class VPSStoreBase (object):
     def exists (self):
         raise NotImplementedError ()
 
+    def get_mounted_dir (self):
+        raise NotImplementedError ()
+
     def mount_tmp (self, readonly=False):
         """ return mountpoint """
         raise NotImplementedError ()
@@ -116,6 +119,7 @@ class VPSStoreBase (object):
             self.expire_date = None
         return self
 
+
     
 class VPSStoreImage (VPSStoreBase):
 
@@ -127,7 +131,7 @@ class VPSStoreImage (VPSStoreBase):
         self.file_path = os.path.join (img_dir, img_name)
         self.trash_path = os.path.join (trash_dir, img_name)
         self.img_dir = img_dir
-	self.img_name = img_name
+        self.img_name = img_name
         self.trash_dir = trash_dir
         xen_path = "file:" + self.file_path
         VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
@@ -174,6 +178,8 @@ class VPSStoreImage (VPSStoreBase):
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.file_path)
 
+    def get_mounted_dir (self):
+        return vps_common.get_mountpoint (self.file_path)
 
     def delete_trash (self):
         if os.path.exists (self.trash_path):
@@ -256,6 +262,9 @@ class VPSStoreLV (VPSStoreBase):
 
     def trash_exists (self):
         return os.path.exists (self.trash_dev)
+
+    def get_mounted_dir (self):
+        return vps_common.get_mountpoint (self.dev)
 
     def dump_trash (self, expire_days):
         if not os.path.exists (self.dev):

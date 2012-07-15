@@ -189,7 +189,6 @@ class MigrateServer (_BaseServer):
         self._handlers["alloc_partition"] = self._handler_alloc_partition
 
     def _handler_alloc_partition (self, conn, cmd, data):
-        print data
         size_g = self._get_req_attr (data, 'size')
         partition_name = self._get_req_attr (data, 'part_time')
         fs_type = self._get_req_attr (data, 'fs_type')
@@ -200,8 +199,9 @@ class MigrateServer (_BaseServer):
             storage = VPSStoreImage (None, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % partition_name, fs_type, None, size_g)
         if not storage.exists ():
             storage.create ()
-        #TODO check whether is mounted
-        mount_point = storage.mount_tmp ()
+        mount_point = storage.get_mounted_dir ()
+        if not mount_point:
+            mount_point = storage.mount_tmp ()
         self.logger.info ("mounted %s on %s" % (str(storage), mount_point))
         self._send_response (conn, 0, {"mount_point": mount_point})
 
@@ -258,7 +258,9 @@ class MigrateClient (_BaseClient):
         arr = dev.split ("/")
         partition_name = arr[-1]
         size_g = vps_common.lv_getsize (dev)
-        mount_point = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+        mount_point = vps_common.get_mountpoint (dev)
+        if not mount_point:
+            mount_point = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
         fs_type = vps_common.get_partition_fs_type (mount_point=mount_point)
         try:
             sock = self.connect (timeout=20)
