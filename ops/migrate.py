@@ -8,6 +8,7 @@ import time
 import signal
 import socket
 import threading
+import traceback
 
 try: 
     import json
@@ -304,7 +305,8 @@ class MigrateClient (_BaseClient):
             self._recv_response (sock)
             sock.close ()
         except Exception, e:
-            print str(e)
+            print traceback.print_exc()
+            self.logger.exception (e)
             vps_common.umount_tmp (mount_point)
             sock.close ()
             
