@@ -277,6 +277,14 @@ class MigrateClient (_BaseClient):
     def migrate_sync (self, vps_id):
         xv = self.vpsops.load_vps_meta (vps_id)
 
+    def snapshot_sync (self, dev):
+        snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (dev) , conf.VPS_LVM_VGNAME)
+        self.logger.info ("made snapshot %s for %s" % (snapshot_dev, dev))
+        self.sync_partition (snapshot_dev)
+        vps_common.lv_delete (snapshot_dev)
+        self.logger.info ("delete snapshot %s" % (snapshot_dev))
+
+
     def sync_partition (self, dev):
         # assert dev is lvm
         arr = dev.split ("/")
