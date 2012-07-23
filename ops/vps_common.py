@@ -73,7 +73,8 @@ def mount_loop_tmp (img_path, readonly=False, temp_dir=None):
     return tmp_mount
 
 def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
-    tmp_mount = mkdtemp ("mp", temp_dir=temp_dir)
+    prefix = "mp" + os.path.basename (dev_path)
+    tmp_mount = mkdtemp (prefix, temp_dir=temp_dir)
     try:
         if readonly:
             call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
@@ -107,6 +108,19 @@ def get_partition_fs_type (mount_point=None, dev_path=None):
         raise Exception ("%s is not a mount point" % (mount_point))
     elif dev_path:
         raise Exception ("device %s is not mounted" % (dev_path))
+
+def get_mountpoint (dev):
+    f = open ("/proc/mounts", "r")
+    lines = None
+    try:
+        lines = f.readlines ()
+    finally:
+        f.close ()
+    lines.reverse ()
+    for line in lines:
+        arr = line.split ()
+        if dev and arr[0] == dev:
+            return arr[1]
 
 
 def umount_tmp (tmp_mount):
@@ -181,8 +195,16 @@ def lv_rename (src_dev, dest_dev):
 def lv_getsize (dev):
     out = call_cmd ("lvs --noheadings -o lv_size --units g %s" % (dev))
     out = out.strip ()
-    out = out.strip ("G")
+    out = out.strip ("g")
     return float(out)
+
+def lv_get_mountpoint (dev):
+    arr = dev.split ("/") 
+    assert arr[0] == "" and arr[1] == 'dev' and len (arr) == 4
+    if arr[2] != 'mapper':
+        dev = "/dev/mapper/%s-%s" % (arr[2], arr[3])
+    return get_mountpoint (dev)
+
 
 def lv_snapshot (dev, snapshot_name, vg_name):
     snapshot_dev = "/dev/%s/%s" % (snapshot_name)

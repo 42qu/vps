@@ -12,7 +12,7 @@ def main():
     logger =  Log ("migrate_client", config=conf)
     client = migrate.MigrateClient (logger, "10.10.2.6")
 
-    client.sync_partition ("/dev/main/vps274_root")
+    client.sync_partition ("/dev/main/vps00_root")
 
 
 if "__main__" == __name__:
