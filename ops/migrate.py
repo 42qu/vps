@@ -3,10 +3,12 @@
 
 import sys
 import os
+import re
 import traceback
 import ops._env
 from ops.sync_server import SyncServerBase, SyncClientBase
 from ops.vps_store import VPSStoreImage, VPSStoreLV
+from ops.vps import XenVPS
 import ops.vps_common as vps_common
 import conf
 assert conf.RSYNC_CONF_PATH
@@ -21,24 +23,30 @@ class MigrateServer (SyncServerBase):
         self._handlers["umount"] = self._handler_umount
 
     def _handler_alloc_partition (self, conn, cmd, data):
-        size_g = self._get_req_attr (data, 'size')
-        partition_name = self._get_req_attr (data, 'part_name')
-        fs_type = self._get_req_attr (data, 'fs_type')
-        storage = None
-        if conf.USE_LVM:
-            storage = VPSStoreLV (None, conf.VPS_LVM_VGNAME, partition_name , fs_type, None, size_g)
-        else:
-            storage = VPSStoreImage (None, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % partition_name, fs_type, None, size_g)
-        if not storage.exists ():
-            storage.create ()
-        mount_point = storage.get_mounted_dir ()
-        if not mount_point:
-            mount_point = storage.mount_tmp ()
-            self.logger.info ("%s mounted on %s" % (str(storage), mount_point))
-        else:
-            self.logger.info ("%s already mounted on %s" % (str(storage), mount_point))
-        mount_point_name = os.path.basename (mount_point)
-        self._send_response (conn, 0, {"mount_point": mount_point_name})
+        try:
+            size_g = self._get_req_attr (data, 'size')
+            partition_name = self._get_req_attr (data, 'part_name')
+            fs_type = self._get_req_attr (data, 'fs_type')
+            storage = None
+            if conf.USE_LVM:
+                storage = VPSStoreLV (None, conf.VPS_LVM_VGNAME, partition_name , fs_type, None, size_g)
+            else:
+                storage = VPSStoreImage (None, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % partition_name, fs_type, None, size_g)
+            if not storage.exists ():
+                storage.create ()
+            mount_point = storage.get_mounted_dir ()
+            if not mount_point:
+                mount_point = storage.mount_tmp ()
+                self.logger.info ("%s mounted on %s" % (str(storage), mount_point))
+            else:
+                self.logger.info ("%s already mounted on %s" % (str(storage), mount_point))
+            mount_point_name = os.path.basename (mount_point)
+            self._send_response (conn, 0, {"mount_point": mount_point_name})
+        except socket.error, e:
+            raise e
+        except Exception, e:
+            self._send_response (conn, 1, str(e))
+
 
     def _handler_umount (self, conn, cmd, data):
         mount_point = self._get_req_attr (data, "mount_point")
@@ -47,9 +55,23 @@ class MigrateServer (SyncServerBase):
             vps_common.umount_tmp (mount_point_path)
             self.logger.info ("%s umounted" % (mount_point_path))
             self._send_response (conn, 0, "")
+        except socket.error, e:
+            raise e
         except Exception, e:
             self._send_response (conn, 1, str(e))
 
+    def _handler_create_vps (self, conn, cmd, data):
+        meta = self._get_req_attr (data, "meta")
+        origin_host_id = self._get_req_attr (data, "origin_host_id")
+        try:
+            xv = XenVPS.from_meta (meta)
+            self.logger.info ("vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
+            self.vpsops.create_from_migrate (xv)
+            self._send_response (conn, 0, "")
+        except socket.error, e:
+            raise e
+        except Exception, e:
+            self._send_response (conn, 1, str(e))
 
 
 class MigrateClient (SyncClientBase):
@@ -57,8 +79,6 @@ class MigrateClient (SyncClientBase):
     def __init__ (self, logger, server_ip):
         SyncClientBase.__init__ (self, logger, server_ip)
 
-    def migrate_sync (self, vps_id):
-        xv = self.vpsops.load_vps_meta (vps_id)
 
     def snapshot_sync (self, dev):
         snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (dev) , conf.VPS_LVM_VGNAME)
@@ -67,9 +87,25 @@ class MigrateClient (SyncClientBase):
         vps_common.lv_delete (snapshot_dev)
         self.logger.info ("delete snapshot %s" % (snapshot_dev))
 
+    def _load_image (self, file_path):
+        file_path = os.path.abspath (file_path)
+        file_name = os.path.basename (file_path)
+        om = re.match (r'(\w+)\.img', file_name)
+        assert om is not None
+        partition_name = om.group (1)
+        s = os.stat (file_path)
+        size_g = s.st_size / 1024 / 1024 / 1024
+        mount_point = vps_common.get_mountpoint (file_path) 
+        if mount_point:
+            self.logger.info ("%s already mounted on %s" % (file_path, mount_point))
+        else:
+            mount_point = vps_common.mount_loop_tmp (file_path, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+            self.logger.info ("%s mounted on %s" % (file_path, mount_point))
+        return mount_point, size_g, partition_name
 
-    def sync_partition (self, dev):
-        # assert dev is lvm
+
+    def _load_lvm (self, dev):
+        #return partition_name, size_g, mount_point
         arr = dev.split ("/")
         partition_name = arr[-1]
         size_g = vps_common.lv_getsize (dev)
@@ -79,6 +115,16 @@ class MigrateClient (SyncClientBase):
         else:
             mount_point = vps_common.mount_partition_tmp (dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
             self.logger.info ("%s mounted on %s" % (dev, mount_point))
+        return mount_point, size_g, partition_name
+
+
+    def sync_partition (self, dev):
+        # assert dev is lvm
+        arr = dev.split ("/")
+        if arr[0] == "" and arr[1] == 'dev' and len (arr) == 4:
+            mount_point, size_g, partition_name = self._load_lvm (dev)
+        else:
+            mount_point, size_g, partition_name = self._load_image (dev)
         fs_type = vps_common.get_partition_fs_type (mount_point=mount_point)
         sock = None
         try:
@@ -111,4 +157,18 @@ class MigrateClient (SyncClientBase):
             print traceback.print_exc()
             self.logger.exception (e)
             
+    def create_vps (self, xv):
+        meta = xv.to_meta ()
+        sock = None
+        try:
+            sock = self.connect (timeout=120)
+            self._send_msg (sock, "create_vps", {
+                    'meta': meta
+                })
+            msg = self._recv_response (sock)
+            #TODO
+        except Exception, e:
+            sock.close ()
+            print traceback.print_exc()
+            self.logger.exception (e)
 

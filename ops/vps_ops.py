@@ -13,6 +13,7 @@ import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
+import ops.migrate as migrate
 
 import ops._env
 import conf
@@ -475,6 +476,38 @@ class VPSOps (object):
         self.loginfo (xv, "added internal vif ip=%s" % (ip))
         return True
 
+    def create_from_migrate (self, xv):
+        xv.check_resource_avail (ignore_trash=True)
+        if xv.swap_store.size_g > 0 and not xv.swap_store.exists ():
+            xv.swap_store.create ()
+            self.loginfo (xv, "swap image %s created" % (str(xv.swap_store)))
+        xv.check_storage_integrity ()
+        self._clear_nonexisting_trash (xv)
+        self.create_xen_config (xv)
+        self.save_vps_meta (xv)
+        self._boot_and_test (xv, is_new=False)
+        self.loginfo (xv, "done vps creation")
+
+
+    def migrate (self, vps_id, dest_ip):
+        xv = self.vpsops.load_vps_meta (vps_id)
+        if xv.stop ():
+            self.loginfo (xv, "vps stopped")
+        else:
+            xv.destroy ()
+            self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
+        migclient = migrate.MigrateClient (self.logger, dest_ip)
+        if conf.USE_LVM:
+            migclient.sync_partition (xv.root_store.dev)
+            for disk in xv.data_disks.values ():
+                migclient.sync_partition (disk.dev)
+        else:
+            migclient.sync_partition (xv.root_store.file_path)
+            for disk in xv.data_disks.values ():
+                migclient.sync_partition (disk.file_path)
+        self.loginfo (xv, "partition synced, going to boot vps remotely")
+        migclient.create_vps (xv)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
