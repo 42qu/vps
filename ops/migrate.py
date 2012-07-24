@@ -23,7 +23,7 @@ class MigrateServer (SyncServerBase):
         SyncServerBase.__init__ (self, logger)
         self._handlers["alloc_partition"] = self._handler_alloc_partition
         self._handlers["umount"] = self._handler_umount
-        self._handlers["create_vps"] = self._create_vps
+        self._handlers["create_vps"] = self._handler_create_vps
 
     def _handler_alloc_partition (self, conn, cmd, data):
         try:
@@ -158,7 +158,8 @@ class MigrateClient (SyncClientBase):
             print "cleaned up"
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
         finally:
-            sock.close ()
+            if sock:
+                sock.close ()
             vps_common.umount_tmp (mount_point)
             
     def create_vps (self, xv):
@@ -172,5 +173,6 @@ class MigrateClient (SyncClientBase):
                 })
             msg = self._recv_response (sock)
         finally:
-            sock.close ()
+            if sock:
+                sock.close ()
 
