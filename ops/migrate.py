@@ -23,6 +23,7 @@ class MigrateServer (SyncServerBase):
         SyncServerBase.__init__ (self, logger)
         self._handlers["alloc_partition"] = self._handler_alloc_partition
         self._handlers["umount"] = self._handler_umount
+        self._handlers["create_vps"] = self._create_vps
 
     def _handler_alloc_partition (self, conn, cmd, data):
         try:

@@ -42,6 +42,7 @@ class XenVPS (object):
     os_id = None
 
     def __init__ (self, _id):
+        assert isinstance (_id, int)
         self.vps_id = _id
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)

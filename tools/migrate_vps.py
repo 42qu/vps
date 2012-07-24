@@ -5,6 +5,7 @@ import getopt
 import _env
 from lib.log import Log
 import conf
+from ops.migrate import MigrateClient
 from ops.vps_ops import VPSOps
 
 
@@ -35,7 +36,7 @@ def main ():
     if len (args) != 2:
         usage ()
         os._exit (1)
-    vps_id = args[0]
+    vps_id = int (args[0])
     dest_ip = args[1]
     migrate_vps (vps_id, dest_ip)
 
