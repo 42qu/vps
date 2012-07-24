@@ -5,6 +5,7 @@ import sys
 import os
 import re
 import traceback
+import socket
 import ops._env
 from ops.sync_server import SyncServerBase, SyncClientBase
 from ops.vps_store import VPSStoreImage, VPSStoreLV
@@ -45,6 +46,7 @@ class MigrateServer (SyncServerBase):
         except socket.error, e:
             raise e
         except Exception, e:
+            self.logger.exception (e)
             self._send_response (conn, 1, str(e))
 
 
@@ -58,6 +60,7 @@ class MigrateServer (SyncServerBase):
         except socket.error, e:
             raise e
         except Exception, e:
+            self.logger.exception (e)
             self._send_response (conn, 1, str(e))
 
     def _handler_create_vps (self, conn, cmd, data):
@@ -71,6 +74,7 @@ class MigrateServer (SyncServerBase):
         except socket.error, e:
             raise e
         except Exception, e:
+            self.logger.exception (e)
             self._send_response (conn, 1, str(e))
 
 
@@ -150,12 +154,9 @@ class MigrateClient (SyncClientBase):
             self._recv_response (sock)
             print "cleaned up"
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
+        finally:
             sock.close ()
-        except Exception, e:
             vps_common.umount_tmp (mount_point)
-            sock.close ()
-            print traceback.print_exc()
-            self.logger.exception (e)
             
     def create_vps (self, xv):
         meta = xv.to_meta ()
@@ -163,12 +164,10 @@ class MigrateClient (SyncClientBase):
         try:
             sock = self.connect (timeout=120)
             self._send_msg (sock, "create_vps", {
-                    'meta': meta
+                    'meta': meta,
+                    'origin_host_id': conf.HOST_ID,
                 })
             msg = self._recv_response (sock)
-            #TODO
-        except Exception, e:
+        finally:
             sock.close ()
-            print traceback.print_exc()
-            self.logger.exception (e)
 

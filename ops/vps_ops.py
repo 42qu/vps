@@ -189,6 +189,8 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
+
+    def _close_vps (xv):
         for disk in xv.data_disks.values ():
             if disk.exists ():
                 disk.dump_trash (conf.CLOSE_EXPIRE_DAYS)
@@ -207,6 +209,7 @@ class VPSOps (object):
             self.loginfo (xv, "removed %s" % (meta_path))
         self.save_vps_meta (xv, is_trash=True)
         self.loginfo (xv, "closed")
+
 
     def _clear_nonexisting_trash (self, xv):
         trash = xv.get_nonexisting_trash ()
@@ -508,6 +511,8 @@ class VPSOps (object):
                 migclient.sync_partition (disk.file_path)
         self.loginfo (xv, "partition synced, going to boot vps remotely")
         migclient.create_vps (xv)
+        self.loginfo (xv, "remote vps started, going to close local vps")
+        self._close_vps (xv)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

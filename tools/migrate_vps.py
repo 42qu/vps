@@ -1,25 +1,25 @@
 #!/usr/bin/env python
-
 import sys
 import os
 import getopt
 import _env
 from lib.log import Log
 import conf
-from ops.migrate import MigrateClient
+from ops.vps_ops import VPSOps
 
-def hotsync_partition (lv_dev, dest_ip):
+
+def migrate_vps (vps_id, dest_ip):
     logger = Log ("vps_mgr", config=conf)
     try:
-        client = MigrateClient (logger, dest_ip)
-        client.snapshot_sync (lv_dev)
+        vpsops = VPSOps (logger)
+        vpsops.migrate (vps_id, dest_ip)
         print "ok"
     except Exception, e:
         logger.exception (e)
         raise e
-    
+
 def usage ():
-    print "usage: %s lvm_dev dest_ip " % (sys.argv[0])
+    print "usage: %s vps_id dest_ip" % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
@@ -34,17 +34,15 @@ def main ():
     if len (args) != 2:
         usage ()
         os._exit (1)
-    lv_dev = args[0]
+    vps_id = args[0]
     dest_ip = args[1]
-    arr = lv_dev.split ("/")
-    if len (arr) == 4 and arr[0] == "" and arr[1] == 'dev' and os.path.exists(lv_dev):
-        hotsync_partition (lv_dev, dest_ip)
-    else:
-        print >> sys.stderr, "%s is not a logical volumn device" % (lv_dev)
-        os._exit (1)
+    migrate_vps (vps_id, dest_ip)
 
 
 if "__main__" == __name__:
     main ()
 
-    # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
+
+
+
+# vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
