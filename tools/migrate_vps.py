@@ -12,7 +12,7 @@ def migrate_vps (vps_id, dest_ip):
     logger = Log ("vps_mgr", config=conf)
     try:
         vpsops = VPSOps (logger)
-        vpsops.migrate (vps_id, dest_ip)
+        vpsops.migrate_vps (vps_id, dest_ip)
         print "ok"
     except Exception, e:
         logger.exception (e)
