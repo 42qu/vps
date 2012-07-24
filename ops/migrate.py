@@ -10,6 +10,7 @@ import ops._env
 from ops.sync_server import SyncServerBase, SyncClientBase
 from ops.vps_store import VPSStoreImage, VPSStoreLV
 from ops.vps import XenVPS
+from ops.vps_ops import VPSOps
 import ops.vps_common as vps_common
 import conf
 assert conf.RSYNC_CONF_PATH
@@ -69,7 +70,8 @@ class MigrateServer (SyncServerBase):
         try:
             xv = XenVPS.from_meta (meta)
             self.logger.info ("vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
-            self.vpsops.create_from_migrate (xv)
+            vpsops = VPSOps (self.logger)
+            vpsops.create_from_migrate (xv)
             self._send_response (conn, 0, "")
         except socket.error, e:
             raise e

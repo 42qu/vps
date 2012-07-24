@@ -15,7 +15,6 @@ import ops._env
 from lib.job_queue import JobQueue, Job
 from lib.socket_engine import TCPSocketEngine, Connection
 import lib.io_poll as io_poll
-from ops.vps_ops import VPSOps
 from lib.net_io import NetHead
 import conf
             
@@ -51,7 +50,6 @@ class SyncServerBase (object):
     def __init__ (self, logger):
         self.logger = logger
         self.host_id = conf.HOST_ID
-        self.vpsops = VPSOps (self.logger)
         self._rsync_popen = None
         self.is_running = False
         self.listen_ip = "0.0.0.0"
@@ -191,7 +189,6 @@ class SyncClientBase (object):
     def __init__ (self, logger, server_ip):
         self.server_ip = server_ip
         self.logger = logger
-        self.vpsops = VPSOps (self.logger)
 
     def connect (self, timeout=10):
         addr = (self.server_ip, conf.INF_PORT)
