@@ -190,7 +190,7 @@ class VPSOps (object):
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
 
-    def _close_vps (xv):
+    def _close_vps (self, xv):
         for disk in xv.data_disks.values ():
             if disk.exists ():
                 disk.dump_trash (conf.CLOSE_EXPIRE_DAYS)
@@ -204,6 +204,8 @@ class VPSOps (object):
         if os.path.exists (xv.config_path):
             os.remove (xv.config_path)
             self.loginfo (xv, "deleted %s" % (xv.config_path))
+
+        meta_path = self._meta_path (xv.vps_id, is_trash=False)
         if os.path.exists (meta_path):
             os.remove (meta_path)
             self.loginfo (xv, "removed %s" % (meta_path))
@@ -493,7 +495,7 @@ class VPSOps (object):
 
 
     def migrate (self, vps_id, dest_ip):
-        xv = self.vpsops.load_vps_meta (vps_id)
+        xv = self.load_vps_meta (vps_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
         else:
