@@ -85,6 +85,7 @@ class VPSStoreBase (object):
 
     def to_meta (self):
         data = {}
+        data['__class__'] = self.__class__.__name__
         data["partition_name"] = self.partition_name
         data["size_g"] = self.size_g
         data["fs_type"] = self.fs_type
@@ -152,7 +153,6 @@ class VPSStoreImage (VPSStoreBase):
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
         data['file_path'] = self.file_path
-        data['__class__'] = self.__class__.__name__
         return data
 
     @classmethod
@@ -226,7 +226,7 @@ class VPSStoreLV (VPSStoreBase):
     lv_name = None
     vg_name = None
 
-    def __init__ (self, partition_name, xen_dev, vg_name, fs_type=None, mount_point=None, size_g=None):
+    def __init__ (self, partition_name, xen_dev, fs_type=None, mount_point=None, size_g=None):
         assert conf.VPS_LVM_VGNAME
         self.lv_name = partition_name
         self.vg_name = conf.VPS_LVM_VGNAME
@@ -243,24 +243,18 @@ class VPSStoreLV (VPSStoreBase):
 
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
-        data['lv_name'] = self.lv_name
-        data['vg_name'] = self.vg_name
-        data['__class__'] = self.__class__.__name__
         return data
 
     @classmethod
     def from_meta (cls, data):
-        return cls (data[partition_name],
+        return cls (data['partition_name'],
                 data['xen_dev'],
-                data['vg_name'],
-                data['lv_name'],
                 data['fs_type'],
                 data['mount_point'],
                 data['size_g'])
 
     def create (self, fs_type=None):
-        if not self.size_g:
-            return
+        assert self.size_g > 0
         vps_common.lv_create (self.vg_name, self.lv_name, self.size_g)
         if not self.fs_type:
             self.fs_type = fs_type
@@ -315,9 +309,9 @@ class VPSStoreLV (VPSStoreBase):
 
 def vps_store_new (partition_name, xen_dev, fs_type=None, mount_point=None, size_g=None):
     if conf.USE_LVM:
-        return VPSStoreLV (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=None)
+        return VPSStoreLV (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=size_g)
     else:
-        return VPSStoreImage (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=None)
+        return VPSStoreImage (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=size_g)
 
 def vps_store_clone (storage):
     return vps_store_new (storage.partition_name, storage.xen_dev, storage.fs_type, storage.mount_point, storage.size_g)

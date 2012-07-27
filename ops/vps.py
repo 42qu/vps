@@ -100,6 +100,8 @@ class XenVPS (object):
         self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
                 data['swap_size_g'])
         self.gateway = data['gateway']
+        self.ip = data['ip']
+        self.netmask = data['netmask']
         if data.has_key ('data_disks'):
             for _disk in data['data_disks']:
                 disk = VPSStoreBase.from_meta (_disk)
@@ -129,10 +131,8 @@ class XenVPS (object):
                 swp_g = 2
             else:
                 swp_g = 1
-
         self.root_store = vps_store_new ("%s_root" % self.name, "xvda1", None, '/', disk_g)
         self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
-
         self.data_disks[self.root_store.xen_dev] = self.root_store
         self.root_pw = root_pw
         
