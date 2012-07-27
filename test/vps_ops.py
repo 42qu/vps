@@ -19,9 +19,10 @@ class TestVPSOPS (unittest.TestCase):
         logger = Log ("test", config=conf)
         vpsops = VPSOps (logger)
         vps = XenVPS (0)
-        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd")
         vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
-        vps.add_netinf ('vps0_inter', "10.10.3.2", '255.255.255.0', 'xenbr0', None)
+        vps.add_netinf_ext ("10.10.1.2", "255.255.255.0", gateway="10.10.1.1")
+        vps.add_netinf_int ("10.10.3.2", '255.255.255.0')
         vps.data_disks['xvdc1']._set_expire_days (1)
         print "trash_date", vps.data_disks['xvdc1'].trash_date
         print "expire_date", vps.data_disks['xvdc1'].expire_date
@@ -44,10 +45,9 @@ class TestVPSOPS (unittest.TestCase):
         self.assertEqual (_vps.data_disks['xvdc1'].expire_date, vps.data_disks['xvdc1'].expire_date)
         print _vps.data_disks['xvdc1'].__class__.__name__
         self.assertEqual (len (_vps.vifs.values ()), 2)
-        self.assertEqual (_vps.vifs['vps0_inter'].ip, '10.10.3.2')
-        self.assertEqual (_vps.vifs['vps0_inter'].netmask, '255.255.255.0')
-        self.assertEqual (_vps.vifs['vps0_inter'].bridge, 'xenbr0')
-        self.assertEqual (_vps.vifs['vps0_inter'].mac, vps.vifs['vps0_inter'].mac)
+        self.assertEqual (_vps.vifs['vps0int'].ip, '10.10.3.2')
+        self.assertEqual (_vps.vifs['vps0int'].netmask, '255.255.255.0')
+        self.assertEqual (_vps.vifs['vps0int'].mac, vps.vifs['vps0int'].mac)
         print "test trash expire date None"
         vps.data_disks['xvdc1']._set_expire_days (None)
         self.assertEqual (vps.data_disks['xvdc1'].trash_date, None)
@@ -62,7 +62,8 @@ class TestVPSOPS (unittest.TestCase):
         print "test mem too big"
         vps = XenVPS (0)
         logger = Log ("test", config=conf)
-        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1", root_pw="fdfdfd")
+        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd")
+        vps.add_netinf_ext (ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1")
         try:
             vps.check_resource_avail ()
         except Exception, e:
@@ -77,8 +78,9 @@ class TestVPSOPS (unittest.TestCase):
         vpsops = VPSOps (logger)
         xv = XenVPS (0)
         try:
-            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1", root_pw="fdfdfd")
+            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd")
             xv.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
+            xv.add_netinf_ext (ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1")
             print xv.gen_xenpv_config ()
             vpsops.create_vps (xv)
         except Exception, e:

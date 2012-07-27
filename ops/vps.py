@@ -4,15 +4,13 @@ import os
 import time
 
 from string import Template
-from ops.vps_store import VPSStoreImage, VPSStoreLV, VPSStoreBase
-from ops.vps_netinf import VPSNetInf
+from ops.vps_store import vps_store_new, vps_store_clone, VPSStoreBase
+from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
 import ops.vps_common as vps_common
 import ops.xen as xen
 import lib.diff as diff
 import ops._env
 import conf
-assert conf.XEN_BRIDGE
-assert conf.XEN_INTERNAL_BRIDGE
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
@@ -54,6 +52,19 @@ class XenVPS (object):
         self.trash_disks = {}
         self.vifs = {}
 
+    def clone (cls, old):
+        self = cls (old.vps_id)
+        self.setup (old.os_id, old.vcpu, old.mem_m, old.root_size_g, None, 
+                 old.swap_size_g)
+        self.gateway = old.gateway
+        for disk in old.data_disks.values ():
+            self.data_disks[disk.xen_dev] = vps_store_clone (disk)
+        #TODO  trash_disks
+        for vif in old.vifs.values ():
+                self.vifs[vif.ifname] = vif.clone ()
+        return self
+    clone = classmethod (clone)
+
     def to_meta (self):
         data = {}
         data['vps_id'] = self.vps_id
@@ -87,7 +98,8 @@ class XenVPS (object):
         assert data
         self = cls (data['vps_id'])
         self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
-                data['gateway'], data['ip'], data['netmask'], data['swap_size_g'])
+                data['swap_size_g'])
+        self.gateway = data['gateway']
         if data.has_key ('data_disks'):
             for _disk in data['data_disks']:
                 disk = VPSStoreBase.from_meta (_disk)
@@ -99,11 +111,11 @@ class XenVPS (object):
                 assert _trash
                 self.trash_disks[trash.xen_dev] = trash
         for _vif in data['vifs']:
-            vif = VPSNetInf.from_meta (_vif)
+            vif = VPSNet.from_meta (_vif)
             self.vifs[vif.ifname] = vif
         return self
 
-    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, gateway=None, ip=None, netmask=None, swp_g=None):
+    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, swp_g=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
         self.has_all_attr = True
@@ -118,24 +130,11 @@ class XenVPS (object):
             else:
                 swp_g = 1
 
-        if conf.USE_LVM:
-            assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', disk_g)
-            self.swap_store = VPSStoreLV ("xvda2", conf.VPS_LVM_VGNAME, "%s_swap" % self.name, 'swap', 'none', swp_g)
-        else:
-            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
-                    None, '/', disk_g)
-            self.swap_store = VPSStoreImage ("xvda2", conf.VPS_SWAP_DIR, conf.VPS_TRASH_DIR, "%s.swp" % self.name, 
-                    'swap', 'none', swp_g)
+        self.root_store = vps_store_new ("%s_root" % self.name, "xvda1", None, '/', disk_g)
+        self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
 
         self.data_disks[self.root_store.xen_dev] = self.root_store
         self.root_pw = root_pw
-        self.gateway = gateway
-        if ip:
-            assert ip and netmask is not None and gateway and isinstance (netmask, basestring)
-            self.ip = ip
-            self.netmask = netmask
-            self.add_netinf (self.name, ip, netmask, bridge=self.xen_bridge, mac=None)
         
     def get_xendev_by_id (self, disk_id):
         return "xvdc%d" % (disk_id)
@@ -145,20 +144,14 @@ class XenVPS (object):
         assert size_g > 0
         xen_dev = self.get_xendev_by_id (disk_id)
         mount_point = '/mnt/data%d' % (disk_id)
-        if conf.USE_LVM:
-            assert conf.VPS_LVM_VGNAME
-            lv_name = "%s_data%s" % (self.name, disk_id)
-            self.data_disks[xen_dev] = VPSStoreLV (xen_dev, conf.VPS_LVM_VGNAME, lv_name, fs_type, mount_point, size_g)
-        else:
-            filename = "%s_data%s.img" % (self.name, disk_id)
-            self.data_disks[xen_dev] = VPSStoreImage (xen_dev, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, filename, fs_type, mount_point, size_g)
+        partition_name = "%s_data%s" % (self.name, disk_id)
+        self.data_disks[xen_dev] = vps_store_new (partition_name, xen_dev, fs_type, mount_point, size_g)
 
     def delete_trash (self, disk):
         del self.trash_disks[disk.xen_dev]
 
     def dump_storage_to_trash (self, disk, expire_days=10):
         res = False
-        # TODO , store the date in meta
         if disk.exists ():
             disk.dump_trash ()
             res = True
@@ -176,12 +169,7 @@ class XenVPS (object):
         self.trash_disks[old_root.xen_dev] = old_root
         if not new_size:
             new_size = old_root.size_g
-        if conf.USE_LVM:
-            assert conf.VPS_LVM_VGNAME
-            self.root_store = VPSStoreLV ("xvda1", conf.VPS_LVM_VGNAME, "%s_root" % self.name, None, '/', new_size)
-        else:
-            self.root_store = VPSStoreImage ("xvda1", conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % self.name,
-                    None, '/', new_size)
+        self.root_store = vps_store_new ("%s_root" % self.name, "xvda1", None, '/', new_size)
         self.data_disks[self.root_store.xen_dev] = self.root_store
         
     def recover_storage_from_trash (self, disk):
@@ -203,19 +191,26 @@ class XenVPS (object):
     def has_netinf (self, vifname):
         return self.vifs.has_key (vifname)
 
-    def add_netinf (self, name, ip, netmask, bridge, mac=None):
+    def add_netinf_ext (self, ip, netmask, gateway=None, mac=None):
         mac = mac or vps_common.gen_mac ()
-        self.vifs[name] = VPSNetInf (ifname=name, ip=ip, netmask=netmask, mac=mac, bridge=bridge)
+        name = "vps%s" % (self.vps_id)
+        self.vifs[name] = VPSNetExt (ifname=name, ip=ip, netmask=netmask, mac=mac)
+        self.ip = ip
+        self.netmask = netmask
+        self.gateway = gateway
         return self.vifs[name]
 
-    def add_netinf_ext (self, name, ip, netmask, mac=None):
-        return self.add_netinf (name, ip, netmask, conf.XEN_BRIDGE, mac)
-
-    def add_netinf_int (self, name, ip, netmask, mac=None):
-        return self.add_netinf (name, ip, netmask, conf.XEN_INTERNAL_BRIDGE, mac)
+    def add_netinf_int (self, ip, netmask, mac=None):
+        name = "vps%sint" % (self.vps_id)
+        mac = mac or vps_common.gen_mac ()
+        self.vifs[name] = VPSNetInt (ifname=name, ip=ip, netmask=netmask, mac=mac)
+        return self.vifs[name]
 
     def del_netinf (self, vifname):
-        del self.vifs[vifname]
+        vif = self.vifs[vifname]
+        if self.ip == vif.ip:
+            self.ip = None
+            self.netmask = None
 
     def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """
@@ -227,10 +222,12 @@ class XenVPS (object):
             raise Exception ("check resource: xen free memory is not enough  (%dM left < %dM)" % (mem_free, self.mem_m))
         #check disks not implemented, too complicate, expect error throw during vps creation
         # check ip available
-        if 0 == os.system ("ping -c2 -W1 %s >/dev/null" % (self.ip)):
-            raise Exception ("check resource: ip %s is in use" % (self.ip))
-        if os.system ("ping -c2 -W1 %s >/dev/null" % (self.gateway)):
-            raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
+        if self.ip:
+            if 0 == os.system ("ping -c2 -W1 %s >/dev/null" % (self.ip)):
+                raise Exception ("check resource: ip %s is in use" % (self.ip))
+        if self.gateway:
+            if os.system ("ping -c2 -W1 %s >/dev/null" % (self.gateway)):
+                raise Exception ("check resource: gateway %s is not reachable" % (self.gateway))
         if not ignore_trash:
             if os.path.exists (self.config_path):
                 raise Exception ("check resource: %s already exists" % (self.config_path))
@@ -392,10 +389,4 @@ on_crash = "restart"
 
 
         
-
-        
-            
-
-
-
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

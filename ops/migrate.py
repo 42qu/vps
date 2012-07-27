@@ -8,7 +8,7 @@ import traceback
 import socket
 import ops._env
 from ops.sync_server import SyncServerBase, SyncClientBase
-from ops.vps_store import VPSStoreImage, VPSStoreLV
+from ops.vps_store import vps_store_new
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 import ops.vps_common as vps_common
@@ -30,11 +30,7 @@ class MigrateServer (SyncServerBase):
             size_g = self._get_req_attr (data, 'size')
             partition_name = self._get_req_attr (data, 'part_name')
             fs_type = self._get_req_attr (data, 'fs_type')
-            storage = None
-            if conf.USE_LVM:
-                storage = VPSStoreLV (None, conf.VPS_LVM_VGNAME, partition_name , fs_type, None, size_g)
-            else:
-                storage = VPSStoreImage (None, conf.VPS_IMAGE_DIR, conf.VPS_TRASH_DIR, "%s.img" % partition_name, fs_type, None, size_g)
+            storage = vps_store_new (partition_name, None, fs_type, None, size_g)
             if not storage.exists ():
                 storage.create ()
             mount_point = storage.get_mounted_dir ()
@@ -72,7 +68,7 @@ class MigrateServer (SyncServerBase):
             xv = XenVPS.from_meta (meta)
             self.logger.info ("vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
             vpsops = VPSOps (self.logger)
-            vpsops.create_from_migrate (xv)
+            vpsops.create_from_migrate (xv.clone ())  # some setting various between different hosts
             self._send_response (conn, 0, "")
         except socket.error, e:
             raise e

@@ -24,6 +24,7 @@ def _parse_date (s):
 
 class VPSStoreBase (object):
 
+    partition_name = None
     xen_dev = None
     size_g = None
     xen_path = None
@@ -31,7 +32,8 @@ class VPSStoreBase (object):
     trash_date = None
     expire_date = None
     
-    def __init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g):
+    def __init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g):
+        self.partition_name = partition_name
         self.size_g = size_g
         self.fs_type = fs_type
         self.xen_dev = xen_dev
@@ -83,6 +85,7 @@ class VPSStoreBase (object):
 
     def to_meta (self):
         data = {}
+        data["partition_name"] = self.partition_name
         data["size_g"] = self.size_g
         data["fs_type"] = self.fs_type
         data["xen_dev"] = self.xen_dev
@@ -127,30 +130,35 @@ class VPSStoreImage (VPSStoreBase):
     trash_path = None
     trash_dir = None
 
-    def __init__ (self, xen_dev, img_dir, trash_dir, img_name, fs_type=None, mount_point=None, size_g=None):
-        self.file_path = os.path.join (img_dir, img_name)
-        self.trash_path = os.path.join (trash_dir, img_name)
-        self.img_dir = img_dir
-        self.img_name = img_name
-        self.trash_dir = trash_dir
+    def __init__ (self, partition_name, xen_dev, fs_type=None, mount_point=None, size_g=None):
+        om = re.match (r'^(vps\d+)_(root|swap)$', partition_name)
+        if om:
+            if om.group (2) == 'root':
+                img_name = "%s.img" % (om.group (1))
+                self.file_path = os.path.join (conf.VPS_IMAGE_DIR, img_name)
+            else:
+                img_name = "%s.swp" % (om.group (1))
+                self.file_path = os.path.join (conf.VPS_SWAP_DIR, img_name)
+        else:
+            img_name = "%s.img" % (partition_name)
+            self.file_path = os.path.join (conf.VPS_IMAGE_DIR, img_name)
+        self.trash_path = os.path.join (conf.VPS_TRASH_DIR, img_name)
+        self.trash_dir = conf.VPS_TRASH_DIR
         xen_path = "file:" + self.file_path
-        VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
+        VPSStoreBase.__init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g)
+
+
 
     def to_meta (self):
         data = VPSStoreBase.to_meta (self)
         data['file_path'] = self.file_path
-        data['img_dir'] = self.img_dir
-        data['trash_dir'] = self.trash_dir
-        data['img_name'] = self.img_name
         data['__class__'] = self.__class__.__name__
         return data
 
     @classmethod
     def from_meta (cls, data):
-        return cls (data['xen_dev'], 
-                data['img_dir'],
-                data['trash_dir'],
-                data['img_name'],
+        return cls (data['partition_name'],
+                data['xen_dev'], 
                 data['fs_type'],
                 data['mount_point'],
                 data['size_g'])
@@ -218,13 +226,14 @@ class VPSStoreLV (VPSStoreBase):
     lv_name = None
     vg_name = None
 
-    def __init__ (self, xen_dev, vg_name, lv_name, fs_type=None, mount_point=None, size_g=None):
-        self.lv_name = lv_name
-        self.vg_name = vg_name
+    def __init__ (self, partition_name, xen_dev, vg_name, fs_type=None, mount_point=None, size_g=None):
+        assert conf.VPS_LVM_VGNAME
+        self.lv_name = partition_name
+        self.vg_name = conf.VPS_LVM_VGNAME
         self.dev = "/dev/%s/%s" % (self.vg_name, self.lv_name)
         self.trash_dev = "/dev/%s/trash_%s" % (self.vg_name, self.lv_name)
         xen_path = "phy:" + self.dev
-        VPSStoreBase.__init__ (self, xen_dev, xen_path, fs_type, mount_point, size_g)
+        VPSStoreBase.__init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g)
 
     def __str__ (self):
         return self.dev
@@ -241,7 +250,8 @@ class VPSStoreLV (VPSStoreBase):
 
     @classmethod
     def from_meta (cls, data):
-        return cls (data['xen_dev'],
+        return cls (data[partition_name],
+                data['xen_dev'],
                 data['vg_name'],
                 data['lv_name'],
                 data['fs_type'],
@@ -301,5 +311,15 @@ class VPSStoreLV (VPSStoreBase):
         snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name) 
         return snapshot_dev
 
+##############
+
+def vps_store_new (partition_name, xen_dev, fs_type=None, mount_point=None, size_g=None):
+    if conf.USE_LVM:
+        return VPSStoreLV (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=None)
+    else:
+        return VPSStoreImage (partition_name, xen_dev, fs_type=fs_type, mount_point=mount_point, size_g=None)
+
+def vps_store_clone (storage):
+    return vps_store_new (storage.partition_name, storage.xen_dev, storage.fs_type, storage.mount_point, storage.size_g)
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

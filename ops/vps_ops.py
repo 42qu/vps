@@ -342,9 +342,10 @@ class VPSOps (object):
             xv.destroy ()
             self.loginfo (xv, "force destroy")
         root_store_trash = xv.root_store
+        xv.gateway = vps_new.gateway
         if xv.ip != vps_new.ip:
             # just in case when ip changed
-            xv.add_netinf (xv.name, vps_new.ip, vps_new.netmask, xv.xen_bridge)
+            xv.add_netinf_ext (xv.name, vps_new.ip, vps_new.netmask)
         
         xv.renew_root_storage (new_size=vps_new.root_store.size_g)
 
