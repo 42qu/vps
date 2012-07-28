@@ -188,6 +188,8 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        self._close_vps (xv)
+        return
 
     def _close_vps (self, xv):
         for disk in xv.data_disks.values ():
