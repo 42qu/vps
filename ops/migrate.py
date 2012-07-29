@@ -34,6 +34,7 @@ class MigrateServer (SyncServerBase):
             storage = vps_store_new (partition_name, None, fs_type, None, size_g)
             if not storage.exists ():
                 storage.create ()
+                self.logger.info ("%s created" % (str(storage)))
             mount_point = storage.get_mounted_dir ()
             if not mount_point:
                 mount_point = storage.mount_tmp ()
