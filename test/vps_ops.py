@@ -92,17 +92,6 @@ class TestVPSOPS (unittest.TestCase):
             xv.check_resource_avail ()
         except Exception, e:
             logger.debug ("expected exception caught: %s" % (e))
-        logger.debug ("now test shutting it down")
-        xv.stop ()
-        self.assert_ (not xv.is_running ())
-
-        try:
-            logger.debug ("test reopen without moving to trash")
-            vpsops.reopen_vps (xv.vps_id, xv)
-        except Exception, e:
-            logger.exception (e)
-            raise e
-        self.assert_ (xv.is_running ())
         try:
             logger.debug ("close vps0")
             vpsops.close_vps (xv.vps_id, xv)
@@ -130,6 +119,18 @@ class TestVPSOPS (unittest.TestCase):
         self.assert_ (xv.is_running ())
         self.assert_ (xv.root_store.exists ())
         self.assert_ (xv.data_disks['xvdc1'].exists ())
+        logger.debug ("shutting it down")
+        xv.stop ()
+        self.assert_ (not xv.is_running ())
+
+        try:
+            logger.debug ("test reopen without moving to trash")
+            vpsops.reopen_vps (xv.vps_id, xv)
+        except Exception, e:
+            logger.exception (e)
+            raise e
+        self.assert_ (xv.is_running ())
+
         try:
             logger.debug ("delete vps0")
             vpsops.delete_vps (xv.vps_id, xv)
