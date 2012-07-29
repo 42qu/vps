@@ -195,7 +195,7 @@ def lv_rename (src_dev, dest_dev):
 def lv_getsize (dev):
     out = call_cmd ("lvs --noheadings -o lv_size --units g %s" % (dev))
     out = out.strip ()
-    out = out.strip ("g")
+    out = out.strip ("gG")
     return float(out)
 
 def lv_get_mountpoint (dev):
