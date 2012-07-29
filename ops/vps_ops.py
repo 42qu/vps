@@ -508,7 +508,6 @@ class VPSOps (object):
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         if conf.USE_LVM:
-            migclient.sync_partition (xv.root_store.dev)
             for disk in xv.data_disks.values ():
                 migclient.sync_partition (disk.dev)
         else:

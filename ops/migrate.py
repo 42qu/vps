@@ -142,7 +142,7 @@ class MigrateClient (SyncClientBase):
                 'size': size_g,
                 'fs_type': fs_type,
                 })
-            sock.settimeout (60)
+            sock.settimeout (size_g / 2 + 5)
             msg = self._recv_response (sock)
             sock.settimeout (20)
             remote_mount_point =  msg['mount_point']
