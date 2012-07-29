@@ -186,7 +186,7 @@ class VPSMgr (object):
 
     def setup_vps (self, xenvps, vps_info):
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram, disk_g=vps_info.hd, root_pw=vps_info.password)
-        xenvps.add_netinf_ext (ip=vps_info.ip, netmask=vps_info.netmask, gateway=int2ip (vps_info.ipv4_gateway))
+        xenvps.add_netinf_ext (ip=int2ip (vps_info.ipv4), netmask=int2ip (vps_info.ipv4_netmask), gateway=int2ip (vps_info.ipv4_gateway))
 
 
     def vps_open (self, vps_info, vps_image=None, is_new=True): 

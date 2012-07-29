@@ -65,8 +65,11 @@ class VPSOps (object):
             data = json.load (f)
         finally:
             f.close ()
-        xv = XenVPS.from_meta (data)
-        return xv
+        try:
+            xv = XenVPS.from_meta (data)
+            return xv
+        except Exception, e:
+            raise Exception ("file=%s, %s" % (meta_path, str(e)))
 
     def load_vps_meta (self, vps_id, is_trash=False):
         meta_path = self._meta_path (vps_id, is_trash=is_trash)

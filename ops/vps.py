@@ -96,25 +96,28 @@ class XenVPS (object):
     @classmethod
     def from_meta (cls, data):
         assert data
-        self = cls (data['vps_id'])
-        self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
-                data['swap_size_g'])
-        self.gateway = data['gateway']
-        self.ip = data['ip']
-        self.netmask = data['netmask']
-        if data.has_key ('data_disks'):
-            for _disk in data['data_disks']:
-                disk = VPSStoreBase.from_meta (_disk)
-                assert disk
-                self.data_disks[disk.xen_dev] = disk
-        if data.has_key ('trash_disks'):
-            for _trash in data['trash_disks']:
-                trash = VPSStoreBase.from_meta (_trash)
-                assert _trash
-                self.trash_disks[trash.xen_dev] = trash
-        for _vif in data['vifs']:
-            vif = VPSNet.from_meta (_vif)
-            self.vifs[vif.ifname] = vif
+        try:
+            self = cls (data['vps_id'])
+            self.setup (data['os_id'], data['vcpu'], data['mem_m'], data['root_size_g'], None, 
+                    data['swap_size_g'])
+            self.gateway = data['gateway']
+            self.ip = data['ip']
+            self.netmask = data['netmask']
+            if data.has_key ('data_disks'):
+                for _disk in data['data_disks']:
+                    disk = VPSStoreBase.from_meta (_disk)
+                    assert disk
+                    self.data_disks[disk.xen_dev] = disk
+            if data.has_key ('trash_disks'):
+                for _trash in data['trash_disks']:
+                    trash = VPSStoreBase.from_meta (_trash)
+                    assert _trash
+                    self.trash_disks[trash.xen_dev] = trash
+            for _vif in data['vifs']:
+                vif = VPSNet.from_meta (_vif)
+                self.vifs[vif.ifname] = vif
+        except KeyError, e:
+            raise Exception ("metadata missing key %s" % (str(e)))
         return self
 
     def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, swp_g=None):
