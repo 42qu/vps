@@ -147,6 +147,7 @@ class MigrateClient (SyncClientBase):
             else:
                 print "rsync failed", err
                 self.logger.info ("rsync %s to %s error, ret=%s, err=%s" % (dev, self.server_ip, ret, err))
+            time.sleep (3)
             self._send_msg (sock, "umount", {
                 'mount_point': remote_mount_point,
                 })
