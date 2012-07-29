@@ -38,9 +38,8 @@ class VPSNet (object):
         data['mac'] = self.mac
         return data
 
-    def clone (cls, other):
-        return cls (other.ifname, other.ip, other.netmask, other.mac)
-    clone = classmethod (clone)
+    def clone (self):
+        return self.__class__ (self.ifname, self.ip, self.netmask, self.mac)
 
 
 class VPSNetExt (VPSNet):

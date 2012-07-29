@@ -5,6 +5,7 @@ import sys
 import os
 import re
 import traceback
+import time
 import socket
 import ops._env
 from ops.sync_server import SyncServerBase, SyncClientBase

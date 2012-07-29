@@ -52,18 +52,17 @@ class XenVPS (object):
         self.trash_disks = {}
         self.vifs = {}
 
-    def clone (cls, old):
-        self = cls (old.vps_id)
-        self.setup (old.os_id, old.vcpu, old.mem_m, old.root_size_g, None, 
-                 old.swap_size_g)
-        self.gateway = old.gateway
-        for disk in old.data_disks.values ():
-            self.data_disks[disk.xen_dev] = vps_store_clone (disk)
+    def clone (self):
+        new = self.__class__ (self.vps_id)
+        new.setup (self.os_id, self.vcpu, self.mem_m, self.root_size_g, None, 
+                 self.swap_size_g)
+        new.gateway = self.gateway
+        for disk in self.data_disks.values ():
+            new.data_disks[disk.xen_dev] = vps_store_clone (disk)
         #TODO  trash_disks
-        for vif in old.vifs.values ():
-                self.vifs[vif.ifname] = vif.clone ()
-        return self
-    clone = classmethod (clone)
+        for vif in self.vifs.values ():
+                new.vifs[vif.ifname] = vif.clone ()
+        return new
 
     def to_meta (self):
         data = {}
