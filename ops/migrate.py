@@ -85,7 +85,7 @@ class MigrateClient (SyncClientBase):
 
 
     def snapshot_sync (self, dev):
-        snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (dev) , conf.VPS_LVM_VGNAME)
+        snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (os.path.basename(dev)) , conf.VPS_LVM_VGNAME)
         self.logger.info ("made snapshot %s for %s" % (snapshot_dev, dev))
         self.sync_partition (snapshot_dev)
         vps_common.lv_delete (snapshot_dev)
