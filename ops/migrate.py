@@ -87,7 +87,7 @@ class MigrateClient (SyncClientBase):
     def snapshot_sync (self, dev):
         snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (os.path.basename(dev)) , conf.VPS_LVM_VGNAME)
         self.logger.info ("made snapshot %s for %s" % (snapshot_dev, dev))
-        self.sync_partition (snapshot_dev)
+        self.sync_partition (snapshot_dev, partition_name=os.path.basename(dev))
         vps_common.lv_delete (snapshot_dev)
         self.logger.info ("delete snapshot %s" % (snapshot_dev))
 
@@ -122,12 +122,16 @@ class MigrateClient (SyncClientBase):
         return mount_point, size_g, partition_name
 
 
-    def sync_partition (self, dev):
+    def sync_partition (self, dev, partition_name=None):
+        """ when you sync a snapshot lv to remote, you'll need to specify partition_name
+        """
         arr = dev.split ("/")
         if arr[0] == "" and arr[1] == 'dev' and len (arr) == 4:
-            mount_point, size_g, partition_name = self._load_lvm (dev)
+            mount_point, size_g, _partition_name = self._load_lvm (dev)
         else:
-            mount_point, size_g, partition_name = self._load_image (dev)
+            mount_point, size_g, _partition_name = self._load_image (dev)
+        if not partition_name:
+            partition_name = _partition_name
         fs_type = vps_common.get_partition_fs_type (mount_point=mount_point)
         sock = None
         try:
