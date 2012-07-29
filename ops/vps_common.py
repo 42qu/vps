@@ -207,7 +207,7 @@ def lv_get_mountpoint (dev):
 
 
 def lv_snapshot (dev, snapshot_name, vg_name):
-    snapshot_dev = "/dev/%s/%s" % (snapshot_name)
+    snapshot_dev = "/dev/%s/%s" % (vg_name, snapshot_name)
     if not os.path.exists (dev):
         raise Exception ("%s not exists" % (dev))
     if os.path.exists (snapshot_dev):
