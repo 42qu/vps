@@ -29,7 +29,7 @@ def gen_meta (vps_mgr, domain_dict, vps_id):
                 vif_id = vif_datas.items ()[0][0]
                 vif_name = 'vif%s.%s' % (domain_id, vif_id)
                 del xv.vifs[xv.name]
-                xv.add_netinf (name=vif_name, ip=xv.ip, netmask=xv.netmask,bridge=vif_data['bridge'], mac=vif_data['mac'])
+                xv.add_netinf_ext (ip=xv.ip, netmask=xv.netmask, mac=vif_data['mac'])
         #vpsops.create_xen_config (xv)
         vpsops.save_vps_meta (xv, override=False)
 

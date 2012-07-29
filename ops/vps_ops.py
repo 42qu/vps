@@ -476,7 +476,7 @@ class VPSOps (object):
         elif not is_ip_available:
             raise Exception ("ip %s is in use" % (ip))
 
-        vif = xv.add_netinf_int (vifname, ip, netmask, mac)
+        vif = xv.add_netinf_int (ip, netmask, mac)
         vps_common.xm_network_attach (xv.name, vifname, vif.mac, ip, vif.bridge)
         self.save_vps_meta (xv)
         self.create_xen_config (xv)
