@@ -144,7 +144,7 @@ class MigrateClient (SyncClientBase):
                 })
             sock.settimeout (size_g / 2 + 5)
             msg = self._recv_response (sock)
-            sock.settimeout (20)
+            sock.settimeout (10)
             remote_mount_point =  msg['mount_point']
             self.logger.info ("remote(%s) mounted" % (remote_mount_point))
             ret, err = self.rsync (mount_point, remote_mount_point)
@@ -158,7 +158,9 @@ class MigrateClient (SyncClientBase):
             self._send_msg (sock, "umount", {
                 'mount_point': remote_mount_point,
                 })
+            sock.settimeout (size_g / 2 + 5)
             self._recv_response (sock)
+            sock.settimeout (10)
             print "remote umounted %s" % (partition_name)
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
         finally:
