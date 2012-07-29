@@ -54,8 +54,10 @@ class XenVPS (object):
 
     def clone (self):
         new = self.__class__ (self.vps_id)
-        new.setup (self.os_id, self.vcpu, self.mem_m, self.root_size_g, None, 
-                 self.swap_size_g)
+        new.setup (self.os_id, self.vcpu, self.mem_m, self.root_store.size_g, None, 
+                 self.swap_store.size_g)
+        new.ip = self.ip
+        new.netmask = self.netmask
         new.gateway = self.gateway
         for disk in self.data_disks.values ():
             new.data_disks[disk.xen_dev] = vps_store_clone (disk)

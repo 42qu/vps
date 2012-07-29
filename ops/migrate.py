@@ -123,7 +123,6 @@ class MigrateClient (SyncClientBase):
 
 
     def sync_partition (self, dev):
-        # assert dev is lvm
         arr = dev.split ("/")
         if arr[0] == "" and arr[1] == 'dev' and len (arr) == 4:
             mount_point, size_g, partition_name = self._load_lvm (dev)
@@ -153,7 +152,7 @@ class MigrateClient (SyncClientBase):
                 'mount_point': remote_mount_point,
                 })
             self._recv_response (sock)
-            print "cleaned up"
+            print "remote umounted %s" % (partition_name)
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
         finally:
             if sock:
