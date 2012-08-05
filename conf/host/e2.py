@@ -5,6 +5,7 @@ from os.path import dirname
 
 def prepare(o):
     o.USE_LVM = False
+    o.VPS_NUM_LIMIT = 39
     o.VPS_IMAGE_DIR = "/vps"
     o.VPS_SWAP_DIR = "/swp" 
     o.VPS_METADATA_DIR = "/vps/metadata"

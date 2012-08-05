@@ -17,6 +17,11 @@ from lib.socket_engine import TCPSocketEngine, Connection
 import lib.io_poll as io_poll
 from lib.net_io import NetHead
 import conf
+assert conf.RSYNC_CONF_PATH
+assert conf.RSYNC_PORT
+assert conf.MOUNT_POINT_DIR
+
+
             
 RSYNC_SERVER_NAME = "sync_server"
 

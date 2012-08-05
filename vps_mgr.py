@@ -199,8 +199,11 @@ class VPSMgr (object):
         xv = XenVPS (vps_info.id)
         try:
             domain_dict = XenStore.domain_name_id_map ()
-            msg = "vps open: cannot open more than 39 vps"
-            if len (domain_dict.keys ()) >= 40:
+            limit = None
+            if 'VPS_NUM_LIMIT' in dir(conf):
+                limit = conf.VPS_NUM_LIMIT
+            if limit and len (domain_dict.keys ()) >= limit + 1:
+                msg = "vps open: cannot open more than %d vps" % (limit)
                 self.logger.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return

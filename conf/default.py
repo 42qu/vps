@@ -37,6 +37,7 @@ def prepare(o):
     o.log_level = "DEBUG"
     # for log.py
 
+    o.VPS_NUM_LIMIT = None
     o.RUN_DIR = "/var/run/vps_mgr"
     o.OS_IMAGE_DIR = "/data/vps/images"
     o.VPS_METADATA_DIR = "/data/vps/metadata" 
