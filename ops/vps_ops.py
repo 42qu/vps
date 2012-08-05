@@ -98,7 +98,7 @@ class VPSOps (object):
         out = None
         err = None
         xv.start ()
-        if not xv.wait_until_reachable (60):
+        if not xv.wait_until_reachable (120):
             raise Exception ("the vps started, seems not reachable")
         if is_new:
             _e = None
