@@ -44,7 +44,9 @@ class VPSMgr (object):
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
-        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.send_netflow)
+        self.last_netflow = None
+        self.netflow_inv = conf.NETFLOW_COLLECT_INV
+        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.monitor_netflow)
         self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
@@ -53,7 +55,7 @@ class VPSMgr (object):
         transport, client = get_client (VPS, timeout_ms=5000)
         return transport, client
 
-    def send_netflow (self):
+    def monitor_netflow (self):
         result = None
         try:
             result = netflow.read_proc ()
@@ -72,6 +74,14 @@ class VPSMgr (object):
                     continue
                 # direction of vps bridged network interface needs to be reversed
                 netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
+                if self.last_netflow and conf.LARGE_NETFLOW:
+                    last_v = self.last_netflow.get (ifname)
+                    if last_v:
+                        _in = (v[1] - last_v[1]) / self.netflow_inv
+                        _out = (v[0] - last_v[0]) / self.netflow_inv
+                        if _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
+                            self.logger_misc.warn ("%s in: %s, out: %s" % (ifname, _in, _out))
+            self.last_netflow = result
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
             return
@@ -227,6 +237,7 @@ class VPSMgr (object):
             self.done_task (Cmd.OPEN, vps_info.id, False, "error, " + str(e))
             return
         self.done_task (Cmd.OPEN, vps_info.id, True)
+        self.refresh_host_space ()
         return True
 
     def vps_reinstall_os (self, vps_info):
@@ -261,6 +272,7 @@ class VPSMgr (object):
             xv = XenVPS (vps_info.id)
             self.setup_vps (xv, vps_info)
             self.vpsops.upgrade_vps (xv)
+            self.refresh_host_space ()
             return True
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
@@ -352,6 +364,7 @@ class VPSMgr (object):
             self.done_task (Cmd.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.CLOSE, vps_info.id, True)
+        self.refresh_host_space ()
         return True
 
             
