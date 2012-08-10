@@ -77,8 +77,8 @@ class VPSMgr (object):
                 if self.last_netflow and conf.LARGE_NETFLOW:
                     last_v = self.last_netflow.get (ifname)
                     if last_v:
-                        _in = (v[1] - last_v[1]) / self.netflow_inv
-                        _out = (v[0] - last_v[0]) / self.netflow_inv
+                        _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
+                        _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
                         if _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
                             self.logger_misc.warn ("%s in: %s, out: %s" % (ifname, _in, _out))
             self.last_netflow = result
