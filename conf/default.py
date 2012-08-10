@@ -50,7 +50,8 @@ def prepare(o):
     o.LVM_VG_MIN_SPACE = 100 # leave 100G in the VG for temporary needs
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
-    o.NETFLOW_COLLECT_INV = 60  # in sec
+    o.NETFLOW_COLLECT_INV = 30  # in sec
+    o.LARGE_NETFLOW = 5.0 * 1024 * 1024
     o.XEN_BRIDGE = "xenbr0"
     o.XEN_INTERNAL_BRIDGE = "xenbr1"
     o.RSYNC_CONF_PATH = "/data/vps/rsync.conf"
