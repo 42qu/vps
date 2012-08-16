@@ -109,6 +109,7 @@ class SocketEngine (object):
         self._unlock = self._locker.release
         self._poll = poll
         self._cbs = MyList () # (handler, handler_args)
+        self._pending_fd_ops = MyList () # (handler, conn)
         self._checktimeout_inv = 0
         self.get_time = time.time
 
@@ -137,60 +138,71 @@ class SocketEngine (object):
             self.logger.warning (msg, bt_level=1)
 
     def put_sock (self, sock, readable_cb, readable_cb_args=(), idle_timeout_cb=None, stack=True):
+        self._put_sock (sock, readable_cb, readable_cb_args, idle_timeout_cb, lock=True)
+
+    def _put_sock (self, sock, readable_cb, readable_cb_args=(), idle_timeout_cb=None, stack=True, lock=False):
         conn = Connection (sock,
                 readable_cb=readable_cb, readable_cb_args=readable_cb_args, 
                 idle_timeout_cb=idle_timeout_cb)
         if stack and self._debug:
             conn.putsock_tb = traceback.extract_stack()[0:-1]
-        self.watch_conn (conn)
+        if lock:
+            self.watch_conn (conn)
+        else:
+            self._watch_conn (conn)
         return conn
+
 
     def watch_conn (self, conn):
         """ assume conn is already manage by server, register into poll """
         assert isinstance (conn, Connection)
         self._lock ()
-        try:
-            self._sock_dict[conn.fd] = conn
-            conn.last_ts = self.get_time ()
-            conn.status = ConnState.IDLE
-#            conn.cur_poll_sign = conn.sign
-            if conn.sign == 'r':
-                self._poll.register (conn.fd, 'r', conn.readable_cb, (conn, ) + conn.readable_cb_args)
-        finally:
-            self._unlock ()
+        self._pending_fd_ops.append ((self._watch_conn, conn))
+        self._unlock ()
+
+    def _watch_conn (self, conn):
+        self._sock_dict[conn.fd] = conn
+        conn.last_ts = self.get_time ()
+        conn.status = ConnState.IDLE
+#       conn.cur_poll_sign = conn.sign
+        if conn.sign == 'r':
+            self._poll.register (conn.fd, 'r', conn.readable_cb, (conn, ) + conn.readable_cb_args)
+
 
     def remove_conn (self, conn):
         """ remove conntion from server """
         self._lock ()
+        self._pending_fd_ops.append ((self._remove_conn, conn))
+        self._unlock ()
+
+    def _remove_conn (self, conn):
+        conn.status = ConnState.EXTENDED_USING
+        fd = conn.fd
+        self._poll.unregister (fd)
         try:
-            conn.status = ConnState.EXTENDED_USING
-            fd = conn.fd
-            self._poll.unregister (fd)
-            try:
-                del self._sock_dict[fd]
-            except KeyError:
-                pass
-        finally:
-            self._unlock ()
+            del self._sock_dict[fd]
+        except KeyError:
+            pass
 
     def close_conn (self, conn):
         """ remove an close connection """
         self._lock ()
+        self._pending_fd_ops.append ((self._close_conn, conn))
+        self._unlock ()
+
+    def _close_conn (self, conn):
+        fd = conn.fd
+        self._poll.unregister (fd)
         try:
-            fd = conn.fd
-            self._poll.unregister (fd)
-            try:
-                del self._sock_dict[fd]
-            except KeyError:
-                pass
-            conn.close ()
-        finally:
-            self._unlock ()
+            del self._sock_dict[fd]
+        except KeyError:
+            pass
+        conn.close ()
 
     def _accept_conn (self, sock, readable_cb, readable_cb_args, idle_timeout_cb, new_conn_cb):
         """ socket will set FD_CLOEXEC upon accepted """
         _accept = sock.accept
-        _put_sock = self.put_sock
+        _put_sock = self._put_sock
         while True: 
         # have to make sure the socket is non-block, so we can accept multiple connection
             try:
@@ -206,7 +218,7 @@ class SocketEngine (object):
                     if not csock:
                         continue
                 _put_sock (csock, readable_cb=readable_cb, readable_cb_args=readable_cb_args, 
-                        idle_timeout_cb=idle_timeout_cb, stack=False)
+                        idle_timeout_cb=idle_timeout_cb, stack=False, lock=False)
             except socket.error, e:
                 if e[0] == errno.EAGAIN:
                     return #no more
@@ -274,7 +286,7 @@ class SocketEngine (object):
             if callable(conn.unblock_err_cb): 
                 conn.call_cb (conn.unblock_err_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb)
                 #error callback
-            self.close_conn (conn) # NOTICE: we will close the conn after err_cb
+            self._close_conn (conn) # NOTICE: we will close the conn after err_cb
         else:
             conn.call_cb (ok_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb)
         return True
@@ -314,7 +326,7 @@ class SocketEngine (object):
             if callable(conn.unblock_err_cb): 
                 conn.call_cb (conn.unblock_err_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb)
                 #error callback
-            self.close_conn (conn) # NOTICE: we will close the conn after err_cb
+            self._close_conn (conn) # NOTICE: we will close the conn after err_cb
         else:
             conn.call_cb (ok_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb)
         return True
@@ -350,7 +362,7 @@ class SocketEngine (object):
         if conn.error is not None:
             if callable (conn.unblock_err_cb): 
                 conn.call_cb (conn.unblock_err_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb) #error callback
-            self.close_conn (conn) # NOTICE: we will close the conn after err_cb
+            self._close_conn (conn) # NOTICE: we will close the conn after err_cb
         else:
             conn.call_cb (ok_cb, (conn, ) + conn.unblock_cb_args, conn.unblock_tb)
         return True
@@ -451,6 +463,7 @@ class SocketEngine (object):
         return res
 
     def _check_timeout (self):
+
         self._lock ()
         conns = self._sock_dict.values ()
         self._unlock ()
@@ -475,7 +488,7 @@ class SocketEngine (object):
             elif callable(conn.unblock_err_cb):
                 conn.error = socket.timeout ("timeout")
                 self._exec_callback (conn.unblock_err_cb, (conn,) + conn.unblock_cb_args, conn.unblock_tb)
-            self.close_conn (conn)
+            self._close_conn (conn)
 
     def _exec_callback (self, cb, args, stack=None):
         try:
@@ -497,17 +510,25 @@ class SocketEngine (object):
 
     def poll (self, timeout=100):
         """ you need to call this in a loop, return fd numbers polled each time """
-        self._lock ()
+
+        #locking when poll may be prevent other thread to lock, but it's possible poll is not thread-safe, so we do the lazy approach
+        __exec_callback = self._exec_callback
         hlist = self._poll.poll (timeout)
-        self._unlock ()
         for h in hlist:
             h[1] (*h[2])
         if self._cbs:
-            __exec_callback = self._exec_callback
             _pop = self._cbs.popleft
             while self._cbs:
                 _cb = _pop ()
                 __exec_callback (*_cb)
+
+        self._lock ()
+        _pop = self._pending_fd_ops.popleft
+        while self._pending_fd_ops:
+            _cb = _pop ()
+            __exec_callback (_cb[0], (_cb[1],))
+        self._unlock ()
+
         if self._checktimeout_inv > 0 and time.time() - self._last_checktimeout > self._checktimeout_inv:
             self._check_timeout ()
         return len (hlist)
