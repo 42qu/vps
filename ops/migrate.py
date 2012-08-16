@@ -88,8 +88,10 @@ class MigrateClient (SyncClientBase):
     def snapshot_sync (self, dev):
         snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (os.path.basename(dev)) , conf.VPS_LVM_VGNAME)
         self.logger.info ("made snapshot %s for %s" % (snapshot_dev, dev))
-        self.sync_partition (snapshot_dev, partition_name=os.path.basename(dev))
-        vps_common.lv_delete (snapshot_dev)
+        try:
+            self.sync_partition (snapshot_dev, partition_name=os.path.basename(dev))
+        finally:
+            vps_common.lv_delete (snapshot_dev)
         self.logger.info ("delete snapshot %s" % (snapshot_dev))
 
     def _load_image (self, file_path):
