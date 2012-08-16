@@ -3,6 +3,7 @@
 import os
 import socket
 import subprocess
+from lib.command import Command
 import time
 import signal
 try: 
@@ -76,9 +77,10 @@ class SyncServerBase (object):
         returncode = self._rsync_popen.poll ()
         if returncode is not None:
             if self.is_running:
-                err = "\n".join (self._rsync_popen.stderr.readlines ())
+                #err = "\n".join (self._rsync_popen.stderr.readlines ())
+                returncode, out, err = self._rsync_popen.get_result ()
                 self.logger.error ("returncode=%d, error=%s" % (returncode, err)) 
-                self._rsync_popen.stderr.close ()
+                #self._rsync_popen.stderr.close ()
                 self.logger.error ("rsync daemon exited, restart it")
                 self.start_rsync ()
 
@@ -164,7 +166,8 @@ use chroot=yes
         rsync_cmd = ["rsync", "--daemon", "--config=%s" % (conf.RSYNC_CONF_PATH), "--no-detach"]
         rsync_cmd.append ("--address=%s" % (self.listen_ip))
         rsync_cmd.append ("--port=%s" % (self.rsync_port))
-        self._rsync_popen = subprocess.Popen (rsync_cmd, stderr=subprocess.PIPE, close_fds=True)
+        #self._rsync_popen = subprocess.Popen (rsync_cmd, stderr=subprocess.PIPE, close_fds=True)
+        self._rsync_popen = Command (rsync_cmd)
         self.logger.info ("started rsync, pid=%s" % (self._rsync_popen.pid))
         time.sleep (1)
 

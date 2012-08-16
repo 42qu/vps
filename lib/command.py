@@ -83,7 +83,8 @@ class Command (object):
             self.cmd_line = ' '.join (cmd)
             self.args = cmd
         self.close_fds = close_fds and True or False
-        
+
+    pid = property (lambda self: self._pid)
     
     def _close_fd (self):
         try:
@@ -201,9 +202,9 @@ class Command (object):
         self._res_err = err
         return (status, output, err)
 
-    def _poll (self, timeout):
+    def _poll (self, timeout=0):
         try:
-            rlist, wlist, xlist = select.select (self._rdset, self._wrset, [], timeout)
+            rlist, wlist, xlist = select.select (self._rdset, self._wrset, [], timeout or 0)
             if self._stdin in wlist:
                 try:
                     res = os.write (self._stdin, self._input_buf)
@@ -240,6 +241,18 @@ class Command (object):
             if e.args[0] != errno.EINTR:
                 self._cleanup ()
                 raise CommandException (self.cmd_line, "pipe error, %s" % (str (e)))
+
+    def poll (self, timeout=None):
+        """ if the child has finished, return exitcode, otherwise None.
+            if timeout > 0, then block until timeout (seconds)
+        """
+        res = self._wait_child (False)
+        if res:
+            self._poll (0)
+            return self._res_code
+        else:
+            self._poll (timeout)
+            return None
 
 
     def wait (self):
