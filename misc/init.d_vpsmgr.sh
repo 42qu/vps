@@ -12,6 +12,8 @@
 BASE_PATH="/data/vps/code"
 cmd="./vps_mgr.py"
 
+export PATH="/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin:/opt/bin"
+
 function start() {
     cd $BASE_PATH && $cmd start
 }
