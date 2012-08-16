@@ -168,6 +168,7 @@ use chroot=yes
         rsync_cmd.append ("--port=%s" % (self.rsync_port))
         #self._rsync_popen = subprocess.Popen (rsync_cmd, stderr=subprocess.PIPE, close_fds=True)
         self._rsync_popen = Command (rsync_cmd)
+        self._rsync_popen.start ()
         self.logger.info ("started rsync, pid=%s" % (self._rsync_popen.pid))
         time.sleep (1)
 

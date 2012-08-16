@@ -136,7 +136,7 @@ class Command (object):
             self._last_ts = self._start_ts = time.time ()
             
 
-    def _cleanup (self):
+    def cleanup (self):
         self._out_stream.close ()
         self._err_stream.close ()
         if not self._stdin is None:
@@ -157,7 +157,7 @@ class Command (object):
                 self._timeout -= time_pass
                 self._last_ts = now
                 return
-            self._cleanup ()
+            self.cleanup ()
             pgid = os.getpgid (self._pid)
             os.killpg (pgid, signal.SIGKILL)
             raise CommandTimeoutException (self.cmd_line, "exec timeout, %f sec passed" % (now - self._start_ts))
@@ -187,7 +187,7 @@ class Command (object):
         self._wait_child (True)
         output = self._out_stream.getvalue ()
         err = self._err_stream.getvalue ()
-        self._cleanup ()
+        self.cleanup ()
         if os.WIFSIGNALED (self._exitcode):
             raise CommandException (self.cmd_line, "terminated by signal, %d" %
                 (os.WSTOPSIG (self._exitcode)))
@@ -235,11 +235,11 @@ class Command (object):
             self._check_timeout ()
         except select.error, e:
             if e.args[0] != errno.EINTR:
-                self._cleanup ()
+                self.cleanup ()
                 raise CommandException (self.cmd_line, "select error, %s" % (str (e)))
         except IOError, e:
             if e.args[0] != errno.EINTR:
-                self._cleanup ()
+                self.cleanup ()
                 raise CommandException (self.cmd_line, "pipe error, %s" % (str (e)))
 
     def poll (self, timeout=None):
@@ -270,7 +270,7 @@ class Command (object):
                     select.select ([], [], [], self._timeout)
                 except select.error, e:
                     if not e.args[0] == errno.EINTR:
-                        self._cleanup ()
+                        self.cleanup ()
                         raise CommandException (self.cmd_line, "select error, %s" % (str (e)))
         else:
             self._wait_child (True)
