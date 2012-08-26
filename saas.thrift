@@ -54,7 +54,7 @@ service VPS {
    void  plot            ( 1:i64 cid, 2:i64 rid, 3:i64 value ),
 
    string   sms          ( 1:list<string>  number_list, 2:string txt),
-   void  host_refresh    ( 1:i64 host_id , 2:i16 hd_remain, 3:i64 ram_remain),
+   void  host_refresh    ( 1:i64 host_id , 2:i16 hd_remain, 3:i64 ram_remain, 4:i16 hd_total=0, 5:i64 ram_total=0),
 }
 
 

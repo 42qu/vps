@@ -126,7 +126,7 @@ class Vps:
    - gateway
    - password
    - os
-   - hardisks
+   - harddisks
    - ram
    - cpu
    - host_id
@@ -144,7 +144,7 @@ class Vps:
     (3, TType.STRUCT, 'gateway', (Ip, Ip.thrift_spec), None, ), # 3
     (4, TType.STRING, 'password', None, None, ), # 4
     (5, TType.I32, 'os', None, None, ), # 5
-    (6, TType.MAP, 'hardisks', (TType.I32,None,TType.I32,None), None, ), # 6
+    (6, TType.MAP, 'harddisks', (TType.I32,None,TType.I32,None), None, ), # 6
     (7, TType.I64, 'ram', None, None, ), # 7
     (8, TType.I16, 'cpu', None, None, ), # 8
     (9, TType.I64, 'host_id', None, None, ), # 9
@@ -155,13 +155,13 @@ class Vps:
     (14, TType.STRING, 'template_image', None, None, ), # 14
   )
 
-  def __init__(self, id=None, ext_ips=None, gateway=None, password=None, os=None, hardisks=None, ram=None, cpu=None, host_id=None, state=None, int_ip=None, bandwidth=None, qos=None, template_image=None,):
+  def __init__(self, id=None, ext_ips=None, gateway=None, password=None, os=None, harddisks=None, ram=None, cpu=None, host_id=None, state=None, int_ip=None, bandwidth=None, qos=None, template_image=None,):
     self.id = id
     self.ext_ips = ext_ips
     self.gateway = gateway
     self.password = password
     self.os = os
-    self.hardisks = hardisks
+    self.harddisks = harddisks
     self.ram = ram
     self.cpu = cpu
     self.host_id = host_id
@@ -214,12 +214,12 @@ class Vps:
           iprot.skip(ftype)
       elif fid == 6:
         if ftype == TType.MAP:
-          self.hardisks = {}
+          self.harddisks = {}
           (_ktype7, _vtype8, _size6 ) = iprot.readMapBegin() 
           for _i10 in xrange(_size6):
             _key11 = iprot.readI32();
             _val12 = iprot.readI32();
-            self.hardisks[_key11] = _val12
+            self.harddisks[_key11] = _val12
           iprot.readMapEnd()
         else:
           iprot.skip(ftype)
@@ -297,10 +297,10 @@ class Vps:
       oprot.writeFieldBegin('os', TType.I32, 5)
       oprot.writeI32(self.os)
       oprot.writeFieldEnd()
-    if self.hardisks is not None:
-      oprot.writeFieldBegin('hardisks', TType.MAP, 6)
-      oprot.writeMapBegin(TType.I32, TType.I32, len(self.hardisks))
-      for kiter14,viter15 in self.hardisks.items():
+    if self.harddisks is not None:
+      oprot.writeFieldBegin('harddisks', TType.MAP, 6)
+      oprot.writeMapBegin(TType.I32, TType.I32, len(self.harddisks))
+      for kiter14,viter15 in self.harddisks.items():
         oprot.writeI32(kiter14)
         oprot.writeI32(viter15)
       oprot.writeMapEnd()
