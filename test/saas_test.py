@@ -4,8 +4,8 @@ import os
 import sys
 import _env
 import conf
-import saas
-from saas.ttypes import Cmd
+import _saas
+from _saas.ttypes import Cmd
 from vps_mgr import VPSMgr
 import time
 from zthrift.client import get_client
@@ -14,7 +14,7 @@ import unittest
 class TestSAASClient (unittest.TestCase):
 
     def test_invalid (self):
-        trans, client = get_client (saas.VPS)
+        trans, client = get_client (_saas.VPS)
         trans.open ()
         print "connected"
         try:
@@ -28,11 +28,11 @@ class TestSAASClient (unittest.TestCase):
             trans.close ()
 
     def test_state (self):
-        trans, client = get_client (saas.VPS)
+        trans, client = get_client (_saas.VPS)
         print "test state"
         trans.open ()
         try:
-            vps = client.vps (65)
+            vps = client.vps (3)
             print VPSMgr.dump_vps_info (vps)
         finally:
             trans.close ()

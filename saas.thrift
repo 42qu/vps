@@ -12,7 +12,7 @@ struct Vps {
    3 : Ip gateway      				,
    4 : string password              ,
    5 : i32 os                    ,                       // os类型
-   6 : map<i32, i32> hardisks      ,                       //
+   6 : map<i32, i32> harddisks      ,                       //
    7 : i64 ram                      ,                       //单位M
    8 : i16 cpu                      ,                       //几个core
    9 : i64 host_id                  ,                       //如pc1.42qu.us

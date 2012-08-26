@@ -175,7 +175,7 @@ class VPSMgr (object):
             return None
         if not vps_info.ext_ips or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
             return None
-        if not vps_info.hardisks.has_key(0) or vps_info.hardisks[0] <= 0:
+        if not vps_info.harddisks.has_key(0) or vps_info.harddisks[0] <= 0:
             return None
         if not vps_info.password:
             return None
@@ -192,7 +192,7 @@ class VPSMgr (object):
             gateway = "%s/%s" % (int2ip(vps_info.gateway.ipv4), int2ip(vps_info.gateway.ipv4_netmask))
         else:
             gateway = None
-        hd = "(%s)" % ",".join (map (lambda disk: "%s:%s" % (disk.id, disk.size), vps_info.hardisks.items ()))
+        hd = "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.items ()))
         if vps_info.state is not None:
             state = "%s(%s)" % (vps_info.state, vps_const.VPS_STATE_CN[vps_info.state])
         else:
@@ -204,12 +204,12 @@ class VPSMgr (object):
             )
 
     def setup_vps (self, xenvps, vps_info):
-        root_size = vps_info.hardisks[0]
+        root_size = vps_info.harddisks[0]
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
                 disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway.ipv4)
         for ip in vps_info.ips:
             xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
-        for disk_id, size in vps_info.hardisks.iteritems ():
+        for disk_id, size in vps_info.harddisks.iteritems ():
             if disk_id == 0:
                 xenvps.add_extra_storage (disk.id, disk.size)
 
