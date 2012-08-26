@@ -24,8 +24,8 @@ def close_vps (vps_id):
     if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state != vps_const.VPS_STATE.CLOSE:
-        print "vps %s state=%s, is not to be close" % (vps_id, vps_const.VPS_STATE_CN[vps.state])
+    if vps.state != vps_const.VM_STATE.CLOSE:
+        print "vps %s state=%s, is not to be close" % (vps_id, vps_const.VM_STATE_CN[vps.state])
         return
     try:
         client.vps_close (vps)
