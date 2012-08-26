@@ -4,9 +4,9 @@
 import sys
 import os
 import conf
-import saas.const.vps as vps_const
-from saas import VPS
-from saas.ttypes import Cmd
+import const as vps_const
+from _saas import VPS
+from _saas.ttypes import Cmd, NetFlow
 from zthrift.client import get_client
 from zkit.ip import int2ip 
 from ops.vps import XenVPS
@@ -21,7 +21,6 @@ import signal
 import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
-from saas.ttypes import NetFlow
 import conf
 
 class VPSMgr (object):
@@ -174,29 +173,46 @@ class VPSMgr (object):
     def vps_is_valid (vps_info):
         if vps_info is None or vps_info.id <= 0:
             return None
-        if not vps_info.ipv4 or not vps_info.ipv4_gateway or vps_info.cpu <= 0 or vps_info.ram <= 0 or vps_info.hd <= 0 or not vps_info.password:
+        if not vps_info.ext_ips or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
+            return None
+        if not vps_info.hardisks.has_key(0) or vps_info.hardisks[0] <= 0:
+            return None
+        if not vps_info.password:
             return None
         return vps_info
 
     @staticmethod
     def dump_vps_info (vps_info):
-        ip = vps_info.ipv4 is not None and int2ip (vps_info.ipv4) or None
-        ip_inter = vps_info.ipv4_inter is not None  and int2ip (vps_info.ipv4_inter) or None
-        netmask = vps_info.ipv4_netmask is not None and int2ip (vps_info.ipv4_netmask) or None
-        gateway = vps_info.ipv4_gateway is not None and int2ip (vps_info.ipv4_gateway) or None
+        ip = "(%s)" % ",".join (map (lambda ip:"%s/%s" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask)), vps_info.ext_ips))
+        if vps_info.int_ip.ipv4:
+            ip_inter = "%s/%s" % (int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
+        else:
+            ip_inter = None
+        if vps_info.gateway.ipv4:
+            gateway = "%s/%s" % (int2ip(vps_info.gateway.ipv4), int2ip(vps_info.gateway.ipv4_netmask))
+        else:
+            gateway = None
+        hd = "(%s)" % ",".join (map (lambda disk: "%s:%s" % (disk.id, disk.size), vps_info.hardisks.items ()))
         if vps_info.state is not None:
             state = "%s(%s)" % (vps_info.state, vps_const.VPS_STATE2CN[vps_info.state])
         else:
             state = None
-        return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, netmask %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
+        return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
                 vps_info.host_id, vps_info.id, state, 
-                vps_info.os, vps_info.cpu, vps_info.ram, vps_info.hd, 
-                ip, netmask, gateway, ip_inter, vps_info.bandwidth,
+                vps_info.os, vps_info.cpu, vps_info.ram, hd, 
+                ip, gateway, ip_inter, vps_info.bandwidth,
             )
 
     def setup_vps (self, xenvps, vps_info):
-        xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram, disk_g=vps_info.hd, root_pw=vps_info.password)
-        xenvps.add_netinf_ext (ip=int2ip (vps_info.ipv4), netmask=int2ip (vps_info.ipv4_netmask), gateway=int2ip (vps_info.ipv4_gateway))
+        root_size = vps_info.hardisks[0]
+                xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
+                disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway.ipv4)
+        for ip in vps_info.ips:
+            xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
+        for disk_id, size in vps_info.hardisks.iteritems ():
+            if disk_id == 0:
+                xenvps.add_extra_storage (disk.id, disk.size)
+
 
 
     def vps_open (self, vps_info, vps_image=None, is_new=True): 

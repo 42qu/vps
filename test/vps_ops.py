@@ -19,9 +19,9 @@ class TestVPSOPS (unittest.TestCase):
         logger = Log ("test", config=conf)
         vpsops = VPSOps (logger)
         vps = XenVPS (0)
-        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd")
+        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd", gateway="10.10.1.1")
         vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
-        vps.add_netinf_ext ("10.10.1.2", "255.255.255.0", gateway="10.10.1.1")
+        vps.add_netinf_ext ("10.10.1.2", "255.255.255.0")
         vps.add_netinf_int ("10.10.3.2", '255.255.255.0')
         vps.data_disks['xvdc1']._set_expire_days (1)
         print "trash_date", vps.data_disks['xvdc1'].trash_date
@@ -62,8 +62,8 @@ class TestVPSOPS (unittest.TestCase):
         print "test mem too big"
         vps = XenVPS (0)
         logger = Log ("test", config=conf)
-        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd")
-        vps.add_netinf_ext (ip="10.10.1.2", netmask="255.255.255.0", gateway="10.10.1.1")
+        vps.setup (os_id=50001, vcpu=1, mem_m=500000, disk_g=7, root_pw="fdfdfd", gateway="10.10.1.1")
+        vps.add_netinf_ext (ip="10.10.1.2", netmask="255.255.255.0")
         try:
             vps.check_resource_avail ()
         except Exception, e:
@@ -78,9 +78,9 @@ class TestVPSOPS (unittest.TestCase):
         vpsops = VPSOps (logger)
         xv = XenVPS (0)
         try:
-            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd")
+            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd", gateway="10.10.2.1")
             xv.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
-            xv.add_netinf_ext (ip="10.10.2.2", netmask="255.255.255.0", gateway="10.10.2.1")
+            xv.add_netinf_ext (ip="10.10.2.2", netmask="255.255.255.0")
             print xv.gen_xenpv_config ()
             vpsops.create_vps (xv)
         except Exception, e:

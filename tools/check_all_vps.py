@@ -5,7 +5,7 @@ import re
 import os
 import _env
 import conf
-import saas.const.vps as vps_const
+import const as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps

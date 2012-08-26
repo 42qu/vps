@@ -121,7 +121,7 @@ class XenVPS (object):
             raise Exception ("metadata missing key %s" % (str(e)))
         return self
 
-    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, swp_g=None):
+    def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, swp_g=None, gateway=None):
         """ on error will raise Exception """
         assert mem_m > 0 and disk_g > 0 and vcpu > 0
         self.has_all_attr = True
@@ -135,6 +135,7 @@ class XenVPS (object):
                 swp_g = 2
             else:
                 swp_g = 1
+        self.gateway = gateway
         self.root_store = vps_store_new ("%s_root" % self.name, "xvda1", None, '/', disk_g)
         self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
         self.data_disks[self.root_store.xen_dev] = self.root_store
@@ -195,13 +196,12 @@ class XenVPS (object):
     def has_netinf (self, vifname):
         return self.vifs.has_key (vifname)
 
-    def add_netinf_ext (self, ip, netmask, gateway=None, mac=None):
+    def add_netinf_ext (self, ip, netmask, mac=None):
         mac = mac or vps_common.gen_mac ()
         name = "vps%s" % (self.vps_id)
         self.vifs[name] = VPSNetExt (ifname=name, ip=ip, netmask=netmask, mac=mac)
         self.ip = ip
         self.netmask = netmask
-        self.gateway = gateway
         return self.vifs[name]
 
     def add_netinf_int (self, ip, netmask, mac=None):

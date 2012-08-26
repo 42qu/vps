@@ -7,7 +7,6 @@ from vps_mgr import VPSMgr
 import conf
 from saas.ttypes import Cmd
 from ops.vps import XenVPS
-import saas.const.vps as vps_const
 
 import getopt
 

@@ -4,7 +4,7 @@ import sys
 import os
 import _env
 from vps_mgr import VPSMgr
-import saas.const.vps as vps_const
+import const as vps_const
 import conf
 import time
 

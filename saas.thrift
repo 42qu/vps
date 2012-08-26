@@ -1,36 +1,26 @@
-namespace py saas 
+namespace py _saas 
 
-typedef i64 Ip 
+struct Ip {
+	1: i64 ipv4						,
+	2: i64 ipv4_netmask				,
+}
 
 
 struct Vps {
-   1 : i64 id                        ,
-   2 : optional Ip ipv4              ,
-   3 : optional Ip ipv4_netmask      ,
-   4 : optional Ip ipv4_gateway      ,
-   5 : string password               ,
-   6 : i64 os                        ,                       //os的id会软连接到真实的os镜像
-   7 : i16 hd                        ,                       //单位G
-   8 : i64 ram                       ,                       //单位M
-   9 : i16 cpu                       ,                       //几个core
-  10 : i64 host_id                   ,                       //如pc1.42qu.us
-/*
-VPS_STATE_RM = 0
-VPS_STATE_PAY = 10
-VPS_STATE_RUN = 15
-VPS_STATE_CLOSE = 20
-
-VPS_STATE2CN = {
-    VPS_STATE_RM  : '已删除' ,
-    VPS_STATE_RUN : '运行中' ,
-    VPS_STATE_CLOSE : '被关闭' ,
-    VPS_STATE_PAY : '未开通' ,
-}
-*/
-  11 : i16 state                     ,
-  12 : optional Ip ipv4_inter        ,                       //内网IP
-  13 : optional i64 bandwidth        ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
-  14 : optional i32 qos              ,                       //带宽优先级 0 为默认值 , 1 为高优先级
+   1 : i64 id                       ,
+   2 : list<Ip> ext_ips           	,
+   3 : Ip gateway      				,
+   4 : string password              ,
+   5 : i32 os                    ,                       // os类型
+   6 : map<i32, i32> hardisks      ,                       //
+   7 : i64 ram                      ,                       //单位M
+   8 : i16 cpu                      ,                       //几个core
+   9 : i64 host_id                  ,                       //如pc1.42qu.us
+  10 : i16 state                    ,
+  11 : optional Ip int_ip           ,                       //内网IP
+  12 : optional i64 bandwidth       ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
+  13 : optional i32 qos             ,                       //带宽优先级 0 为默认值 , 1 为高优先级
+  14 : optional string template_image		,
 }
 
 struct NetFlow {

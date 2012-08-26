@@ -859,11 +859,11 @@ class netflow_save_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.netflow = []
-          (_etype3, _size0) = iprot.readListBegin()
-          for _i4 in xrange(_size0):
-            _elem5 = NetFlow()
-            _elem5.read(iprot)
-            self.netflow.append(_elem5)
+          (_etype19, _size16) = iprot.readListBegin()
+          for _i20 in xrange(_size16):
+            _elem21 = NetFlow()
+            _elem21.read(iprot)
+            self.netflow.append(_elem21)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -889,8 +889,8 @@ class netflow_save_args:
     if self.netflow is not None:
       oprot.writeFieldBegin('netflow', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.netflow))
-      for iter6 in self.netflow:
-        iter6.write(oprot)
+      for iter22 in self.netflow:
+        iter22.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.timestamp is not None:
@@ -1112,10 +1112,10 @@ class sms_args:
       if fid == 1:
         if ftype == TType.LIST:
           self.number_list = []
-          (_etype10, _size7) = iprot.readListBegin()
-          for _i11 in xrange(_size7):
-            _elem12 = iprot.readString();
-            self.number_list.append(_elem12)
+          (_etype26, _size23) = iprot.readListBegin()
+          for _i27 in xrange(_size23):
+            _elem28 = iprot.readString();
+            self.number_list.append(_elem28)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1137,8 +1137,8 @@ class sms_args:
     if self.number_list is not None:
       oprot.writeFieldBegin('number_list', TType.LIST, 1)
       oprot.writeListBegin(TType.STRING, len(self.number_list))
-      for iter13 in self.number_list:
-        oprot.writeString(iter13)
+      for iter29 in self.number_list:
+        oprot.writeString(iter29)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.txt is not None:
