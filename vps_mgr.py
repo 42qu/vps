@@ -194,7 +194,7 @@ class VPSMgr (object):
             gateway = None
         hd = "(%s)" % ",".join (map (lambda disk: "%s:%s" % (disk.id, disk.size), vps_info.hardisks.items ()))
         if vps_info.state is not None:
-            state = "%s(%s)" % (vps_info.state, vps_const.VPS_STATE2CN[vps_info.state])
+            state = "%s(%s)" % (vps_info.state, vps_const.VPS_STATE_CN[vps_info.state])
         else:
             state = None
         return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
@@ -205,7 +205,7 @@ class VPSMgr (object):
 
     def setup_vps (self, xenvps, vps_info):
         root_size = vps_info.hardisks[0]
-                xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
+        xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
                 disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway.ipv4)
         for ip in vps_info.ips:
             xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
@@ -239,12 +239,12 @@ class VPSMgr (object):
                 self.logger_err.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
-            if vps_info.state in [vps_const.VPS_STATE_PAY, vps_const.VPS_STATE_RUN]:
+            if vps_info.state in [vps_const.VPS_STATE.PAY, vps_const.VPS_STATE.RUN]:
                 self.vpsops.create_vps (xv, vps_image, is_new)
-            elif vps_info.state == vps_const.VPS_STATE_CLOSE:
+            elif vps_info.state == vps_const.VPS_STATE.CLOSE:
                 self.vpsops.reopen_vps (vps_info.id, xv)
             else:
-                msg = "vps%s state is %s(%s)" % (str(vps_info.id), vps_info.state, vps_const.VPS_STATE2CN[vps_info.state])
+                msg = "vps%s state is %s(%s)" % (str(vps_info.id), vps_info.state, vps_const.VPS_STATE_CN[vps_info.state])
                 self.logger_err.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
@@ -371,7 +371,7 @@ class VPSMgr (object):
 
     def vps_close (self, vps_info):
         try:
-            assert vps_info.state == vps_const.VPS_STATE_CLOSE
+            assert vps_info.state == vps_const.VPS_STATE.CLOSE
             xv = XenVPS (vps_info.id)
             self.setup_vps (xv, vps_info)
             self.vpsops.close_vps (vps_info.id, xv)

@@ -46,9 +46,9 @@ def check_via_backend (client, vps_id):
         is_running = xv.is_running () and "(running)" or "(not running)"
         print "vps %s %s host_id=%s not on this host" % (vps_id, is_running, vps_info.host_id)
         return True, None
-    elif vps_info.state != vps_const.VPS_STATE_RUN:
+    elif vps_info.state != vps_const.VPS_STATE.RUN:
         is_running = xv.is_running () and "(running)" or "(not running)"
-        print "vps %s %s backend state=%s " % (vps_id, is_running, vps_const.VPS_STATE2CN[vps_info.state])
+        print "vps %s %s backend state=%s " % (vps_id, is_running, vps_const.VPS_STATE_CN[vps_info.state])
         return True, None
     return False, vps_info
 
