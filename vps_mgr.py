@@ -207,11 +207,11 @@ class VPSMgr (object):
         root_size = vps_info.harddisks[0]
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
                 disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway.ipv4)
-        for ip in vps_info.ips:
+        for ip in vps_info.ext_ips:
             xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
-        for disk_id, size in vps_info.harddisks.iteritems ():
-            if disk_id == 0:
-                xenvps.add_extra_storage (disk.id, disk.size)
+        for disk_id, disk_size in vps_info.harddisks.iteritems ():
+            if disk_id != 0:
+                xenvps.add_extra_storage (disk_id, disk_size)
 
 
 
@@ -239,7 +239,7 @@ class VPSMgr (object):
                 self.logger_err.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
-            if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.RUN]:
+            if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN]:
                 self.vpsops.create_vps (xv, vps_image, is_new)
             elif vps_info.state == vps_const.VM_STATE.CLOSE:
                 self.vpsops.reopen_vps (vps_info.id, xv)
@@ -336,22 +336,23 @@ class VPSMgr (object):
         return None
 
     def refresh_host_space (self):
-        if not conf.USE_LVM:
-            return
         try:
-            extra = 0
-            if "LVM_VG_MIN_SPACE" in dir(conf) and conf.LVM_VG_MIN_SPACE:
-                extra = int(conf.LVM_VG_MIN_SPACE)
-            disk_remain = vps_common.vg_free_space (conf.VPS_LVM_VGNAME) # in g
-            disk_remain -= extra
-            if disk_remain < 0:
-                disk_remain = 0
+            disk_remain = -1
+            disk_total = -1 
+            if conf.USE_LVM:
+                disk_remain, disk_total = vps_common.vg_space (conf.VPS_LVM_VGNAME) # in g
+                if "LVM_VG_MIN_SPACE" in dir(conf) and conf.LVM_VG_MIN_SPACE:
+                    extra = int(conf.LVM_VG_MIN_SPACE)
+                    disk_remain -= extra
+                if disk_remain < 0:
+                    disk_remain = 0
             xen_inf = get_xen_inf ()
             mem_remain = xen_inf.mem_free () # in m
+            mem_total = xen_inf.mem_total ()
             trans, client = self.get_client ()
             trans.open ()
             try:
-                client.host_refresh (self.host_id, disk_remain, mem_remain)
+                client.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_remain)
             finally:
                 trans.close ()
             self.logger.info ("send host remain disk:%dG, mem:%dM" % (disk_remain, mem_remain))

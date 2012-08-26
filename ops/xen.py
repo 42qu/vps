@@ -57,6 +57,9 @@ class IXen (object):
         """ return mem free (MB) in Xen """
         raise NotImplementedError ()
 
+    @staticmethod
+    def mem_total ():
+        raise NotImplementedError ()
 
 class XenXM (IXen):
 
@@ -90,6 +93,13 @@ class XenXM (IXen):
         """ return mem free (MB) in Xen """
         out = call_cmd ("xm info | grep free_memory")
         return int(out.strip("\r\n").split (":")[1].strip ())
+
+    @staticmethod
+    def mem_total ():
+        """ return mem total (MB) in Xen """
+        out = call_cmd ("xm info | grep total_memory")
+        return int(out.strip("\r\n").split (":")[1].strip ())
+
 
     @staticmethod
     def uptime (domain):
@@ -133,6 +143,12 @@ class XenXL (IXen):
     def mem_free ():
         """ return mem free (MB) in Xen """
         out = call_cmd ("xl info | grep free_memory")
+        return int(out.strip("\r\n").split (":")[1].strip ())
+
+    @staticmethod
+    def mem_total ():
+        """ return mem total (MB) in Xen """
+        out = call_cmd ("xl info | grep total_memory")
         return int(out.strip("\r\n").split (":")[1].strip ())
 
     @staticmethod

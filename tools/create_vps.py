@@ -21,7 +21,7 @@ def create_vps (vps_id, vps_image=None, is_new=True):
     if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state not in [vps_const.VM_STATE_PAY, vps_const.VM_STATE.RUN]:
+    if vps.state not in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN]:
         print "vps %s state=%s, is not to be created" % (vps_id, vps_const.VM_STATE_CN[vps.state])
         return
     if vps_image and not os.path.exists (vps_image):

@@ -41,9 +41,14 @@ class TestSAASClient (unittest.TestCase):
         m = VPSMgr ()
         m.send_netflow ()
 
+    def test_done (self):
+        m = VPSMgr ()
+        m.done_task (Cmd.OPEN, 4, True)
+
 if __name__ == '__main__':
     runner = unittest.TextTestRunner ()
-    runner.run (TestSAASClient ("test_state"))
+    #runner.run (TestSAASClient ("test_state"))
+    runner.run (TestSAASClient ("test_done"))
     #runner.run (TestSAASClient ("test_netflow"))
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
