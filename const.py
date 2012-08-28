@@ -1,9 +1,14 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+_dictcls = None
 import collections
+if 'OrderedDict' in dir (collections):
+    _dictcls = collections.OrderedDict
+else:
+    _dictcls = dict
 
-VPS_HOST_TYPE_NAME2ID = collections.OrderedDict (
+VPS_HOST_TYPE_NAME2ID = _dictcls (
     centos6_xen= 1,
     centos5_xen=2,
     ubuntu_xen_openvswitch=3,
@@ -21,7 +26,7 @@ class VM_STATE:
     OPEN = 15
     CLOSE = 20
 
-VM_STATE_CN = collections.OrderedDict()
+VM_STATE_CN = _dictcls()
 VM_STATE_CN[VM_STATE.OPEN] = '运行中'
 VM_STATE_CN[VM_STATE.PAY] = '待开通'
 VM_STATE_CN[VM_STATE.CLOSE] = '被关闭'
