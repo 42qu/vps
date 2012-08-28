@@ -387,10 +387,10 @@ class VPSOps (object):
         xv = None
         if os.path.exists (meta_path):
             xv = self._load_vps_meta (meta_path)
-            if _xv: 
-                xv.os_id = _xv.os_id
-            elif os_id:
+            if os_id:
                 xv.os_id = os_id
+            elif _xv: 
+                xv.os_id = _xv.os_id
             else:
                 raise Exception ("missing os_id")
         else:
