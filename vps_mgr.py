@@ -173,13 +173,18 @@ class VPSMgr (object):
     def vps_is_valid (vps_info):
         if vps_info is None or vps_info.id <= 0:
             return None
-        if not vps_info.ext_ips or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
-            return None
         if not vps_info.harddisks.has_key(0) or vps_info.harddisks[0] <= 0:
             return None
         if not vps_info.password:
             return None
         return vps_info
+
+    @staticmethod
+    def vpsinfo_check_ip (vps_info):
+        if not vps_info.ext_ips or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
+            return None
+        return vps_info
+
 
     @staticmethod
     def dump_vps_info (vps_info):
@@ -222,6 +227,11 @@ class VPSMgr (object):
             self.logger.error (msg)
             self.done_task (Cmd.OPEN, vps_info.id, False, msg)
             return
+        if not self.vpsinfo_check_ip (vps_info):
+            msg = "no ip with vps %s" % (vps_info.id)
+            self.logger.error (msg)
+            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            return
         xv = XenVPS (vps_info.id)
         try:
             domain_dict = XenStore.domain_name_id_map ()
@@ -258,6 +268,11 @@ class VPSMgr (object):
 
     def vps_reinstall_os (self, vps_info):
         self.logger.info ("to reinstall vps %s, os=%s" % (vps_info.id, vps_info.os))
+        if not self.vpsinfo_check_ip (vps_info):
+            msg = "no ip with vps %s" % (vps_info.id)
+            self.logger.error (msg)
+            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            return
         if vps_info.host_id != self.host_id:
             msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
@@ -284,6 +299,11 @@ class VPSMgr (object):
     def vps_upgrade (self, vps_info):
         self.logger.info ("to upgrade vps %s" % (vps_info.id))
         #TODO done task
+        if not self.vpsinfo_check_ip (vps_info):
+            msg = "no ip with vps %s" % (vps_info.id)
+            self.logger.error (msg)
+            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            return
         try:
             xv = XenVPS (vps_info.id)
             self.setup_vps (xv, vps_info)
