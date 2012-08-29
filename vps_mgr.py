@@ -272,7 +272,7 @@ class VPSMgr (object):
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_info.id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            self.done_task (Cmd.OS, vps_info.id, False, msg)
             return
         if vps_info.host_id != self.host_id:
             msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
@@ -303,17 +303,18 @@ class VPSMgr (object):
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_info.id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            self.done_task (Cmd.UPGRADE, vps_info.id, False, msg)
             return
         try:
             xv = XenVPS (vps_info.id)
             self.setup_vps (xv, vps_info)
             self.vpsops.upgrade_vps (xv)
             self.refresh_host_space ()
+            self.done_task(Cmd.UPGRADE, vps_info.id, True)
             return True
         except Exception, e:
             self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
-            #TODO done task
+            self.done_task(Cmd.UPGRADE, vps_info.id, False, "exception %s" % str(e))
             return False
 
 
@@ -430,7 +431,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS)
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE)
         self.start_worker (Cmd.REBOOT)
         self.timer.start ()
         self.logger.info ("timer started")
