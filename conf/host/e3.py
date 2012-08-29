@@ -4,7 +4,6 @@ import os
 from os.path import dirname
 
 def prepare(o):
-    o.SAAS_HOST = "113.11.199.184"
     base_dir = dirname (dirname (dirname (__file__)))
     o.log_dir = os.path.join (base_dir, "log") # for test
     o.RUN_DIR = os.path.join (base_dir, "run")

@@ -181,23 +181,23 @@ class VPSMgr (object):
 
     @staticmethod
     def vpsinfo_check_ip (vps_info):
-        if not vps_info.ext_ips or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
+        if not vps_info.ext_ips or not vps_info.gateway or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
             return None
         return vps_info
 
 
     @staticmethod
     def dump_vps_info (vps_info):
-        ip = "(%s)" % ",".join (map (lambda ip:"%s/%s" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask)), vps_info.ext_ips))
-        if vps_info.int_ip.ipv4:
+        ip = vps_info.ext_ips and "(%s)" % ",".join (map (lambda ip:"%s/%s" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask)), vps_info.ext_ips)) or None
+        if vps_info.int_ip and vps_info.int_ip.ipv4:
             ip_inter = "%s/%s" % (int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
         else:
             ip_inter = None
-        if vps_info.gateway.ipv4:
+        if vps_info.gateway and vps_info.gateway.ipv4:
             gateway = "%s/%s" % (int2ip(vps_info.gateway.ipv4), int2ip(vps_info.gateway.ipv4_netmask))
         else:
             gateway = None
-        hd = "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.items ()))
+        hd = vps_info.harddisks and "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.items ())) or None
         if vps_info.state is not None:
             state = "%s(%s)" % (vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
         else:
