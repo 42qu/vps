@@ -209,14 +209,15 @@ class VPSMgr (object):
             )
 
     def setup_vps (self, xenvps, vps_info):
-        root_size = vps_info.harddisks[0]
+        root_size = vps_info.harddisks and svps_info.harddisks[0] or 0
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
-                disk_g=root_size, root_pw=vps_info.password, gateway=int2ip (vps_info.gateway.ipv4))
+                disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway and int2ip (vps_info.gateway.ipv4) or 0)
         for ip in vps_info.ext_ips:
             xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
-        for disk_id, disk_size in vps_info.harddisks.iteritems ():
-            if disk_id != 0:
-                xenvps.add_extra_storage (disk_id, disk_size)
+        if vps_info.harddisks:
+            for disk_id, disk_size in vps_info.harddisks.iteritems ():
+                if disk_id != 0:
+                    xenvps.add_extra_storage (disk_id, disk_size)
 
 
 
