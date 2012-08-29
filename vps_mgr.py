@@ -387,6 +387,7 @@ class VPSMgr (object):
                 xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps_info)
             self.vpsops.delete_vps (vps_id, xv)
+            self.done_task(Cmd.RM, vps_id, True)
         except Exception, e:
             self.logger_err.exception (e)
             raise e

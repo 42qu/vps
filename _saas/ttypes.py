@@ -24,6 +24,7 @@ class Cmd:
   RM = 4
   BANDWIDTH = 5
   OS = 6
+  UPGRADE = 7
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -33,6 +34,7 @@ class Cmd:
     4: "RM",
     5: "BANDWIDTH",
     6: "OS",
+    7: "UPGRADE",
   }
 
   _NAMES_TO_VALUES = {
@@ -43,6 +45,7 @@ class Cmd:
     "RM": 4,
     "BANDWIDTH": 5,
     "OS": 6,
+    "UPGRADE": 7,
   }
 
 
