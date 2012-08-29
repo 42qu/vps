@@ -330,55 +330,56 @@ class VPSOps (object):
             raise Exception ("the vps started, seems not reachable")
         self.loginfo (xv, "started")
 
-    def upgrade_vps (self, vps_new):
-        assert vps_new.has_all_attr
-        vps_id = vps_new.vps_id
-        meta_path = self._meta_path (vps_id, is_trash=False)
-        xv = self._load_vps_meta (meta_path)
+    def upgrade_vps (self, xv_new):
+        assert xv_new.has_all_attr
+        meta_path = self._meta_path (xv_new.vps_id, is_trash=False)
+        xv_old = self._load_vps_meta (meta_path)
 
-        xv.os_id = vps_new.os_id
-        _vps_image, os_type, os_version = os_image.find_os_image (vps_new.os_id)
-        xv.vcpu = vps_new.vcpu
-        xv.mem_m = vps_new.mem_m
+        _vps_image, os_type, os_version = os_image.find_os_image (xv_new.os_id)
+        fs_type = vps_common.get_fs_from_tarball_name (_vps_image)
+        if not fs_type:
+            fs_type = conf.DEFAULT_FS_TYPE
 
-        if xv.stop ():
-            self.loginfo (xv, "stopped")
+        if xv_old.stop ():
+            self.loginfo (xv_old, "stopped")
         else:
-            xv.destroy ()
-            self.loginfo (xv, "force destroy")
-        root_store_trash = xv.root_store
-        xv.gateway = vps_new.gateway
-        if xv.ip != vps_new.ip:
-            # just in case when ip changed
-            xv.add_netinf_ext (xv.name, vps_new.ip, vps_new.netmask)
-        
-        xv.renew_root_storage (new_size=vps_new.root_store.size_g)
+            xv_old.destroy ()
+            self.loginfo (xv_old, "force destroy")
+        for xen_dev, new_disk in xv_new.data_disks.iteritems ():
+            if not new_disk.exists ():
+                new_disk.create (fs_type)
+            else:
+                old_disk = xv_old.data_disks.get (xen_dev)
+                if not old_disk or old_disk.size_g != new_disk.size_g:
+                    old_disk, new_disk = xv_new.renew_storage (xen_dev)
+                    vps_mountpoint_bak = old_disk.mount_trash_temp ()
+                    self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
+                    try:
+                        fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint_bak)
+                        new_disk.create (fs_type)
+                        self.loginfo (xv_new, "create new %s" % (str(new_disk)))
+                        vps_mountpoint = new_disk.mount_tmp ()
+                        self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
+                        try:
+                            call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
+                            self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
+                            # TODO:  uncomment this when os_init can deal with multiple net address
+                            self.loginfo (xv_new, "begin to init os")
+                            os_init.os_init (xv_new, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                            self.loginfo (xv_new, "done init os")
+                        finally:
+                            vps_common.umount_tmp (vps_mountpoint)
+                    finally:
+                        vps_common.umount_tmp (vps_mountpoint_bak)
 
-        vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
-        self.loginfo (xv, "mounted vps old root %s" % (str(root_store_trash)))
-        try:
-            fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint_bak)
-            xv.root_store.create (fs_type)
-            self.loginfo (xv, "create new root")
-            vps_mountpoint = xv.root_store.mount_tmp ()
-            self.loginfo (xv, "mounted vps new root %s" % (str(xv.root_store)))
-        
-            try:
-                call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
-                self.loginfo (xv, "synced old root to new root")
-                # TODO:  uncomment this when os_init can deal with multiple net address
-                #self.loginfo (xv, "begin to init os")
-                #os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False)
-                #self.loginfo (xv, "done init os")
-            finally:
-                vps_common.umount_tmp (vps_mountpoint)
-        finally:
-            vps_common.umount_tmp (vps_mountpoint_bak)
-        
-        self.save_vps_meta (xv)
-        self.create_xen_config (xv)
-        self._boot_and_test (xv, is_new=False)
-        self.loginfo (xv, "done vps upgrade")
+        for xen_dev, old_disk in xv_old.data_disks.iteritems ():
+            if not xv_new.data_disks.has_key (xen_dev):
+                xv_new.data_disks[xen_dev] = old_disk
+                xv_new.dump_storage_to_trash (old_disk)
+        self.save_vps_meta (xv_new)
+        self.create_xen_config (xv_new)
+        self._boot_and_test (xv_new, is_new=False)
+        self.loginfo (xv_new, "done vps upgrade")
 
 
 
@@ -413,8 +414,7 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "force destroy")
-        root_store_trash = xv.root_store
-        xv.renew_root_storage (5)
+        root_store_trash, root_store = xv.renew_storage (xv.root_store.xen_dev, 5)
         xv.root_store.create (fs_type)
         self.loginfo (xv, "create new root")
 

@@ -203,6 +203,11 @@ def lv_getsize (dev):
     out = out.strip ("gG")
     return float(out)
 
+def file_getsize (filename):
+    # return in G
+    s = os.stat (filename)
+    return float (s.st_size) / 1024.0 / 1024.0 / 1024.0
+
 def lv_get_mountpoint (dev):
     arr = dev.split ("/") 
     assert arr[0] == "" and arr[1] == 'dev' and len (arr) == 4
