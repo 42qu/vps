@@ -351,9 +351,9 @@ class VPSMgr (object):
             vps_info = client.vps (vps_id)
         finally:
             trans.close ()
-        if VPSMgr.vps_is_valid (vps_info):
-            return vps_info
-        return None
+        if vps_info is None or vps_info.id <= 0:
+            return None
+        return vps_info
 
     def refresh_host_space (self):
         try:
