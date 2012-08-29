@@ -37,6 +37,7 @@ enum Cmd{
   RM          = 4,
   BANDWIDTH   = 5, //调整带宽
   OS          = 6, //更换操作系统
+  UPGRADE     = 7,
 }
 
 

@@ -123,7 +123,7 @@ class XenVPS (object):
 
     def setup (self, os_id, vcpu, mem_m, disk_g, root_pw=None, swp_g=None, gateway=None):
         """ on error will raise Exception """
-        assert mem_m > 0 and disk_g > 0 and vcpu > 0
+        assert mem_m > 0 and vcpu > 0
         self.has_all_attr = True
         self.os_id = os_id
         self.vcpu = vcpu
