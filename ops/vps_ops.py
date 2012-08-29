@@ -352,7 +352,6 @@ class VPSOps (object):
             # just in case when ip changed
             xv.add_netinf_ext (xv.name, vps_new.ip, vps_new.netmask)
         
-	for disk in xv.data_disks.values ():
         xv.renew_root_storage (new_size=vps_new.root_store.size_g)
 
         vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
