@@ -374,7 +374,7 @@ class VPSMgr (object):
             trans, client = self.get_client ()
             trans.open ()
             try:
-                client.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_remain)
+                client.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
             finally:
                 trans.close ()
             self.logger.info ("send host remain disk:%dG, mem:%dM" % (disk_remain, mem_remain))
