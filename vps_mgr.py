@@ -440,8 +440,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE)
-        self.start_worker (Cmd.REBOOT)
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT)
         self.timer.start ()
         self.logger.info ("timer started")
 

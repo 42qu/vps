@@ -368,7 +368,8 @@ class VPSOps (object):
                             vps_common.umount_tmp (vps_mountpoint)
                     finally:
                         vps_common.umount_tmp (vps_mountpoint_bak)
-                else: # we have to know fs_type
+                else: 
+                    # we have to know fs_type for fstab generation
                     vps_mountpoint = new_disk.mount_tmp ()
                     try:
                         fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint)
@@ -426,6 +427,20 @@ class VPSOps (object):
         root_store_trash, root_store = xv.renew_storage (xv.root_store.xen_dev, 5)
         xv.root_store.create (fs_type)
         self.loginfo (xv, "create new root")
+
+        # we have to know fs_type for fstab generation
+        for xen_dev, disk in xv.data_disks.iteritems ():
+            if xen_dev == xv.root_store.xen_dev:
+                continue
+            if disk.exists ():
+                vps_mountpoint = disk.mount_tmp ()
+                try:
+                    fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint)
+                    disk.fs_type = fs_type
+                finally:
+                    vps_common.umount_tmp (vps_mountpoint)
+            else:
+                disk.create (fs_type)
 
         vps_mountpoint_bak = root_store_trash.mount_trash_temp ()
         try:
