@@ -30,7 +30,7 @@ class VPSMgr (object):
 
     def __init__ (self):
         self.logger = Log ("vps_mgr", config=conf)
-        self.logger_err = Log ("vps_mgr_err", config=conf)
+        self.logger_net = Log ("vps_mgr_net", config=conf)
         self.logger_misc = Log ("misc", config=conf) 
         self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
@@ -40,6 +40,7 @@ class VPSMgr (object):
             Cmd.REBOOT: self.__class__.vps_reboot,
             Cmd.CLOSE: self.__class__.vps_close,
             Cmd.OS: self.__class__.vps_reinstall_os,
+            Cmd.UPGRADE: self.__class__.vps_upgrade,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -117,7 +118,7 @@ class VPSMgr (object):
             finally:
                 trans.close ()
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger_net.exception (e) 
             return False
         if not vps_info:
             return False
@@ -127,7 +128,7 @@ class VPSMgr (object):
                 h (self, vps_info)
                 return True
             except Exception, e:
-                self.logger_err.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
+                self.logger.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
                 #TODO notify maintainments
                 return False
         else:
@@ -151,7 +152,7 @@ class VPSMgr (object):
                     else:
                         time.sleep (1)
             except Exception, e:
-                self.logger_err.exception ("uncaught exception: " + str(e))
+                self.logger.exception ("uncaught exception: " + str(e))
         self.logger.info ("worker for %s stop" % (str(cmds)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
@@ -167,7 +168,7 @@ class VPSMgr (object):
             finally:
                 trans.close ()
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger_net.exception (e)
 
     @staticmethod
     def vps_is_valid (vps_info):
@@ -247,7 +248,7 @@ class VPSMgr (object):
             self.setup_vps (xv, vps_info)
             if xv.is_running ():
                 msg = "vps %s is running" % (vps_info.id)
-                self.logger_err.error (msg)
+                self.logger.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
             if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN]:
@@ -256,11 +257,11 @@ class VPSMgr (object):
                 self.vpsops.reopen_vps (vps_info.id, xv)
             else:
                 msg = "vps%s state is %s(%s)" % (str(vps_info.id), vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
-                self.logger_err.error (msg)
+                self.logger.error (msg)
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
+            self.logger.exception ("for %s: %s" % (str(vps_info.id), str(e)))
             self.done_task (Cmd.OPEN, vps_info.id, False, "error, " + str(e))
             return
         self.done_task (Cmd.OPEN, vps_info.id, True)
@@ -292,7 +293,7 @@ class VPSMgr (object):
                 self.done_task (Cmd.OS, vps_id, True, "os:%s" % (vps_info.os))
             return True
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+            self.logger.exception ("for %s: %s" % (str(vps_id), str(e)))
             if vps_info:
                 self.done_task (Cmd.OS, vps_id, False, "os:%s, error: %s "% (vps_info.os,  str(e)))
             return False
@@ -313,7 +314,7 @@ class VPSMgr (object):
             self.done_task(Cmd.UPGRADE, vps_info.id, True)
             return True
         except Exception, e:
-            self.logger_err.exception ("for %s: %s" % (str(vps_info.id), str(e)))
+            self.logger.exception ("for %s: %s" % (str(vps_info.id), str(e)))
             self.done_task(Cmd.UPGRADE, vps_info.id, False, "exception %s" % str(e))
             return False
 
@@ -325,7 +326,7 @@ class VPSMgr (object):
             self.setup_vps (xv, vps_info)
             self.vpsops.reboot_vps (xv)
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger.exception (e)
             self.done_task (Cmd.REBOOT, vps_info.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.REBOOT, vps_info.id, True)
@@ -338,7 +339,7 @@ class VPSMgr (object):
             self.setup_vps (xv, vps_info)
             self.vpsops.create_xen_config (vps_info)
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger.exception (e)
             self.done_task (Cmd.BANDWIDTH, vps_info.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.BANDWIDTH, vps_info.id, True)
@@ -358,6 +359,10 @@ class VPSMgr (object):
         return vps_info
 
     def refresh_host_space (self):
+        disk_remain = None
+        mem_remain = None
+        disk_total = None
+        mem_total = None
         try:
             disk_remain = -1
             disk_total = -1 
@@ -371,6 +376,10 @@ class VPSMgr (object):
             xen_inf = get_xen_inf ()
             mem_remain = xen_inf.mem_free () # in m
             mem_total = xen_inf.mem_total ()
+        except Exception, e:
+            self.logger.exception (e)
+            return
+        try:
             trans, client = self.get_client ()
             trans.open ()
             try:
@@ -379,7 +388,7 @@ class VPSMgr (object):
                 trans.close ()
             self.logger.info ("send host remain disk:%dG, mem:%dM" % (disk_remain, mem_remain))
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger_net.exception (e)
 
     def _vps_delete (self, vps_id, vps_info=None):
         try:
@@ -390,7 +399,7 @@ class VPSMgr (object):
             self.vpsops.delete_vps (vps_id, xv)
             self.done_task(Cmd.RM, vps_id, True)
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger.exception (e)
             raise e
 
     def vps_close (self, vps_info):
@@ -400,7 +409,7 @@ class VPSMgr (object):
             self.setup_vps (xv, vps_info)
             self.vpsops.close_vps (vps_info.id, xv)
         except Exception, e:
-            self.logger_err.exception (e)
+            self.logger.exception (e)
             self.done_task (Cmd.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
             return
         self.done_task (Cmd.CLOSE, vps_info.id, True)
@@ -425,7 +434,7 @@ class VPSMgr (object):
             th.start ()
             self.workers.append (th)
         except Exception, e:
-            self.logger_err.info ("failed to start worker for cmd %s, %s" % (str(cmds), str(e)))
+            self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmds), str(e)))
 
     def start (self):
         if self.running:

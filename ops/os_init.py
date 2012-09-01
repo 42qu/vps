@@ -128,7 +128,8 @@ proc                    /proc                   proc    defaults        0 0
         if disk.mount_point and disk.mount_point not in ['none', '/']:
             fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev, disk.mount_point, disk.fs_type) 
             mount_dir = os.path.join (vps_mountpoint, disk.mount_point.strip ("/"))
-            os.makedirs (mount_dir, 0755)
+            if not os.path.exists (mount_dir):
+                os.makedirs (mount_dir, 0755)
     f = open (os.path.join (vps_mountpoint, "etc/fstab"), 'w')
     try:
         f.write (fstab)

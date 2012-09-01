@@ -33,7 +33,7 @@ def reopen_vps (vps_id):
         client.done_task (Cmd.OPEN, vps_id, True)
         return True
     except Exception, e:
-        client.logger_err.exception ("for %s: %s" % (str(vps_id), str(e)))
+        client.logger.exception ("for %s: %s" % (str(vps_id), str(e)))
         client.done_task (Cmd.OPEN, vps_id, False, "error, " + str(e))
         return False
 
