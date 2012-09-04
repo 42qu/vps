@@ -25,9 +25,9 @@ class TestVPSCreate (unittest.TestCase):
         vpsops = VPSOps (logger)
         vps = XenVPS (0)
         try:
-            vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfdsss")
-            vps.add_netinf_ext ("113.11.199.19", "255.255.255.0", gateway="113.11.199.1")
-            #vps.add_netinf_int ('vps0int', "10.10.2.12", '255.255.255.0')
+            vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfdsss", gateway="113.11.199.1")
+            vps.add_netinf_ext ({"113.11.199.18": "255.255.255.0"})
+            vps.add_netinf_int ({"10.10.2.20": '255.255.255.0'})
             #vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
             #vps.add_extra_storage (disk_id=2, size_g=0.5, fs_type='ext4')
             #vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd")
@@ -56,15 +56,6 @@ class TestVPSCreate (unittest.TestCase):
         self.assertEqual(status, 0)
         print out
 #
-#    def test_reboot00 (self):
-#        print "test reboot vps00"
-#        logger = Log ("test", config=conf)
-#        vps = XenVPS (0)
-#        vps.setup (os_id=10003, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd")
-#        vps.add_netinf_ext (ip="113.11.199.3", netmask="255.255.255.0", gateway="113.11.199.1")
-#        vpsops = VPSOps (logger)
-#        vpsops.reboot_vps (vps)
-#        print "reboot ok"
 #
 #    def test_multiple (self):
 #        print "create vps00"
@@ -73,8 +64,8 @@ class TestVPSCreate (unittest.TestCase):
 #        for i in xrange (1, 33):
 #            vps = XenVPS (i)
 #            try:
-#                vps.setup (os_id=50001, vcpu=1, mem_m=1024, disk_g=7, root_pw="fdfdfd")
-#                vps.add_netinf_ext (ip="113.11.199.%d" % (i + 20), netmask="255.255.255.0", gateway="113.11.199.1",)
+#                vps.setup (os_id=50001, vcpu=1, mem_m=1024, disk_g=7, root_pw="fdfdfd", gateway="113.11.199.1")
+#                vps.add_netinf_ext ({"113.11.199.%d" % (i + 20) : "255.255.255.0"})
 #                print vps.gen_xenpv_config ()
 #                vpsops.create_vps (vps)
 #            except Exception, e:

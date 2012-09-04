@@ -213,8 +213,10 @@ class VPSMgr (object):
         root_size = vps_info.harddisks and vps_info.harddisks[0] or 0
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
                 disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway and int2ip (vps_info.gateway.ipv4) or 0)
+        ip_dict = dict ()
         for ip in vps_info.ext_ips:
-            xenvps.add_netinf_ext (ip=int2ip (ip.ipv4), netmask=int2ip (ip.ipv4_netmask))
+            ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+            xenvps.add_netinf_ext (ip_dict)
         if vps_info.harddisks:
             for disk_id, disk_size in vps_info.harddisks.iteritems ():
                 if disk_id != 0:
@@ -261,7 +263,7 @@ class VPSMgr (object):
                 self.done_task (Cmd.OPEN, vps_info.id, False, msg)
                 return
         except Exception, e:
-            self.logger.exception ("for %s: %s" % (str(vps_info.id), str(e)))
+            self.logger.exception ("vps %s: %s" % (str(vps_info.id), str(e)))
             self.done_task (Cmd.OPEN, vps_info.id, False, "error, " + str(e))
             return
         self.done_task (Cmd.OPEN, vps_info.id, True)
@@ -293,7 +295,7 @@ class VPSMgr (object):
                 self.done_task (Cmd.OS, vps_id, True, "os:%s" % (vps_info.os))
             return True
         except Exception, e:
-            self.logger.exception ("for %s: %s" % (str(vps_id), str(e)))
+            self.logger.exception ("vps %s: %s" % (str(vps_id), str(e)))
             if vps_info:
                 self.done_task (Cmd.OS, vps_id, False, "os:%s, error: %s "% (vps_info.os,  str(e)))
             return False
@@ -314,7 +316,7 @@ class VPSMgr (object):
             self.done_task(Cmd.UPGRADE, vps_info.id, True)
             return True
         except Exception, e:
-            self.logger.exception ("for %s: %s" % (str(vps_info.id), str(e)))
+            self.logger.exception ("vps %s: %s" % (str(vps_info.id), str(e)))
             self.done_task(Cmd.UPGRADE, vps_info.id, False, "exception %s" % str(e))
             return False
 

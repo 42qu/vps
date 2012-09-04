@@ -396,16 +396,21 @@ class VPSOps (object):
     def reinstall_os (self, vps_id, _xv=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
         xv = None
-        if os.path.exists (meta_path):
-            xv = self._load_vps_meta (meta_path)
+        if _xv:
+            xv = _xv
             if os_id:
                 xv.os_id = os_id
-            elif _xv: 
-                xv.os_id = _xv.os_id
-            else:
-                raise Exception ("missing os_id")
         else:
-            raise Exception ("missing vps metadata")
+            if os.path.exists (meta_path):
+                xv = self._load_vps_meta (meta_path)
+                if os_id:
+                    xv.os_id = os_id
+                elif _xv: 
+                    xv.os_id = _xv.os_id
+                else:
+                    raise Exception ("missing os_id")
+            else:
+                raise Exception ("missing vps metadata")
         _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
         if not vps_image:
             vps_image = _vps_image
@@ -473,7 +478,8 @@ class VPSOps (object):
                 vps_common.umount_tmp (vps_mountpoint)
         finally:
             vps_common.umount_tmp (vps_mountpoint_bak)
-        
+
+        self.create_xen_config (xv)
         self.save_vps_meta (xv)
         self._boot_and_test (xv, is_new=False)
         self.loginfo (xv, "done vps reinstall")

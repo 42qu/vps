@@ -48,9 +48,16 @@ class XenVPS (object):
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
+        self.vif_ext_name = self.name
+        self.vif_int_name = self.name + "int"
         self.data_disks = {}
         self.trash_disks = {}
         self.vifs = {}
+
+    vif_ext = property (lambda self: self.vifs.get (self.vif_ext_name))
+
+    vif_int = property (lambda self: self.vifs.get (self.vif_int_name))
+    
 
     def clone (self):
         new = self.__class__ (self.vps_id)
@@ -63,7 +70,7 @@ class XenVPS (object):
             new.data_disks[disk.xen_dev] = vps_store_clone (disk)
         #TODO  trash_disks
         for vif in self.vifs.values ():
-                new.vifs[vif.ifname] = vif.clone ()
+            new.vifs[vif.ifname] = vif.clone ()
         return new
 
     def to_meta (self):
@@ -197,25 +204,33 @@ class XenVPS (object):
     def has_netinf (self, vifname):
         return self.vifs.has_key (vifname)
 
-    def add_netinf_ext (self, ip, netmask, mac=None):
+    def add_netinf_ext (self, ip_dict, mac=None):
+        # ip_dict: ip=>netmask
+        assert isinstance (ip_dict, dict)
+        ips = ip_dict.keys ()
+        assert len(ips) > 0
+        ips.sort ()
+        self.ip = ips[0]
         mac = mac or vps_common.gen_mac ()
-        name = "vps%s" % (self.vps_id)
-        self.vifs[name] = VPSNetExt (ifname=name, ip=ip, netmask=netmask, mac=mac)
-        self.ip = ip
-        self.netmask = netmask
-        return self.vifs[name]
+        vif = VPSNetExt (self.vif_ext_name, ip_dict, mac=mac)
+        self.vifs[self.vif_ext_name] = vif
+        return vif
 
-    def add_netinf_int (self, ip, netmask, mac=None):
-        name = "vps%sint" % (self.vps_id)
+    def add_netinf_int (self, ip_dict, mac=None):
+        # ip_dict: ip=>netmask
+        assert isinstance (ip_dict, dict)
+        ips = ip_dict.keys ()
+        assert len(ips) > 0
+        ips.sort ()
+        if not self.ip:
+            self.ip = ips[0]
         mac = mac or vps_common.gen_mac ()
-        self.vifs[name] = VPSNetInt (ifname=name, ip=ip, netmask=netmask, mac=mac)
-        return self.vifs[name]
+        vif = VPSNetInt (self.vif_int_name, ip_dict, mac=mac)
+        self.vifs[self.vif_int_name] = vif
+        return vif
 
     def del_netinf (self, vifname):
         vif = self.vifs[vifname]
-        if self.ip == vif.ip:
-            self.ip = None
-            self.netmask = None
 
     def check_resource_avail (self, ignore_trash=False):
         """ on error or space not available raise Exception """
@@ -278,7 +293,9 @@ on_crash = "restart"
         vif_keys.sort ()
         for k in vif_keys:
             vif = self.vifs[k]
-            vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=vif.ip, bridge=vif.bridge) )
+            ips = vif.ip_dict.keys ()
+            ips.sort ()
+            vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge) )
 
         xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
                     disks=",".join (disks), vifs=",".join (vifs)
