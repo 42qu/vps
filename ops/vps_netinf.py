@@ -29,7 +29,7 @@ class VPSNet (object):
                 return VPSNetExt (data['ifname'], data['ip_dict'], data['mac'])
         if _class == VPSNetInt.__name__:
             if data.has_key ("ip"):
-                return VPSNetInt (data['ifname'], {data['ip'], data['netmask']}, data['mac'])
+                return VPSNetInt (data['ifname'], {data['ip']: data['netmask']}, data['mac'])
             else:
                 return VPSNetInt (data['ifname'], data['ip_dict'], data['mac'])
 
