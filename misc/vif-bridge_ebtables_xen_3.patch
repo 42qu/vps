@@ -18,7 +18,7 @@
 +	$EBTABLES -A FORWARD -i $vif -j $vif
 +	$EBTABLES -A $vif -p ARP --arp-opcode 1 -j ACCEPT
 +	$EBTABLES -A $vif -p IPv6 -j DROP
-+	if [ ! -z $ip ]; then
++	if [ ! -z "$ip" ]; then
 +		for oneip in $ip; do
 +			$EBTABLES -A $vif -p IPv4 --ip-src $oneip -j ACCEPT
 +			$EBTABLES -A $vif -p IPv4 --ip-dst $oneip -j ACCEPT

@@ -22,7 +22,7 @@
 +        $EBTABLES -A $dev -p ARP --arp-opcode 1 -j ACCEPT
 +        $EBTABLES -A $dev -p IPv6 -j DROP  # drop ipv6 neight discovery packet, but no logging
 +        
-+        if [ ! -z $ip ]; then
++        if [ ! -z "$ip" ]; then
 +                for oneip in $ip; do
 +                        $EBTABLES -A $dev -p IPv4 --ip-src $oneip -j ACCEPT
 +                        $EBTABLES -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
@@ -55,7 +55,7 @@
 +        $EBTABLES -A $dev -p ARP --arp-opcode 1 -j ACCEPT
 +        $EBTABLES -A $dev -p IPv6 -j DROP  # drop ipv6 neight discovery packet, but no logging
 +        
-+        if [ ! -z $ip ]; then
++        if [ ! -z "$ip" ]; then
 +                for oneip in $ip; do
 +                        $EBTABLES -A $dev -p IPv4 --ip-src $oneip -j ACCEPT
 +                        $EBTABLES -A $dev -p IPv4 --ip-dst $oneip -j ACCEPT
