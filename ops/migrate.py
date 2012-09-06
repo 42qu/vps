@@ -166,9 +166,9 @@ class MigrateClient (SyncClientBase):
             print "remote umounted %s" % (partition_name)
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
         finally:
+            vps_common.umount_tmp (mount_point)
             if sock:
                 sock.close ()
-            vps_common.umount_tmp (mount_point)
             
     def create_vps (self, xv):
         meta = xv.to_meta ()

@@ -64,9 +64,9 @@ def mount_loop_tmp (img_path, readonly=False, temp_dir=None):
     tmp_mount = mkdtemp ("mpl", temp_dir=temp_dir)
     try:
         if readonly:
-            call_cmd ("mount %s %s -o loop,ro" % (img_path, tmp_mount))
+            call_cmd ("mount %s %s -o loop,ro,noatime" % (img_path, tmp_mount))
         else:
-            call_cmd ("mount %s %s -o loop" % (img_path, tmp_mount))
+            call_cmd ("mount %s %s -o loop,noatime" % (img_path, tmp_mount))
     except Exception, e:
         os.rmdir (tmp_mount)
         raise e
@@ -77,9 +77,9 @@ def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
     tmp_mount = mkdtemp (prefix, temp_dir=temp_dir)
     try:
         if readonly:
-            call_cmd ("mount %s %s -o ro" % (dev_path, tmp_mount))
+            call_cmd ("mount %s %s -o ro,noatime" % (dev_path, tmp_mount))
         else:
-            call_cmd ("mount %s %s" % (dev_path, tmp_mount))
+            call_cmd ("mount %s %s -o noatime" % (dev_path, tmp_mount))
     except Exception, e:
         os.rmdir (tmp_mount)
         raise e
