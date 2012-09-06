@@ -233,7 +233,7 @@ class SyncClientBase (object):
 
 
     def rsync (self, mount_point, remote_mount_point):
-        cmd = ("rsync", "-avz", "--delete", "%s/" % (mount_point), 
+        cmd = ("rsync", "-avW", "--inplace", "--delete", "%s/" % (mount_point), 
                 "rsync://%s:%s/%s/%s/" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, remote_mount_point)
                 )
         p = subprocess.Popen (cmd, stderr=subprocess.PIPE, close_fds=True)
