@@ -103,6 +103,7 @@ class TestVPSOPS (unittest.TestCase):
         self.assert_ (xv.root_store.trash_exists ())
         self.assert_ (xv.data_disks['xvdc1'].trash_exists ())
         self.assert_ (not xv.root_store.exists ())
+        self.assert_ (vpsops.is_trash_exists (xv.vps_id))
         try:
             logger.debug ("reopen vps0")
             vpsops.reopen_vps (xv.vps_id, xv)
@@ -125,13 +126,11 @@ class TestVPSOPS (unittest.TestCase):
         self.assert_ (not xv.is_running ())
 
         try:
-            logger.debug ("test reopen without moving to trash")
-            vpsops.reopen_vps (xv.vps_id, xv)
+            logger.debug ("test is_normal_exists without moving to trash")
+            self.assert_ (vpsops.is_normal_exists (xv.vps_id))
         except Exception, e:
             logger.exception (e)
             raise e
-        self.assert_ (xv.is_running ())
-
         try:
             logger.debug ("delete vps0")
             vpsops.delete_vps (xv.vps_id, xv)
@@ -148,7 +147,7 @@ def main():
     runner = unittest.TextTestRunner ()
     runner.run (TestVPSOPS ("test_meta"))
 #    runner.run (TestVPSOPS ("test_mem_too_big"))
-#    runner.run (TestVPSOPS ("test_vps0"))
+    runner.run (TestVPSOPS ("test_vps0"))
 
 
 if "__main__" == __name__:
