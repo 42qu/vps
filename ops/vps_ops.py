@@ -121,7 +121,7 @@ class VPSOps (object):
                     _e = e
                     continue
             if _e:
-                raise _e
+                raise Exception(_e)
         else: # if it's recoverd os, passwd is likely to be changed by user
             self.loginfo (xv, "started and reachable")
 
@@ -223,20 +223,33 @@ class VPSOps (object):
             xv.delete_trash (disk)
             self.loginfo (xv, "delete nonexisting trash %s from meta" % disk.trash_str ())
 
+    def is_trash_exists (self, vps_id):
+        trash_meta_path = self._meta_path (vps_id, is_trash=True)
+        if os.path.exists (trash_meta_path):
+            xv = self._load_vps_meta (trash_meta_path)
+            for disk in xv.data_disks.values ():
+                if not disk.trash_exists ():
+                    return False
+            return True
+        return False
+
+    def is_normal_exists (self, vps_id):
+        meta_path = self._meta_path (vps_id)
+        if os.path.exists (meta_path):
+            xv = self._load_vps_meta (meta_path)
+            for disk in xv.data_disks.values ():
+                if not disk.exists ():
+                    return False
+            return True
+        return False
+
     def reopen_vps (self, vps_id, _xv=None):
         meta_path = self._meta_path (vps_id)
         trash_meta_path = self._meta_path (vps_id, is_trash=True)
         if os.path.exists (trash_meta_path):
             xv = self._load_vps_meta (trash_meta_path)
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
-        elif os.path.exists (meta_path):
             xv = self._load_vps_meta (meta_path)
-            self.loginfo (xv, "seems vps was not closed")
-            xv.check_storage_integrity ()
-            xv.check_xen_config ()
-            if not xv.is_running ():
-                self._boot_and_test (xv, is_new=False)
-            return
         elif _xv:
             xv = _xv
         else:
@@ -509,7 +522,7 @@ class VPSOps (object):
         elif not is_ip_available:
             raise Exception ("ip %s is in use" % (ip))
 
-        vif = xv.add_netinf_int (ip, netmask, mac)
+        vif = xv.add_netinf_int ({ip : netmask}, mac)
         vps_common.xm_network_attach (xv.name, vifname, vif.mac, ip, vif.bridge)
         self.save_vps_meta (xv)
         self.create_xen_config (xv)

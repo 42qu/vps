@@ -225,18 +225,19 @@ class VPSMgr (object):
 
 
     def vps_open (self, vps_info, vps_image=None, is_new=True): 
-        self.logger.info ("to open vps %s" % (vps_info.id))
+        vps_id = vps_info.id
+        self.logger.info ("to open vps %s" % (vps_id))
         if vps_info.host_id != self.host_id:
-            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
+            msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps_id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            self.done_task (Cmd.OPEN, vps_id, False, msg)
             return
         if not self.vpsinfo_check_ip (vps_info):
-            msg = "no ip with vps %s" % (vps_info.id)
+            msg = "no ip with vps %s" % (vps_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+            self.done_task (Cmd.OPEN, vps_id, False, msg)
             return
-        xv = XenVPS (vps_info.id)
+        xv = XenVPS (vps_id)
         try:
             domain_dict = XenStore.domain_name_id_map ()
             limit = None
@@ -245,28 +246,35 @@ class VPSMgr (object):
             if limit and len (domain_dict.keys ()) >= limit + 1:
                 msg = "vps open: cannot open more than %d vps" % (limit)
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_id, False, msg)
                 return
             self.setup_vps (xv, vps_info)
             if xv.is_running ():
-                msg = "vps %s is running" % (vps_info.id)
+                msg = "vps %s is running" % (vps_id)
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_id, True, msg)
                 return
-            if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN]:
-                self.vpsops.create_vps (xv, vps_image, is_new)
-            elif vps_info.state == vps_const.VM_STATE.CLOSE:
-                self.vpsops.reopen_vps (vps_info.id, xv)
+            if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN, vps_const.VM_STATE.CLOSE]:
+                if self.vpsops.is_normal_exists (vps_id):
+                    xv.check_storage_integrity ()
+                    xv.check_xen_config ()
+                    if not xv.is_running ():
+                        self.logger.info ("seems vps %s was not closed, try to boot" % (vps_id))
+                        self.vpsops._boot_and_test (xv, is_new=False)
+                elif self.vpsops.is_trash_exists (vps_id):
+                    self.vpsops.reopen_vps (vps_id, xv)
+                else:
+                    self.vpsops.create_vps (xv, vps_image, is_new)
             else:
-                msg = "vps%s state is %s(%s)" % (str(vps_info.id), vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
+                msg = "vps%s state is %s(%s)" % (str(vps_id), vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_info.id, False, msg)
+                self.done_task (Cmd.OPEN, vps_id, False, msg)
                 return
         except Exception, e:
-            self.logger.exception ("vps %s: %s" % (str(vps_info.id), str(e)))
-            self.done_task (Cmd.OPEN, vps_info.id, False, "error, " + str(e))
+            self.logger.exception ("vps %s: %s" % (str(vps_id), str(e)))
+            self.done_task (Cmd.OPEN, vps_id, False, "error, " + str(e))
             return
-        self.done_task (Cmd.OPEN, vps_info.id, True)
+        self.done_task (Cmd.OPEN, vps_id, True)
         self.refresh_host_space ()
         return True
 
