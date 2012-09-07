@@ -286,6 +286,7 @@ class VPSOps (object):
             disk.delete ()
             self.loginfo (xv, "deleted %s" % (str(disk)))
         if disk.trash_exists ():
+            disk.delete ()
             self.loginfo (xv, "deleted %s" % (disk.trash_str ()))
 
         
