@@ -35,6 +35,18 @@ class VPSOps (object):
         else:
             self.logger.info (message)
 
+    def read_traffic_limit (self, vps_id):
+        xv = None
+        try:
+            xv = self.load_vps_meta (vps_id)
+        except:
+            return None
+        if xv.vif_ext:
+            return xv.vif_ext.bandwidth
+
+    def set_ovs_qos_queue_uuid ()
+        
+
     def create_xen_config (self, xv):
         """ will override config """
         xen_config = xv.gen_xenpv_config ()
@@ -46,6 +58,7 @@ class VPSOps (object):
             f.close ()
         xv.create_autolink ()
         self.loginfo (xv, "created link to xen auto")
+        self.save_vps_meta (xv)
 
     @staticmethod
     def _meta_path (vps_id, is_trash=False, is_deleted=False):
@@ -155,7 +168,6 @@ class VPSOps (object):
             disk.create ()
             self.loginfo (xv, "%s created" % (str(disk)))
 
-        self.create_xen_config (xv)
 
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
@@ -173,7 +185,7 @@ class VPSOps (object):
         finally:
             vps_common.umount_tmp (vps_mountpoint)
         
-        self.save_vps_meta (xv)
+        self.create_xen_config (xv)
         self._boot_and_test (xv, is_new=is_new)
         self.loginfo (xv, "done vps creation")
 
@@ -270,12 +282,11 @@ class VPSOps (object):
         xv.check_storage_integrity ()
         self._clear_nonexisting_trash (xv)
 
-        self.create_xen_config (xv)
 
         if os.path.exists (trash_meta_path):
             os.remove (trash_meta_path)
             self.loginfo (xv, "removed %s" % (trash_meta_path))
-        self.save_vps_meta (xv)
+        self.create_xen_config (xv)
 
         self._boot_and_test (xv, is_new=False)
 
@@ -394,7 +405,6 @@ class VPSOps (object):
             if not xv_new.data_disks.has_key (xen_dev):
                 xv_new.data_disks[xen_dev] = old_disk
                 xv_new.dump_storage_to_trash (old_disk)
-        self.save_vps_meta (xv_new)
         self.create_xen_config (xv_new)
         self.loginfo (xv_new, "begin to init os")
         vps_mountpoint = xv_new.root_store.mount_tmp ()
@@ -493,7 +503,6 @@ class VPSOps (object):
             vps_common.umount_tmp (vps_mountpoint_bak)
 
         self.create_xen_config (xv)
-        self.save_vps_meta (xv)
         self._boot_and_test (xv, is_new=False)
         self.loginfo (xv, "done vps reinstall")
 
@@ -524,7 +533,6 @@ class VPSOps (object):
 
         vif = xv.add_netinf_int ({ip : netmask}, mac)
         vps_common.xm_network_attach (xv.name, vifname, vif.mac, ip, vif.bridge)
-        self.save_vps_meta (xv)
         self.create_xen_config (xv)
         self.loginfo (xv, "added internal vif ip=%s" % (ip))
         return True
@@ -537,7 +545,6 @@ class VPSOps (object):
         xv.check_storage_integrity ()
         self._clear_nonexisting_trash (xv)
         self.create_xen_config (xv)
-        self.save_vps_meta (xv)
         self._boot_and_test (xv, is_new=False)
         self.loginfo (xv, "done vps creation")
 

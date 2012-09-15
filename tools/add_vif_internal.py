@@ -4,7 +4,6 @@ import sys
 import os
 import _env
 from vps_mgr import VPSMgr
-import conf
 import getopt
 from ops.vps_ops import VPSOps
 

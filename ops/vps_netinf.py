@@ -11,28 +11,35 @@ class VPSNet (object):
     bridge = None
     ip_dict = None
     mac = None
+    bandwidth = None
+    ovs_queue_uuid = None
 
-    def __init__ (self, ifname, ip_dict, bridge, mac):
+    def __init__ (self, ifname, ip_dict, bridge, mac, bandwidth=0):
         # ip_dict: ip=>netmask
         self.ifname = ifname
         self.bridge = bridge
         self.ip_dict = ip_dict
         self.mac = mac
+        self.bandwidth = bandwidth
+        self.ovs_queue_uuid = None
 
     @classmethod
     def from_meta (cls, data):
         _class = data['__class__']
+        self = None
         if _class == VPSNetExt.__name__:
             if data.has_key ("ip"):
-                return VPSNetExt (data['ifname'], {data['ip']: data['netmask']}, data['mac'])
+                self = VPSNetExt (data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get ('bandwidth'))
             else:
-                return VPSNetExt (data['ifname'], data['ip_dict'], data['mac'])
+                self = VPSNetExt (data['ifname'], data['ip_dict'], data['mac'], data.get ('bandwidth'))
         if _class == VPSNetInt.__name__:
             if data.has_key ("ip"):
-                return VPSNetInt (data['ifname'], {data['ip']: data['netmask']}, data['mac'])
+                self = VPSNetInt (data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get ('bandwidth'))
             else:
-                return VPSNetInt (data['ifname'], data['ip_dict'], data['mac'])
-
+                self = VPSNetInt (data['ifname'], data['ip_dict'], data['mac'], data.get ('bandwidth'))
+            self.ovs_queue_uuid = data.get ('ovs_queue_uuid')
+        if self:
+            return self
         raise TypeError (_class)
 
     def to_meta (self):
@@ -41,22 +48,24 @@ class VPSNet (object):
         data['ifname'] = self.ifname
         data['ip_dict'] = self.ip_dict
         data['mac'] = self.mac
+        data['bandwidth'] = self.bandwidth
+        data['ovs_queue_uuid'] = self.ovs_queue_uuid
         return data
 
     def clone (self):
-        return self.__class__ (self.ifname, self.ip_dict.copy (), self.mac)
-
+        data = self.__class__ (self.ifname, self.ip_dict.copy (), self.mac, self.bandwidth)
+        data.ovs_queue_uuid = self.ovs_queue_uuid
 
 class VPSNetExt (VPSNet):
 
-    def __init__ (self, ifname, ip_dict, mac):
-        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_BRIDGE, mac)
+    def __init__ (self, ifname, ip_dict, mac, bandwidth=0):
+        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_BRIDGE, mac, bandwidth=0)
 
 
 class VPSNetInt (VPSNet):
 
-    def __init__ (self, ifname, ip_dict, mac):
-        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_INTERNAL_BRIDGE, mac)
+    def __init__ (self, ifname, ip_dict, mac, bandwidth=0):
+        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_INTERNAL_BRIDGE, mac, bandwidth=0)
 
 
 
