@@ -296,7 +296,7 @@ on_crash = "restart"
             ips = vif.ip_dict.keys ()
             ips.sort ()
             if conf.USE_OVS or not vif.bandwidth:
-                vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge) )
+                vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, rate="") )
             else:
                 vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, 
                     rate=",rate=%dMb/s" % vif.bandwidth) )
