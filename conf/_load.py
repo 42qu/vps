@@ -3,7 +3,7 @@ def load(self, *args):
     ]
     FINISH = [
     ]
-    #print "loading :", args
+    print "loading :", args
 
     def _load(name):
         try:
