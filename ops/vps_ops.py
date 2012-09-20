@@ -318,6 +318,7 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it, going to delete data")
+        time.sleep (1)
         for disk in xv.data_disks.values ():
             self._delete_disk (xv, disk)
         for disk in xv.trash_disks.values ():

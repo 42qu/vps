@@ -64,7 +64,7 @@ class TestVPSCreate (unittest.TestCase):
 #        for i in xrange (1, 33):
 #            vps = XenVPS (i)
 #            try:
-#                vps.setup (os_id=50001, vcpu=1, mem_m=1024, disk_g=7, root_pw="fdfdfd", gateway="113.11.199.1")
+#                vps.setup (os_id=10001, vcpu=1, mem_m=1024, disk_g=7, root_pw="fdfdfd", gateway="113.11.199.1")
 #                vps.add_netinf_ext ({"113.11.199.%d" % (i + 20) : "255.255.255.0"})
 #                print vps.gen_xenpv_config ()
 #                vpsops.create_vps (vps)
@@ -80,7 +80,7 @@ class TestVPSCreate (unittest.TestCase):
 #        vpsops = VPSOps (logger)
 #        for i in xrange (1,33):
 #            vps = XenVPS (i)
-#            vpsops.delete_vps (vps)
+#            vpsops.delete_vps (i, vps)
 #        print "done"
         
 
