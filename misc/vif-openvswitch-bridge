@@ -1,0 +1,116 @@
+#!/bin/bash
+
+################################################################################
+# vif-open-vswitch-bridge                                                       
+# ---------------------------                                                   
+# Last Changes: 2012/08/19   (by plan frostyplanet@gmail.com)			
+#                                                      				
+#                                                                               
+# Usage:                                                                        
+#                                                                               
+# vif-open-vswitch-bridge (add|remove|online|offline)                           
+#                                                                               
+# Environment vars:                                                             
+# vif         vif interface name (required).                                    
+# XENBUS_PATH path to this device's details in the XenStore (required).         
+#                                                                               
+# Read from the store:                                                          
+# bridge  bridge to add the vif to (optional).                                  
+# Defaults to searching for the  bridge itself.                                 
+#                                                                               
+# up:                                                                           
+# Enslaves the vif interface to the bridge.                                     
+#                                                                               
+# down:                                                                         
+# Removes the vif interface from the bridge.                                    
+#                                                                               
+#                                                                               
+# This file is part of vif-open-vswitch-bridge.                                 
+#                                                                               
+#    vif-open-vswitch-bridge is free software; you can redistribute it          
+#    and/or modify it under the terms of the GNU General Public License         
+#    as published by the Free Software Foundation; either version 3 of the      
+#    License, or (at your option) any later version.                            
+#                                                                               
+#    vif-open-vswitch-bridge is distributed in the hope that it will be         
+#    useful, but WITHOUT ANY WARRANTY;                                          
+#    without even the implied warranty of MERCHANTABILITY or FITNESS FOR A      
+#    PARTICULAR PURPOSE. See the GNU General Public License for more details.   
+#                                                                               
+#    You should have received a copy of the GNU General Public License along    
+#    with GeSHi; if not, write to the Free Software Foundation,                 
+#    Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA              
+#                                                                               
+################################################################################
+
+dir=$(dirname "$0")
+. "$dir/vif-common.sh"
+
+bridge=${bridge:-}
+bridge=$(xenstore_read_default "$XENBUS_PATH/bridge" "$bridge")
+
+if [ -z "$bridge" ]
+then
+  bridge=$(ovs-vsctl list-br | cut -d "
+" -f 1)
+  if [ -z "$bridge" ]
+  then
+     fatal "Could not find bridge, and none was specified"
+  fi
+fi
+
+##Domain on VLAN tagged bridge?
+#RET=0
+#ovs-vsctl list-br | grep -c ${bridge} 1>/dev/null 2>&1 || RET=1
+#if [ $RET -eq 1 ]
+#then
+#    if [[ $bridge =~ \.[[:digit:]]{1,4}$ ]]
+#    then
+#        tag=$(echo ${bridge} | cut -d "." -f 2)
+#        bridge=$(echo ${bridge} | cut -d "." -f 1)
+#    else
+#        fatal "Could not find bridge device ${bridge}"
+#    fi
+#fi
+
+RET=0
+ovs-vsctl list-br | grep -c ${bridge} 1>/dev/null 2>&1 || RET=1
+if [ $RET -eq 1 ]
+then
+    fatal "Could not find bridge device ${bridge}"
+fi
+
+mac=$(xenstore_read "$XENBUS_PATH/mac")
+log debug "Successful vif-bridge $command for ${dev}, ${mac},  bridge ${bridge}."
+
+case "$command" in
+    online|add)
+        setup_virtual_bridge_port "$dev"
+        mtu="`ip link show $bridge | awk '/mtu/ { print $5 }'`"
+        if [ -n "$mtu" ] && [ "$mtu" -gt 0 ]
+        then
+                ip link set $dev mtu $mtu || :
+        fi
+
+        if [ -z $tag ]
+        then
+            ovs-vsctl -- --may-exist add-port ${bridge} ${dev}
+        else
+            ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
+        fi
+	    ip link set ${dev} up
+		/data/vps/code/tools/ovs_set_vif.py ${dev}
+        ;;
+
+    offline)
+        do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
+	do_without_error ip link set ${dev} down
+        ;;
+esac
+
+if [ "$command" == "online" ]
+then
+  success
+fi
+
+

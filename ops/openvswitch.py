@@ -100,7 +100,6 @@ class OVSDB (object):
 class OVSOps (object):
 
     def __init__ (self):
-        print conf.OVS_DB_SOCK
         self.ovsdb = OVSDB (conf.OVS_DB_SOCK)
 
     def find_ofport_by_name (self, if_name):
