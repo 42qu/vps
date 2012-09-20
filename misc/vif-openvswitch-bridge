@@ -104,7 +104,7 @@ case "$command" in
 
     offline)
         do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
-		/data/vps/code/tools/ovs_unset_vif.py ${dev}
+		do_without_error /data/vps/code/tools/ovs_unset_vif.py ${dev}
 		do_without_error ip link set ${dev} down
         ;;
 esac
