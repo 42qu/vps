@@ -24,6 +24,7 @@ def main ():
         ofport = ovsops.find_ofport_by_name (vif_name)
         ovsops.unset_mac_filter (ofport)
         ovsops.unset_traffic_limit (vif_name)
+        return 0
     except Exception, e:
         client.logger.exception (e)
         print >> sys.stderr, str(e)
