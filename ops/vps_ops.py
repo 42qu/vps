@@ -13,6 +13,7 @@ import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
+from ops.openvswitch import OVSOps
 
 import ops._env
 import conf
@@ -44,8 +45,6 @@ class VPSOps (object):
         if xv.vif_ext:
             return xv.vif_ext.bandwidth
 
-    def set_ovs_qos_queue_uuid ()
-        
 
     def create_xen_config (self, xv):
         """ will override config """
@@ -569,5 +568,24 @@ class VPSOps (object):
         self.loginfo (xv, "remote vps started, going to close local vps")
         self._close_vps (xv)
 
+    def change_qos (self, _xv):
+        xv = self.load_vps_meta (_xv.vps_id)
+        if not _xv.vif_ext or not xv.vif_ext:
+            return
+        xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
+        bandwidth = _xv.vif_ext.bandwidth
+
+        if conf.USE_OVS:
+            ovsops = OVSOps ()
+            ovsops.unset_traffic_limit (xv.vif_ext.ifname)
+            ovsops.set_traffic_limit (xv.vif_ext.ifname, bandwidth)
+            self.save_vps_meta (xv)
+        else:
+            if xv.stop ():
+                self.loginfo (xv, "vps stopped")
+            else:
+                xv.destroy ()
+                self.loginfo (xv, "vps cannot shutdown, destroyed it")
+            self.create_xen_config (xv)
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

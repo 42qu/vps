@@ -5,10 +5,11 @@
 def prepare(o):
     from os.path import join, dirname
     from _env import PREFIX
-    
+
+    o.USE_OVS = False
+    o.OVS_DB_SOCK = "unix:/var/run/openvswitch/db.sock"
     o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
     o.SAAS_PORT = 50042
-
     o.SAAS_HOST = "saas-vps.42qu.com"
 
     o.ALLOWED_IPS = set((

@@ -204,7 +204,7 @@ class XenVPS (object):
     def has_netinf (self, vifname):
         return self.vifs.has_key (vifname)
 
-    def add_netinf_ext (self, ip_dict, mac=None):
+    def add_netinf_ext (self, ip_dict, mac=None, bandwidth=0):
         # ip_dict: ip=>netmask
         assert isinstance (ip_dict, dict)
         ips = ip_dict.keys ()
@@ -212,11 +212,11 @@ class XenVPS (object):
         ips.sort ()
         self.ip = ips[0]
         mac = mac or vps_common.gen_mac ()
-        vif = VPSNetExt (self.vif_ext_name, ip_dict, mac=mac)
+        vif = VPSNetExt (self.vif_ext_name, ip_dict, mac=mac, bandwidth=bandwidth)
         self.vifs[self.vif_ext_name] = vif
         return vif
 
-    def add_netinf_int (self, ip_dict, mac=None):
+    def add_netinf_int (self, ip_dict, mac=None, bandwidth=0):
         # ip_dict: ip=>netmask
         assert isinstance (ip_dict, dict)
         ips = ip_dict.keys ()
@@ -225,7 +225,7 @@ class XenVPS (object):
         if not self.ip:
             self.ip = ips[0]
         mac = mac or vps_common.gen_mac ()
-        vif = VPSNetInt (self.vif_int_name, ip_dict, mac=mac)
+        vif = VPSNetInt (self.vif_int_name, ip_dict, mac=mac, bandwidth=bandwidth)
         self.vifs[self.vif_int_name] = vif
         return vif
 
@@ -276,7 +276,7 @@ on_reboot = "restart"
 on_crash = "restart"
 """ )
 
-        vif_t = Template ("""  "vifname=$ifname,mac=$mac,ip=$ip,bridge=$bridge"  """)
+        vif_t = Template ("""  "vifname=$ifname,mac=$mac,ip=$ip,bridge=$bridge"$rate  """)
         disk_t = Template (""" "$path,$dev,$mod" """)
         disks = []
         vifs = []
@@ -295,7 +295,11 @@ on_crash = "restart"
             vif = self.vifs[k]
             ips = vif.ip_dict.keys ()
             ips.sort ()
-            vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge) )
+            if conf.USE_OVS or not vif.bandwidth:
+                vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge) )
+            else:
+                vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, 
+                    rate=",rate=%dMb/s" % vif.bandwidth) )
 
         xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
                     disks=",".join (disks), vifs=",".join (vifs)

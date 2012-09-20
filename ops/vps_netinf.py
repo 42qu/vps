@@ -12,7 +12,6 @@ class VPSNet (object):
     ip_dict = None
     mac = None
     bandwidth = None
-    ovs_queue_uuid = None
 
     def __init__ (self, ifname, ip_dict, bridge, mac, bandwidth=0):
         # ip_dict: ip=>netmask
@@ -21,7 +20,6 @@ class VPSNet (object):
         self.ip_dict = ip_dict
         self.mac = mac
         self.bandwidth = bandwidth
-        self.ovs_queue_uuid = None
 
     @classmethod
     def from_meta (cls, data):
@@ -37,7 +35,6 @@ class VPSNet (object):
                 self = VPSNetInt (data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get ('bandwidth'))
             else:
                 self = VPSNetInt (data['ifname'], data['ip_dict'], data['mac'], data.get ('bandwidth'))
-            self.ovs_queue_uuid = data.get ('ovs_queue_uuid')
         if self:
             return self
         raise TypeError (_class)
@@ -49,23 +46,21 @@ class VPSNet (object):
         data['ip_dict'] = self.ip_dict
         data['mac'] = self.mac
         data['bandwidth'] = self.bandwidth
-        data['ovs_queue_uuid'] = self.ovs_queue_uuid
         return data
 
     def clone (self):
         data = self.__class__ (self.ifname, self.ip_dict.copy (), self.mac, self.bandwidth)
-        data.ovs_queue_uuid = self.ovs_queue_uuid
 
 class VPSNetExt (VPSNet):
 
     def __init__ (self, ifname, ip_dict, mac, bandwidth=0):
-        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_BRIDGE, mac, bandwidth=0)
+        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_BRIDGE, mac, bandwidth=bandwidth)
 
 
 class VPSNetInt (VPSNet):
 
     def __init__ (self, ifname, ip_dict, mac, bandwidth=0):
-        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_INTERNAL_BRIDGE, mac, bandwidth=0)
+        VPSNet.__init__ (self, ifname, ip_dict, conf.XEN_INTERNAL_BRIDGE, mac, bandwidth=bandwidth)
 
 
 
