@@ -22,7 +22,7 @@ def main ():
     client = VPSMgr ()
     try:
         ovsops = OVSOps ()
-        om = re.match (r'^\w+?(\d+)$', vif_name)
+        om = re.match (r'^\w+?(\d+)\w*?$', vif_name)
         if not om:
             print >> sys.stderr, "wrong vif format %s" % (vif_name)
             return 1
