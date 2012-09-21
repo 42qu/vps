@@ -99,11 +99,11 @@ case "$command" in
             ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
         fi
 	    ip link set ${dev} up
-		/data/vps/code/tools/ovs_set_vif.py ${dev}
+		/data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
         ;;
 
     offline)
-		/data/vps/code/tools/ovs_unset_vif.py ${dev}
+		/data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
         do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
 		do_without_error ip link set ${dev} down
         ;;

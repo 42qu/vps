@@ -105,17 +105,17 @@ class OVSOps (object):
     def find_ofport_by_name (self, if_name):
         return self.ovsdb.find_one ('ofport', "Interface", {'name': if_name})
 
-    def set_mac_filter (self, ofport, ips):
+    def set_mac_filter (self, bridge, ofport, ips):
         if isinstance (ips, basestring):
             ips = [ips]
         for ip in ips:
-            call_cmd ("ovs-ofctl add-flow xenbr0 in_port=%s,arp,nw_proto=2,nw_src=%s,priority=2,action=normal" % (ofport, ip))
-            call_cmd ("ovs-ofctl add-flow xenbr0 in_port=%s,ip,nw_src=%s,priority=2,action=normal" % (ofport, ip))
-        call_cmd ("ovs-ofctl add-flow xenbr0 in_port=%s,arp,nw_proto=1,priority=2,action=normal" % (ofport))
-        call_cmd ("ovs-ofctl add-flow xenbr0 in_port=%s,priority=1,action=drop" % (ofport))
+            call_cmd ("ovs-ofctl add-flow %s in_port=%s,arp,nw_proto=2,nw_src=%s,priority=2,action=normal" % (bridge, ofport, ip))
+            call_cmd ("ovs-ofctl add-flow %s in_port=%s,ip,nw_src=%s,priority=2,action=normal" % (bridge, ofport, ip))
+        call_cmd ("ovs-ofctl add-flow %s in_port=%s,arp,nw_proto=1,priority=2,action=normal" % (bridge, ofport))
+        call_cmd ("ovs-ofctl add-flow %s in_port=%s,priority=1,action=drop" % (bridge, ofport))
 
-    def unset_mac_filter (self, ofport):
-        call_cmd ("ovs-ofctl del-flows xenbr0 in_port=%s" % (ofport))
+    def unset_mac_filter (self, bridge, ofport):
+        call_cmd ("ovs-ofctl del-flows %s in_port=%s" % (ofport, bridge))
 
     def set_traffic_limit (self, if_name, bandwidth):
         """ bandwidth in kbps """

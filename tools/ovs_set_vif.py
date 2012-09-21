@@ -13,12 +13,14 @@ import getopt
 
 
 def usage (): 
-    print "%s vif_name" % (sys.argv[0])
+    print "%s bridge vif_name" % (sys.argv[0])
     print "vif_name must match /\w(+d)/"
     return
 
 def main ():
-    vif_name = args[0]
+    bridge = args[0]
+    vif_name = args[1]
+
     client = VPSMgr ()
     try:
         ovsops = OVSOps ()
@@ -33,7 +35,7 @@ def main ():
             client.logger.error ("no vif %s in metadata of %s" % (vif_name, vps_id))
             return 1
         ofport = ovsops.find_ofport_by_name (vif_name)
-        ovsops.set_mac_filter (ofport, vif.ip_dict.keys ())
+        ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
         ovsops.unset_traffic_limit (vif_name)
 
         if vif.bandwidth:
@@ -47,7 +49,7 @@ def main ():
  
 
 if __name__ == '__main__':
-    if len (sys.argv) <= 1:
+    if len (sys.argv) <= 2:
         usage ()
         os._exit (0)
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
