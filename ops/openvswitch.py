@@ -115,7 +115,7 @@ class OVSOps (object):
         call_cmd ("ovs-ofctl add-flow %s in_port=%s,priority=1,action=drop" % (bridge, ofport))
 
     def unset_mac_filter (self, bridge, ofport):
-        call_cmd ("ovs-ofctl del-flows %s in_port=%s" % (ofport, bridge))
+        call_cmd ("ovs-ofctl del-flows %s in_port=%s" % (bridge, ofport))
 
     def set_traffic_limit (self, if_name, bandwidth):
         """ bandwidth in kbps """
