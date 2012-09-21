@@ -148,10 +148,12 @@ class OVSOps (object):
 
 if __name__ == '__main__': 
     import pprint
-    #pprint.pprint (ovs_db_find ([], "Interface", {'mtu':1500}))
-    #pprint.pprint (ovs_db_find (['ofport'], "Interface", {'name': 'vps2'}))
-    #pprint.pprint (ovs_db_find_one_by_one ('ofport', "Interface", {'name': 'vps2'}))
-    #ovs_set_traffic_limit ("vps345", 5000)
-    #ovs_unset_traffic_limit ('vps345')
+    #ovsops = OVSOps ()
+    #pprint.pprint (ovsops.find_ofport_by_name ('vps2'))
+    #pprint.pprint (ovsops.ovsdb.find ([], "Interface", {'mtu':1500}))
+    #pprint.pprint (ovsops.ovsdb.find (['ofport'], "Interface", {'name': 'vps2'}))
+    #pprint.pprint (ovsops.ovsdb.find_one_by_one ('ofport', "Interface", {'name': 'vps2'}))
+    #ovsops.set_traffic_limit ("vps345", 5000)
+    #ovsops.unset_traffic_limit ('vps345')
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

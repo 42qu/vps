@@ -35,6 +35,9 @@ def main ():
             client.logger.error ("no vif %s in metadata of %s" % (vif_name, vps_id))
             return 1
         ofport = ovsops.find_ofport_by_name (vif_name)
+        if ofport < 0:
+            client.logger.error ("vif %s ofport=%s, which is impossible, you can fix it by delete the port from bridge " % (vif_name, ofport))
+            return 1
         ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
         ovsops.unset_traffic_limit (vif_name)
 
