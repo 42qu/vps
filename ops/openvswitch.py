@@ -129,7 +129,7 @@ class OVSOps (object):
                 ])
 
     def unset_traffic_limit (self, if_name):
-        qos_rows = self.ovsdb.find (['qos'], 'Port', {'name': 'vps345'})
+        qos_rows = self.ovsdb.find (['qos'], 'Port', {'name': if_name})
         qos = None
         if not qos_rows:
             return
