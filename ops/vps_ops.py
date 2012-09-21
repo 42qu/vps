@@ -13,12 +13,13 @@ import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
-from ops.openvswitch import OVSOps
 
 import ops._env
 import conf
 from lib.command import call_cmd
 
+if conf.USE_OVS:
+    from ops.openvswitch import OVSOps
 assert conf.DEFAULT_FS_TYPE
 assert conf.VPS_METADATA_DIR
 assert conf.CLOSE_EXPIRE_DAYS
