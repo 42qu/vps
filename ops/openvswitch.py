@@ -149,7 +149,7 @@ class OVSOps (object):
         call_cmd ("ovs-vsctl del-port %s %s" % (bridge, if_name)) 
 
     def add_port_to_bridge (self, bridge, if_name):
-        call_cmd ("ovs_vsctl add-port %s %s" % (bridge, if_name))
+        call_cmd ("ovs-vsctl add-port %s %s" % (bridge, if_name))
 
 if __name__ == '__main__': 
     import pprint
