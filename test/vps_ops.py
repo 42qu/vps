@@ -45,10 +45,10 @@ class TestVPSOPS (unittest.TestCase):
         self.assertEqual (_vps.data_disks['xvdc1'].expire_date, vps.data_disks['xvdc1'].expire_date)
         print _vps.data_disks['xvdc1'].__class__.__name__
         self.assertEqual (len (_vps.vifs.values ()), 2)
-        self.assertEqual (_vps.vifs['vps0int'].ip_dict, {'10.10.3.2': '255.255.255.0'})
-        self.assertEqual (_vps.vifs['vps0int'].mac, vps.vifs['vps0int'].mac)
-        self.assertEqual (_vps.vifs['vps0int'].mac, vps.vif_int.mac)
-        self.assertEqual (_vps.vifs['vps0'].mac, vps.vif_ext.mac)
+        self.assertEqual (_vps.vifs['vps00int'].ip_dict, {'10.10.3.2': '255.255.255.0'})
+        self.assertEqual (_vps.vifs['vps00int'].mac, vps.vifs['vps00int'].mac)
+        self.assertEqual (_vps.vifs['vps00int'].mac, vps.vif_int.mac)
+        self.assertEqual (_vps.vifs['vps00'].mac, vps.vif_ext.mac)
         print "test trash expire date None"
         vps.data_disks['xvdc1']._set_expire_days (None)
         self.assertEqual (vps.data_disks['xvdc1'].trash_date, None)
