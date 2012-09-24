@@ -55,17 +55,17 @@ class TestVPSCreate (unittest.TestCase):
         status, out, err = call_cmd_via_ssh ("10.10.2.2", user="root", password="fdfdfd", cmd="free|grep Swap")
         self.assertEqual(status, 0)
         print out
-#
-#
+
+
 #    def test_multiple (self):
 #        print "create vps00"
 #        logger = Log ("test", config=conf)
 #        vpsops = VPSOps (logger)
-#        for i in xrange (1, 33):
+#        for i in xrange (1, 50):
 #            vps = XenVPS (i)
 #            try:
-#                vps.setup (os_id=10001, vcpu=1, mem_m=1024, disk_g=7, root_pw="fdfdfd", gateway="113.11.199.1")
-#                vps.add_netinf_ext ({"113.11.199.%d" % (i + 20) : "255.255.255.0"})
+#                vps.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd", gateway="10.10.2.1")
+#                vps.add_netinf_ext ({"10.10.2.%d" % (i + 30) : "255.255.255.0"})
 #                print vps.gen_xenpv_config ()
 #                vpsops.create_vps (vps)
 #            except Exception, e:
