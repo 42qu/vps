@@ -50,6 +50,7 @@ class VPSNet (object):
 
     def clone (self):
         data = self.__class__ (self.ifname, self.ip_dict.copy (), self.mac, self.bandwidth)
+        return data
 
 class VPSNetExt (VPSNet):
 
