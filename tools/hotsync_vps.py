@@ -43,6 +43,7 @@ def main ():
     for vps_id in vps_ids:
         hotsync_vps (vps_id, dest_ip)
 
-
+if __name__ == '__main__':
+    main ()
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
