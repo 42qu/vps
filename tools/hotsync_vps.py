@@ -7,10 +7,11 @@ import getopt
 import _env
 from lib.log import Log
 import conf
-from ops.migrate import migrateclient
+from ops.migrate import MigrateClient
+from ops.vps_ops import VPSOps
 
 
-def hostsync_vps (vps_id, dest_ip):
+def hotsync_vps (vps_id, dest_ip):
     logger = Log ("vps_mgr", config=conf)
     try:
         vpsops = VPSOps (logger)
@@ -39,7 +40,9 @@ def main ():
         os._exit (1)
     vps_ids = args[0:-1]
     dest_ip = args[-1]
-    print vps_ids, dest_ip
+    for vps_id in vps_ids:
+        hotsync_vps (vps_id, dest_ip)
+
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
