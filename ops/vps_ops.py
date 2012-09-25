@@ -37,16 +37,6 @@ class VPSOps (object):
         else:
             self.logger.info (message)
 
-    def read_traffic_limit (self, vps_id):
-        xv = None
-        try:
-            xv = self.load_vps_meta (vps_id)
-        except:
-            return None
-        if xv.vif_ext:
-            return xv.vif_ext.bandwidth
-
-
     def create_xen_config (self, xv):
         """ will override config """
         xen_config = xv.gen_xenpv_config ()
