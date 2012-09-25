@@ -570,6 +570,14 @@ class VPSOps (object):
         self.loginfo (xv, "remote vps started, going to close local vps")
         self._close_vps (xv)
 
+    def hotsync_vps (self, migclient, vps_id, dest_ip):
+        if not conf.USE_LVM:
+            raise Exception ("only lvm host support hotsync")
+        xv = self.load_vps_meta (vps_id)
+        for disk in xv.data_disks.values ():
+            migclient.snapshot_sync (disk.dev)
+
+
     def change_qos (self, _xv):
         xv = self.load_vps_meta (_xv.vps_id)
         if not _xv.vif_ext or not xv.vif_ext:
