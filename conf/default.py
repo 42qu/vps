@@ -10,19 +10,7 @@ def prepare(o):
     o.OVS_DB_SOCK = "unix:/var/run/openvswitch/db.sock"
     o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
     o.SAAS_PORT = 50042
-    o.SAAS_HOST = "saas-vps.42qu.us"
-
-    o.ALLOWED_IPS = set((
-        "113.11.199.5",
-        "119.254.32.166",
-        "118.145.8.17" ,
-        "113.11.199.6" ,
-        "113.11.199.7" ,
-        "113.11.199.8" ,
-        "113.11.199.10" ,
-        "113.11.199.12" ,
-        "113.11.199.13" ,
-    ))
+    o.SAAS_HOST = "0.0.0.0"
 
     import socket
     HOSTNAME = socket.gethostname()
