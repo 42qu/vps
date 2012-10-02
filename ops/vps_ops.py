@@ -193,6 +193,7 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        time.sleep (3)
         self._close_vps (xv)
         return
 
@@ -309,7 +310,7 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it, going to delete data")
-        time.sleep (1)
+        time.sleep (3)
         for disk in xv.data_disks.values ():
             self._delete_disk (xv, disk)
         for disk in xv.trash_disks.values ():
@@ -360,6 +361,7 @@ class VPSOps (object):
         else:
             xv_old.destroy ()
             self.loginfo (xv_old, "force destroy")
+        time.sleep (3)
         for xen_dev, new_disk in xv_new.data_disks.iteritems ():
             old_disk = xv_old.data_disks.get (xen_dev)
             if not new_disk.exists ():
@@ -443,6 +445,7 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "force destroy")
+        time.sleep (3)
         root_store_trash, root_store = xv.renew_storage (xv.root_store.xen_dev, 5)
         xv.root_store.create (fs_type)
         self.loginfo (xv, "create new root")
