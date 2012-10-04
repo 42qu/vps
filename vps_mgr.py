@@ -80,7 +80,7 @@ class VPSMgr (object):
                         _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
                         _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
                         if _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
-                            self.logger_misc.warn ("%s in: %s mbps, out: %s mbps" % (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
+                            self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
             self.last_netflow = result
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
