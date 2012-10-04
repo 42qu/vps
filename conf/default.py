@@ -41,7 +41,7 @@ def prepare(o):
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
     o.NETFLOW_COLLECT_INV = 30  # in sec
-    o.LARGE_NETFLOW = 5.0 * 1024 * 1024 # in bit
+    o.LARGE_NETFLOW = 10.0 * 1024 * 1024 # in bit
     o.XEN_BRIDGE = "xenbr0"
     o.XEN_INTERNAL_BRIDGE = "xenbr1"
     o.RSYNC_CONF_PATH = "/data/vps/rsync.conf"
