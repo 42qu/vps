@@ -591,4 +591,25 @@ class VPSOps (object):
                 self.loginfo (xv, "vps cannot shutdown, destroyed it")
             self.create_xen_config (xv)
 
+    def change_ip (self, _xv):
+        xv = self.load_vps_meta (_xv.vps_id)
+        xv.vifs = dict ()
+        for vif in _xv.vifs.values ():
+            xv.vifs[vif.ifname] = vif.clone ()
+        _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
+        vps_mountpoint = xv.root_store.mount_tmp ()
+        self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
+        try:
+            self.loginfo (xv, "begin to init os")
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+            self.loginfo (xv, "done init os")
+        finally:
+            vps_common.umount_tmp (vps_mountpoint)
+        self.create_xen_config (xv)
+        self._boot_and_test (xv, is_new=False)
+        self.loginfo (xv, "done vps change ip")
+      
+
+        
+
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

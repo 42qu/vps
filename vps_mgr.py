@@ -278,6 +278,21 @@ class VPSMgr (object):
         self.refresh_host_space ()
         return True
 
+    def vps_change_ip (self, vps_info):
+        self.logger.info ("to change ip vps %s" % (vps_info.id))
+        if not self.vpsinfo_check_ip (vps_info):
+            msg = "no ip with vps %s" % (vps_info.id)
+            self.logger.error (msg)
+            return
+        try:
+            xv = XenVPS (vps_info.id)
+            self.setup_vps (xv, vps_info)
+            self.vpsops.change_ip (xv)
+        except Exception, e:
+            self.logger.error (e)
+        return
+
+
     def vps_reinstall_os (self, vps_info):
         self.logger.info ("to reinstall vps %s, os=%s" % (vps_info.id, vps_info.os))
         if not self.vpsinfo_check_ip (vps_info):
