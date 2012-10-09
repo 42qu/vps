@@ -595,7 +595,10 @@ class VPSOps (object):
         xv = self.load_vps_meta (_xv.vps_id)
         xv.vifs = dict ()
         for vif in _xv.vifs.values ():
-            xv.vifs[vif.ifname] = vif.clone ()
+            if isinstance (vif, VPSNetExt):
+                xv.add_netinf_ext (vif.ip_dict, vif.mac, vif.bandwidth)
+            else:
+                xv.add_netinf_int (vif.ip_dict, vif.mac, vif.bandwidth)
         _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
