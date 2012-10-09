@@ -13,6 +13,7 @@ import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
+from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
 
 import ops._env
 import conf
