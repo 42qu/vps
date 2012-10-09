@@ -600,6 +600,12 @@ class VPSOps (object):
             else:
                 xv.add_netinf_int (vif.ip_dict, vif.mac, vif.bandwidth)
         _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
+        if xv.stop ():
+            self.loginfo (xv, "vps stopped")
+        else:
+            xv.destroy ()
+            self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        time.sleep (3)
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
