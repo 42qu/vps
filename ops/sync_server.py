@@ -232,10 +232,16 @@ class SyncClientBase (object):
         return msg
 
 
-    def rsync (self, mount_point, remote_mount_point):
-        cmd = ("rsync", "-avW", "--inplace", "--delete", "%s/" % (mount_point), 
+    def rsync (self, mount_point, remote_mount_point, speed=None):
+        options = ("-avW", "--inplace", "--delete")
+        if speed:
+            assert isinstance (speed, (int, float))
+            options += ("--bwlimit", str(int(speed * 1000)))
+        cmd = ("rsync", ) + options + \
+                ("%s/" % (mount_point), \
                 "rsync://%s:%s/%s/%s/" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, remote_mount_point)
                 )
+        print cmd
         p = subprocess.Popen (cmd, stderr=subprocess.PIPE, close_fds=True)
         retcode = p.wait ()
         if retcode:

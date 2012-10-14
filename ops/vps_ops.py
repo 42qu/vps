@@ -544,7 +544,7 @@ class VPSOps (object):
         self.loginfo (xv, "done vps creation")
 
 
-    def migrate_vps (self, migclient, vps_id, dest_ip):
+    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None):
         xv = self.load_vps_meta (vps_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
@@ -554,22 +554,22 @@ class VPSOps (object):
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         if conf.USE_LVM:
             for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.dev)
+                migclient.sync_partition (disk.dev, speed=speed)
         else:
             migclient.sync_partition (xv.root_store.file_path)
             for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.file_path)
+                migclient.sync_partition (disk.file_path, speed=speed)
         self.loginfo (xv, "partition synced, going to boot vps remotely")
         migclient.create_vps (xv)
         self.loginfo (xv, "remote vps started, going to close local vps")
         self._close_vps (xv)
 
-    def hotsync_vps (self, migclient, vps_id, dest_ip):
+    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
         if not conf.USE_LVM:
             raise Exception ("only lvm host support hotsync")
         xv = self.load_vps_meta (vps_id)
         for disk in xv.data_disks.values ():
-            migclient.snapshot_sync (disk.dev)
+            migclient.snapshot_sync (disk.dev, speed=speed)
 
 
     def change_qos (self, _xv):
