@@ -373,7 +373,7 @@ class VPSOps (object):
                     vps_mountpoint_bak = old_disk.mount_trash_temp ()
                     self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
                     try:
-                        fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint_bak)
+                        fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
                         new_disk.create (fs_type)
                         self.loginfo (xv_new, "create new %s" % (str(new_disk)))
                         vps_mountpoint = new_disk.mount_tmp ()
@@ -386,14 +386,14 @@ class VPSOps (object):
                             vps_common.umount_tmp (vps_mountpoint)
                     finally:
                         vps_common.umount_tmp (vps_mountpoint_bak)
-                else: 
-                    # we have to know fs_type for fstab generation
-                    vps_mountpoint = new_disk.mount_tmp ()
-                    try:
-                        fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint)
-                        new_disk.fs_type = fs_type
-                    finally:
-                        vps_common.umount_tmp (vps_mountpoint)
+#                else: 
+#                    # we have to know fs_type for fstab generation
+#                    vps_mountpoint = new_disk.mount_tmp ()
+#                    try:
+#                        fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint)
+#                        new_disk.fs_type = fs_type
+#                    finally:
+#                        vps_common.umount_tmp (vps_mountpoint)
 
         for xen_dev, old_disk in xv_old.data_disks.iteritems ():
             if not xv_new.data_disks.has_key (xen_dev):
@@ -456,12 +456,13 @@ class VPSOps (object):
             if xen_dev == xv.root_store.xen_dev:
                 continue
             if disk.exists ():
-                vps_mountpoint = disk.mount_tmp ()
-                try:
-                    fs_type = vps_common.get_partition_fs_type (mount_point=vps_mountpoint)
-                    disk.fs_type = fs_type
-                finally:
-                    vps_common.umount_tmp (vps_mountpoint)
+                pass
+                #vps_mountpoint = disk.mount_tmp ()
+                #try:
+                #    fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint)
+                #    disk.fs_type = fs_type
+                #finally:
+                #    vps_common.umount_tmp (vps_mountpoint)
             else:
                 disk.create (fs_type)
 

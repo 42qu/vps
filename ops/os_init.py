@@ -126,7 +126,7 @@ proc                    /proc                   proc    defaults        0 0
     for k in keys:
         disk = xv.data_disks[k]
         if disk.mount_point and disk.mount_point not in ['none', '/']:
-            fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev, disk.mount_point, disk.fs_type) 
+            fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev, disk.mount_point, disk.get_fs_type ()) 
             mount_dir = os.path.join (vps_mountpoint, disk.mount_point.strip ("/"))
             if not os.path.exists (mount_dir):
                 os.makedirs (mount_dir, 0755)

@@ -85,7 +85,38 @@ def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
         raise e
     return tmp_mount
 
-def get_partition_fs_type (mount_point=None, dev_path=None):
+def get_link_target (l):
+    if os.path.islink (l):
+        t = os.readlink (l)
+        l = os.path.join (os.path.dirname (l), t)
+        return os.path.abspath (l)
+    return l
+
+def get_fs_type (dev_path):
+    if os.path.islink (dev_path):
+        dev_path = get_link_target (dev_path)
+    assert os.path.exists(dev_path)
+    out = call_cmd ("file -s %s" % (dev_path))
+    if re.match (r"^.*ext4.*?$", out, re.I):
+        return "ext4"
+    elif re.match (r"^.*ext3.*?$", out, re.I):
+        return "ext3"
+    elif re.match (r"^.*ext2.*?", out, re.I):
+        return "ext2"
+    elif re.match (r"^.*swap.*?", out, re.I):
+        return "swap"
+    elif re.match(r"^.*ReiserFS.*?", out, re.I):
+        return "reiserfs"
+    elif re.match (r"^.*xfs.*?", out, re.I):
+        return "xfs"
+    elif re.match (r"^.*FAT.*?", out, re.I):
+        return "vfat"
+    elif re.match (r"^.*NTFS.*?", out, re.I):
+        return "ntfs-3g"
+    else:
+        raise Exception ("unknown fs: %s" % (out.strip ("\r\n")))
+
+def get_mounted_fs_type (mount_point=None, dev_path=None):
     """ NOTE that /dev/main/vps00_root will actually be  /dev/mapper/main-vps00_root in /proc/mounts, so dev_path is not likely to be reliable
     """
     assert dev_path or mount_point
@@ -245,7 +276,7 @@ def pack_vps_fs_tarball (img_path, tarball_dir_or_path):
     else:
         mount_point = mount_loop_tmp (img_path, readonly=True)
     if not tarball_path and tarball_dir:
-        fs_type = get_partition_fs_type (mount_point=mount_point)
+        fs_type = get_fs_type (img_path)
         tarball_name = "%s_fs_%s.tar.gz" % (os.path.basename (img_path), fs_type)
         tarball_path = os.path.join (tarball_dir, tarball_name)
         if os.path.exists (tarball_path):

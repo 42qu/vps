@@ -40,6 +40,9 @@ class VPSStoreBase (object):
         self.xen_path = xen_path
         self.mount_point = mount_point
 
+    def get_fs_type (self):
+        raise NotImplementedError ()
+
     def _set_expire_days (self, days):
         if days > 0:
             self.trash_date = datetime.date.today ()
@@ -176,6 +179,15 @@ class VPSStoreImage (VPSStoreBase):
     def trash_exists (self):
         return os.path.isfile (self.trash_path)
 
+    def get_fs_type (self):
+        if self.fs_type:
+            return self.fs_type
+        if self.exists ():
+            return vps_common.get_fs_type (self.file_path)
+        elif self.trash_exists ():
+            return vps_common.get_fs_type(self.trash_path)
+        else:
+            raise Exception ("not exist")
 
     def create (self, fs_type=None):
         if not self.size_g:
@@ -266,6 +278,17 @@ class VPSStoreLV (VPSStoreBase):
 
     def trash_exists (self):
         return os.path.exists (self.trash_dev)
+
+    def get_fs_type (self):
+        if self.fs_type:
+            return self.fs_type
+        if self.exists ():
+            return vps_common.get_fs_type (self.dev)
+        elif self.trash_exists ():
+            return vps_common.get_fs_type(self.trash_dev)
+        else:
+            raise Exception ("not exist")
+
 
     def get_mounted_dir (self):
         return vps_common.lv_get_mountpoint (self.dev)

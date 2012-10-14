@@ -16,7 +16,7 @@ def hotsync_vps (vps_id, dest_ip, speed=None):
     try:
         vpsops = VPSOps (logger)
         client = MigrateClient (logger, dest_ip)
-        vpsops.hotsync_vps (client, vps_id, dest_ip)
+        vpsops.hotsync_vps (client, vps_id, dest_ip, speed=speed)
         print "%s ok" % (vps_id)
     except Exception, e:
         logger.exception (e)
