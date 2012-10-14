@@ -8,8 +8,10 @@ import os
 import tempfile
 import time
 import re
-import ops._env
-from lib.command import call_cmd
+import _env
+from lib.command import call_cmd, search_path
+
+assert search_path ("file")
 
 #def call_cmd (cmd):
 #    res = os.system (cmd)
