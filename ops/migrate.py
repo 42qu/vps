@@ -135,9 +135,9 @@ class MigrateClient (SyncClientBase):
             mount_point, size_g, _partition_name = self._load_image (dev)
         if not partition_name:
             partition_name = _partition_name
-        fs_type = vps_common.get_fs_type (dev)
         sock = None
         try:
+            fs_type = vps_common.get_fs_type (dev)
             sock = self.connect (timeout=5)
             self._send_msg (sock, "alloc_partition", {
                 'part_name': partition_name,
