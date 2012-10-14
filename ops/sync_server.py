@@ -236,7 +236,8 @@ class SyncClientBase (object):
         options = ("-avW", "--inplace", "--delete")
         if speed:
             assert isinstance (speed, (int, float))
-            options += ("--bwlimit", str(int(speed * 1000)))
+            options += ("--bwlimit", str(int(speed * 1000)), "-z")
+            
         cmd = ("rsync", ) + options + \
                 ("%s/" % (mount_point), \
                 "rsync://%s:%s/%s/%s/" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, remote_mount_point)
