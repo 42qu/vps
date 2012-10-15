@@ -604,6 +604,7 @@ class VPSOps (object):
     def change_ip (self, _xv):
         xv = self.load_vps_meta (_xv.vps_id)
         xv.vifs = dict ()
+        xv.gateway = _xv.gateway
         for vif in _xv.vifs.values ():
             if isinstance (vif, VPSNetExt):
                 xv.add_netinf_ext (vif.ip_dict, vif.mac, vif.bandwidth)
