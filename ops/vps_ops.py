@@ -413,21 +413,19 @@ class VPSOps (object):
     def reinstall_os (self, vps_id, _xv=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
         xv = None
-        if _xv:
+        if os.path.exists (meta_path):
+            xv = self._load_vps_meta (meta_path)
+            if os_id:
+                xv.os_id = os_id
+            elif _xv: 
+                xv.os_id = _xv.os_id
+            else:
+                raise Exception ("missing os_id")
+        elif _xv:
             xv = _xv
             if os_id:
                 xv.os_id = os_id
-        else:
-            if os.path.exists (meta_path):
-                xv = self._load_vps_meta (meta_path)
-                if os_id:
-                    xv.os_id = os_id
-                elif _xv: 
-                    xv.os_id = _xv.os_id
-                else:
-                    raise Exception ("missing os_id")
-            else:
-                raise Exception ("missing vps metadata")
+            raise Exception ("missing vps metadata")
         _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
         if not vps_image:
             vps_image = _vps_image
@@ -544,7 +542,7 @@ class VPSOps (object):
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -621,7 +619,7 @@ class VPSOps (object):
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
