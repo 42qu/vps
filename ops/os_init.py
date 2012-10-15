@@ -118,7 +118,7 @@ devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 sysfs                   /sys                    sysfs   defaults        0 0
 proc                    /proc                   proc    defaults        0 0
 """)
-    fstab = fstab_t.substitute (root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.disk.get_fs_type ())
+    fstab = fstab_t.substitute (root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.get_fs_type ())
     if xv.swap_store.size_g > 0:
         fstab += "/dev/%s   none    swap    sw  0 0\n"  % (xv.swap_store.xen_dev)
     keys = xv.data_disks.keys ()
