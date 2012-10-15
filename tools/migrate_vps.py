@@ -27,6 +27,7 @@ def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
                  "help", "speed=",
                  ])
+    speed = None
 
     for opt, v in optlist:
         if opt == '--help': 
