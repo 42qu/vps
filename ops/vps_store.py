@@ -283,9 +283,11 @@ class VPSStoreLV (VPSStoreBase):
         if self.fs_type:
             return self.fs_type
         if self.exists ():
-            return vps_common.get_fs_type (self.dev)
+            self.fs_type = vps_common.get_fs_type (self.dev)
+            return self.fs_type
         elif self.trash_exists ():
-            return vps_common.get_fs_type(self.trash_dev)
+            self.fs_type = vps_common.get_fs_type (self.trash_dev)
+            return self.fs_type
         else:
             raise Exception ("not exist")
 
