@@ -25,7 +25,7 @@ def usage ():
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
-                 "help", "--speed"
+                 "help", "speed",
                  ])
 
     for opt, v in optlist:
