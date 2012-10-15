@@ -9,7 +9,7 @@ import string
 import time
 import crypt
 
-def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True):
+def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True, to_init_fstab=True):
     assert isinstance (xv, XenVPS)
     
     if os_type.find ('gentoo') == 0:
@@ -24,7 +24,8 @@ def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True):
         raise NotImplementedError ()
     if to_init_passwd:
         set_root_passwd_2 (xv, vps_mountpoint)
-    gen_fstab (xv, vps_mountpoint)
+    if to_init_fstab:
+        gen_fstab (xv, vps_mountpoint)
 
 def migrate_users (xv, vps_mountpoint, vps_mountpoint_old):
     passwd_path_old = os.path.join (vps_mountpoint_old, "etc", "passwd")
@@ -117,7 +118,7 @@ devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 sysfs                   /sys                    sysfs   defaults        0 0
 proc                    /proc                   proc    defaults        0 0
 """)
-    fstab = fstab_t.substitute (root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.fs_type)
+    fstab = fstab_t.substitute (root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.disk.get_fs_type ())
     if xv.swap_store.size_g > 0:
         fstab += "/dev/%s   none    swap    sw  0 0\n"  % (xv.swap_store.xen_dev)
     keys = xv.data_disks.keys ()
