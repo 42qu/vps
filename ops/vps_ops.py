@@ -541,6 +541,7 @@ class VPSOps (object):
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
+            _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
             self.loginfo (xv, "begin to init os")
             os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
             self.loginfo (xv, "done init os")
