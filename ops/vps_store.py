@@ -311,7 +311,7 @@ class VPSStoreLV (VPSStoreBase):
     def get_size (self):
         if self.exists ():
             return vps_common.lv_getsize (self.dev)
-        elif self.trash_exists ()
+        elif self.trash_exists ():
             return vps_common.lv_getsize (self.trash_dev)
         elif self.size_g is not None:
             return self.size_g
