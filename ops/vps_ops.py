@@ -368,7 +368,8 @@ class VPSOps (object):
             if not new_disk.exists ():
                 new_disk.create (fs_type)
             else:
-                if old_disk and old_disk.size_g != new_disk.size_g:
+                assert new_disk.size_g
+                if old_disk and old_disk.get_size () != new_disk.size_g:
                     old_disk, new_disk = xv_new.renew_storage (xen_dev)
                     vps_mountpoint_bak = old_disk.mount_trash_temp ()
                     self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))

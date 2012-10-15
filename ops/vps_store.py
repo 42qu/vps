@@ -43,6 +43,9 @@ class VPSStoreBase (object):
     def get_fs_type (self):
         raise NotImplementedError ()
 
+    def get_size (self):
+        raise NotImplementedError ()
+
     def _set_expire_days (self, days):
         if days > 0:
             self.trash_date = datetime.date.today ()
@@ -180,14 +183,27 @@ class VPSStoreImage (VPSStoreBase):
         return os.path.isfile (self.trash_path)
 
     def get_fs_type (self):
-        if self.fs_type:
-            return self.fs_type
         if self.exists ():
-            return vps_common.get_fs_type (self.file_path)
+            self.fs_type = vps_common.get_fs_type (self.file_path)
+            return self.fs_type
         elif self.trash_exists ():
-            return vps_common.get_fs_type(self.trash_path)
+            self.fs_type = vps_common.get_fs_type(self.trash_path)
+            return self.fs_type
+        elif self.fs_type:
+            return self.fs_type
         else:
             raise Exception ("not exist")
+
+    def get_size (self):
+        if self.exists ():
+            return vps_common.file_getsize (self.file_path)
+        elif self.trash_exists ():
+            return vps_common.file_getsize (self.trash_path)
+        elif self.size_g is not None:
+            return self.size_g
+        else:
+            raise Exception ("no size")
+
 
     def create (self, fs_type=None):
         if not self.size_g:
@@ -272,7 +288,8 @@ class VPSStoreLV (VPSStoreBase):
             self.fs_type = fs_type
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.dev)
-        
+
+       
     def exists (self):
         return os.path.exists (self.dev)
 
@@ -280,17 +297,27 @@ class VPSStoreLV (VPSStoreBase):
         return os.path.exists (self.trash_dev)
 
     def get_fs_type (self):
-        if self.fs_type:
-            return self.fs_type
         if self.exists ():
             self.fs_type = vps_common.get_fs_type (self.dev)
             return self.fs_type
         elif self.trash_exists ():
             self.fs_type = vps_common.get_fs_type (self.trash_dev)
             return self.fs_type
+        elif self.fs_type:
+            return self.fs_type
         else:
             raise Exception ("not exist")
 
+    def get_size (self):
+        if self.exists ():
+            return vps_common.lv_getsize (self.dev)
+        elif self.trash_exists ()
+            return vps_common.lv_getsize (self.trash_dev)
+        elif self.size_g is not None:
+            return self.size_g
+        else:
+            raise Exception ("no size")
+ 
 
     def get_mounted_dir (self):
         return vps_common.lv_get_mountpoint (self.dev)
