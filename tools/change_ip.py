@@ -14,13 +14,13 @@ def usage ():
 
 def change_ip (vps_id):
     client = VPSMgr ()
-    vps = None
+    vps_info = None
     try:
         vps_info = client.query_vps (vps_id)
-        client.vps_change_ip (vps_info)
     except Exception, e:
         print "failed to query vps state: [%s] %s" % (type(e), str(e))
         os._exit (1)
+    client.vps_change_ip (vps_info)
 
 if __name__ == '__main__':
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
