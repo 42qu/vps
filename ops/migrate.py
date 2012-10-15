@@ -99,7 +99,9 @@ class MigrateClient (SyncClientBase):
         file_name = os.path.basename (file_path)
         om = re.match (r'(\w+)\.img', file_name)
         assert om is not None
-        partition_name = om.group (1)
+        partition_name = om.group (1) 
+        if partition_name.find ("data") < 0:
+            partition_name += "_root"
         s = os.stat (file_path)
         size_g = s.st_size / 1024 / 1024 / 1024
         mount_point = vps_common.get_mountpoint (file_path) 

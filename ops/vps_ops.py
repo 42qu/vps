@@ -564,11 +564,10 @@ class VPSOps (object):
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         if conf.USE_LVM:
             for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.dev, speed=speed)
+                migclient.sync_partition (disk.dev, partition_name=disk.partition_name, speed=speed)
         else:
-            migclient.sync_partition (xv.root_store.file_path)
             for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.file_path, speed=speed)
+                migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
         self.loginfo (xv, "partition synced, going to boot vps remotely")
         migclient.create_vps (xv)
         self.loginfo (xv, "remote vps started, going to close local vps")
