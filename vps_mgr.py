@@ -189,7 +189,7 @@ class VPSMgr (object):
 
     @staticmethod
     def dump_vps_info (vps_info):
-        ip = vps_info.ext_ips and "(%s)" % ",".join (map (lambda ip:"%s/%s" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask)), vps_info.ext_ips)) or None
+        ip = vps_info.ext_ips and "(%s)" % ",".join (map (lambda ip:"%s/%s(%s)" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask), ip.mac), vps_info.ext_ips)) or None
         if vps_info.int_ip and vps_info.int_ip.ipv4:
             ip_inter = "%s/%s" % (int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
         else:
@@ -216,7 +216,7 @@ class VPSMgr (object):
         ip_dict = dict ()
         for ip in vps_info.ext_ips:
             ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
-            xenvps.add_netinf_ext (ip_dict)
+            xenvps.add_netinf_ext (ip_dict, mac=ip.mac)
         if vps_info.harddisks:
             for disk_id, disk_size in vps_info.harddisks.iteritems ():
                 if disk_id != 0:
