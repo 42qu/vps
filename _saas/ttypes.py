@@ -54,17 +54,20 @@ class Ip:
   Attributes:
    - ipv4
    - ipv4_netmask
+   - mac
   """
 
   thrift_spec = (
     None, # 0
     (1, TType.I64, 'ipv4', None, None, ), # 1
     (2, TType.I64, 'ipv4_netmask', None, None, ), # 2
+    (3, TType.STRING, 'mac', None, None, ), # 3
   )
 
-  def __init__(self, ipv4=None, ipv4_netmask=None,):
+  def __init__(self, ipv4=None, ipv4_netmask=None, mac=None,):
     self.ipv4 = ipv4
     self.ipv4_netmask = ipv4_netmask
+    self.mac = mac
 
   def read(self, iprot):
     if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
@@ -85,6 +88,11 @@ class Ip:
           self.ipv4_netmask = iprot.readI64();
         else:
           iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.STRING:
+          self.mac = iprot.readString();
+        else:
+          iprot.skip(ftype)
       else:
         iprot.skip(ftype)
       iprot.readFieldEnd()
@@ -102,6 +110,10 @@ class Ip:
     if self.ipv4_netmask is not None:
       oprot.writeFieldBegin('ipv4_netmask', TType.I64, 2)
       oprot.writeI64(self.ipv4_netmask)
+      oprot.writeFieldEnd()
+    if self.mac is not None:
+      oprot.writeFieldBegin('mac', TType.STRING, 3)
+      oprot.writeString(self.mac)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

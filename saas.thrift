@@ -3,6 +3,7 @@ namespace py _saas
 struct Ip {
 	1: i64 ipv4						,
 	2: i64 ipv4_netmask				,
+	3: optional string mac          ,
 }
 
 
