@@ -5,6 +5,7 @@ import os
 import re
 import time
 import socket
+import threading
 try:
     import json
 except ImportError:
@@ -259,7 +260,6 @@ class VPSOps (object):
             raise Exception ("missing metadata or backend data")
 
         xv.check_resource_avail (ignore_trash=True)
-        # TODO if resource not available on this host, we must allow moving the vps elsewhere
         for disk in xv.data_disks.values ():
             if disk.trash_exists ():
                 disk.restore_from_trash ()
@@ -382,7 +382,6 @@ class VPSOps (object):
                         try:
                             call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
                             self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
-                            # TODO:  uncomment this when os_init can deal with multiple net address
                         finally:
                             vps_common.umount_tmp (vps_mountpoint)
                     finally:
@@ -532,56 +531,6 @@ class VPSOps (object):
         self.loginfo (xv, "added internal vif ip=%s" % (ip))
         return True
 
-    def create_from_migrate (self, xv):
-        xv.check_resource_avail (ignore_trash=True)
-        if xv.swap_store.size_g > 0 and not xv.swap_store.exists ():
-            xv.swap_store.create ()
-            self.loginfo (xv, "swap image %s created" % (str(xv.swap_store)))
-        xv.check_storage_integrity ()
-        self._clear_nonexisting_trash (xv)
-        vps_mountpoint = xv.root_store.mount_tmp ()
-        self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
-        try:
-            _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
-            self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
-            self.loginfo (xv, "done init os")
-        finally:
-            vps_common.umount_tmp (vps_mountpoint)
-
-        self.create_xen_config (xv)
-        self._boot_and_test (xv, is_new=False)
-        self.loginfo (xv, "done vps creation")
-
-
-    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None, _xv=None):
-        xv = self.load_vps_meta (vps_id)
-        if xv.stop ():
-            self.loginfo (xv, "vps stopped")
-        else:
-            xv.destroy ()
-            self.loginfo (xv, "vps cannot shutdown, destroyed it")
-        if _xv:
-            self._update_vif_setting (xv, _xv)
-        self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
-        if conf.USE_LVM:
-            for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.dev, partition_name=disk.partition_name, speed=speed)
-        else:
-            for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
-        self.loginfo (xv, "partition synced, going to boot vps remotely")
-        migclient.create_vps (xv)
-        self.loginfo (xv, "remote vps started, going to close local vps")
-        self.close_vps (vps_id)
-
-    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
-        if not conf.USE_LVM:
-            raise Exception ("only lvm host support hotsync")
-        xv = self.load_vps_meta (vps_id)
-        for disk in xv.data_disks.values ():
-            migclient.snapshot_sync (disk.dev, speed=speed)
-
 
     def change_qos (self, _xv):
         xv = self.load_vps_meta (_xv.vps_id)
@@ -635,6 +584,124 @@ class VPSOps (object):
         self.loginfo (xv, "done vps change ip")
       
 
+    def create_from_hot_migrate (self, xv):
+        """ server side """
+        xv.check_storage_integrity ()
+        self._clear_nonexisting_trash (xv)
+        self.create_xen_config (xv)
+        xv.restore ()
+        if not xv.wait_until_reachable (120):
+            raise Exception ("the vps started, seems not reachable")
+        os.remove (xv.save_path)
+        self.loginfo (xv, "removed %s" % (xv.save_path))
+        self.loginfo (xv, "done vps hot immigrate")
+
+    def _send_swap (self, migclient, xv, dest_ip, dest_port, result):
+        assert isinstance (result, dict)
+        ret, err = migclient.sendfile (xv.swap_store.file_path, dest_ip, dest_port)
+        result["swap"] = (ret, err)
+
+    def _send_savefile (self, migclient, xv, dest_ip, dest_port, result):
+        assert isinstance (result, dict)
+        ret, err = migclient.sendfile (xv.save_path, dest_ip, dest_port)
+        result["savefile"] = (ret, err)
+
+
+    def migrate_vps_hot (self, migclient, vps_id, dest_ip, speed=None):
+        """client size"""
+        xv = self.load_vps_meta (vps_id)
+        xv.save ()
+        try:
+            swap_port, savefile_port = migclient.prepare_hot_immigrate (xv)
+            result = dict ()
+            try:
+                th1 = threading.Thread (target=self._send_swap, args=(migclient, dest_ip, swap_port, result,))
+                th1.setDaemon (1)
+                th1.start ()
+                th2 = threading.Thread (target=self._send_savefile, args=(migclient, dest_ip, savefile_port, result, ))
+                th2.setDaemon (1)
+                th2.start ()
+                for disk in xv.data_disks.values ():
+                    migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
+                self.loginfo (xv, "partition synced")
+                th1.join ()
+                th2.join ()
+                swap_result = result.get ("swap")
+                savefile_result = result.get ("savefile")
+                if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
+                    migclient.vps_hot_immigrate (xv, swap_port, savefile_port)
+                    # ok
+                    return
+                else:
+                    if swap_result and swap_result[0] != 0:
+                        print "sending swap: ", swap_result[1]
+                    if savefile_result and savefile_result[0] != 0:
+                        print "sending savefile", 
+                    migclient.vps_fail_hot_immigrate (xv, swap_port, savefile_port)
+            except Exception, e:
+                print "error %s" % (e)
+                self.logger.exception (e)
+                migclient.vps_fail_hot_immigrate (xv, swap_port, savefile_port)
+        except Exception, e:
+            self.logger.exception (e)
+            print "error %s" % (e)
+        # error
+        print "going to restore vps %s" % (xv.vps_id)
+        xv.restore ()
+        msg = "vps %s restored" % (xv.vps_id)
+        print msg
+        self.logger.info (msg)
+        os.remove (xv.save_path)
+        return False
+        
+
+    def create_from_migrate (self, xv):
+        """ server side """
+        xv.check_resource_avail (ignore_trash=True)
+        if xv.swap_store.size_g > 0 and not xv.swap_store.exists ():
+            xv.swap_store.create ()
+            self.loginfo (xv, "swap image %s created" % (str(xv.swap_store)))
+        xv.check_storage_integrity ()
+        self._clear_nonexisting_trash (xv)
+        vps_mountpoint = xv.root_store.mount_tmp ()
+        self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
+        try:
+            _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
+            self.loginfo (xv, "begin to init os")
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
+            self.loginfo (xv, "done init os")
+        finally:
+            vps_common.umount_tmp (vps_mountpoint)
+
+        self.create_xen_config (xv)
+        self._boot_and_test (xv, is_new=False)
+        self.loginfo (xv, "done vps creation")
+       
+
+    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None, _xv=None):
+        """client side """
+        xv = self.load_vps_meta (vps_id)
+        if xv.stop ():
+            self.loginfo (xv, "vps stopped")
+        else:
+            xv.destroy ()
+            self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        if _xv:
+            self._update_vif_setting (xv, _xv)
+        self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
+        for disk in xv.data_disks.values ():
+            migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
+        self.loginfo (xv, "partition synced, going to boot vps remotely")
+        migclient.create_vps (xv)
+        self.loginfo (xv, "remote vps started, going to close local vps")
+        self.close_vps (vps_id)
+
+    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
+        if not conf.USE_LVM:
+            raise Exception ("only lvm host support hotsync")
+        xv = self.load_vps_meta (vps_id)
+        for disk in xv.data_disks.values ():
+            migclient.snapshot_sync (disk.dev, speed=speed)
         
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

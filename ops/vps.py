@@ -14,6 +14,7 @@ import conf
 assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
+assert conf.VPS_METADATA_DIR
 
 
 
@@ -45,6 +46,7 @@ class XenVPS (object):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
+        self.save_path = os.path.join (conf.VPS_METADATA_DIR, "%s.save" % self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()
@@ -339,6 +341,20 @@ on_crash = "restart"
             if now - start_ts > 90:
                 # shutdown failed
                 return False
+
+    def save (self):
+        if self.is_running():
+            self.xen_inf.save (self.name, self.save_path)
+        if not os.path.isfile (self.save_path):
+            raise Exception ("cannot save %s" % (self.name))
+
+    def restore (self):
+        if self.is_running():
+            raise Exception ("cannot restore %s, vps is running" % (self.name))
+        elif os.path.isfile (self.save_path):
+            self.xen_inf.restore (self.save_path)
+        else:
+            raise Exception ("%s does not exists" % (self.save_path))
 
     def destroy (self):
         """ if failed to destroy, raise Exception """

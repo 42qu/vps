@@ -34,6 +34,14 @@ class IXen (object):
     def create (xen_config):
         raise NotImplementedError ()
 
+    @staticmethod
+    def save (domain, path):
+        raise NotImplementedError ()
+
+    @staticmethod
+    def restore (path):
+        raise NotImplementedError ()
+
 #    @staticmethod
 #    def reboot (domain):
 #        raise NotImplementedError ()
@@ -45,8 +53,6 @@ class IXen (object):
     @staticmethod
     def destroy (domain):
         raise NotImplementedError ()
-
-
 
     @staticmethod
     def uptime (domain):
@@ -73,6 +79,14 @@ class XenXM (IXen):
         if not os.path.exists (xen_config):
             raise Exception ("%s not exist" % (xen_config))
         call_cmd ("xm create %s" % (xen_config))
+
+    @staticmethod
+    def save (domain, path):
+        call_cmd ("xm save %s %s" % (domain, path))
+
+    @staticmethod
+    def restore (path):
+        call_cmd ("xm restore %s" % (path))
 
 #    @staticmethod
 #    def reboot (domain):
