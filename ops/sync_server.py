@@ -313,9 +313,9 @@ class SyncClientBase (object):
 
 
     def rsync (self, mount_point, remote_mount_point=None, speed=None, use_zip=False):
-        options = ("-avW", "--inplace")
+        options = ("-avW", "--inplace", )
         if remote_mount_point:
-            options = ("--delete")
+            options += ("--delete", )
         if speed:
             assert isinstance (speed, (int, float))
             options += ("--bwlimit", str(int(speed * 1000)), )
