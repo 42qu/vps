@@ -573,7 +573,7 @@ class VPSOps (object):
         self.loginfo (xv, "partition synced, going to boot vps remotely")
         migclient.create_vps (xv)
         self.loginfo (xv, "remote vps started, going to close local vps")
-        self._close_vps (xv)
+        self.close_vps (vps_id)
 
     def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
         if not conf.USE_LVM:
