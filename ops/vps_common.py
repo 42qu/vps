@@ -94,6 +94,12 @@ def get_link_target (l):
         return os.path.abspath (l)
     return l
 
+def get_blk_size (dev):
+    out = call_cmd ("blockdev --getsize64 %s" % (dev))
+    out = out.strip ()
+    return int (out)
+
+
 def get_fs_type (dev_path):
     if os.path.islink (dev_path):
         dev_path = get_link_target (dev_path)

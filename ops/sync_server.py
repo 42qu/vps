@@ -14,6 +14,7 @@ except ImportError:
     import simplejson as json
 
 
+import ops.vps_common as vps_common
 import ops._env
 from lib.job_queue import JobQueue, Job
 from lib.socket_engine import TCPSocketEngine, Connection
@@ -63,7 +64,6 @@ class SyncServerBase (object):
         self.listen_ip = "0.0.0.0"
         self.inf_addr = (self.listen_ip, conf.INF_PORT)
         self.rsync_port = conf.RSYNC_PORT
-        self.sendfile_start_port = conf.SENDFILE_PORT
         self.engine = TCPSocketEngine (io_poll.Poll())
         self.engine.set_logger (logger)
         self.engine.set_timeout (10, 10, 1800)
@@ -191,20 +191,22 @@ use chroot=yes
         try:
             f = open (filepath, "w")
             head = NetHead ()
-            data = json.dump ({"res": 0, 'msg': ''})
+            data = json.dumps ({"res": 0, 'msg': ''})
             buf = head.pack (len (data)) + data
             conn.sock.setblocking (False)
             self.engine.write_unblock (conn, buf, self._recv_file_content, self._recv_file_content_error, cb_args=(f, filepath, size))
+            return True
         except Exception, e:
             self._send_response (conn, 1, str(e))
             
     def _recv_file_content (self, conn, f, filepath, size):
-        def __on_recv_content (self, conn, *cb_args): 
+        def __on_recv_content (conn, *cb_args): 
             buf = conn.get_readbuf ()
-            buf = buf.decode ("zlib")
+            #buf = buf.decode ("zlib")
             f.write (buf)
             _size = size
-            _size -= len (buf)
+            if _size is not None:
+                _size -= len (buf)
             if _size == 0:
                 f.close ()
                 self.engine.close_conn (conn)
@@ -284,22 +286,30 @@ class SyncClientBase (object):
             raise Exception ("remote error: %s" % (msg))
         return msg
 
-    def sendfile (self, filepath, remote_path, block_size=1024*1024):
+    def sendfile (self, filepath, remote_path, block_size=1*1024*1024):
         assert filepath and remote_path
         sock = None
-        st = os.stat (filepath)
-        filesize = st.st_size
+        filesize = None
+        if os.path.islink (filepath):
+            filepath = vps_common.get_link_target (filepath)
+        if os.path.isfile (filepath):
+            st = os.stat (filepath)
+            filesize = st.st_size
+        elif filepath.find ("/dev") == 0:
+            filesize = vps_common.get_blk_size (filepath)
         f = open (filepath, "r")
         head = NetHead ()
         try:
             sock = self.connect ()
             try:
                 self._send_msg (sock, "recv_file", {'size': filesize, 'filepath': remote_path})
-                self._recv_msg (sock)
-                while filesize > 0:
+                self._recv_response (sock)
+                while filesize > 0 or filesize is None:
                     buf = f.read (block_size)
                     sent_size = len (buf)
-                    buf = buf.encode ("zlib")
+                    if sent_size == 0:
+                        break
+                    #buf = buf.encode ("zlib")
                     head.write_msg (sock, buf)
                     filesize -= sent_size
             finally:
