@@ -67,6 +67,13 @@ class MigrateServer (SyncServerBase):
             self.logger.exception (e)
             self._send_response (conn, 1, str(e))
 
+    def _handler_send_file (self, conn, cmd, data):
+        try:
+            pass
+        except socket.error, e:
+            raise e
+
+
     def _handler_create_vps (self, conn, cmd, data):
         meta = self._get_req_attr (data, "meta")
         origin_host_id = self._get_req_attr (data, "origin_host_id")

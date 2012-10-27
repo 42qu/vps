@@ -3,7 +3,9 @@
 import os
 import socket
 import subprocess
-from lib.command import Command
+from lib.command import Command, search_path
+assert search_path ("ncat")
+
 import time
 import signal
 try: 
@@ -21,6 +23,7 @@ import conf
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
+assert conf.SENDFILE_PORT
 
 
             
@@ -61,12 +64,14 @@ class SyncServerBase (object):
         self.listen_ip = "0.0.0.0"
         self.inf_addr = (self.listen_ip, conf.INF_PORT)
         self.rsync_port = conf.RSYNC_PORT
+        self.sendfile_start_port = conf.SENDFILE_PORT
         self.engine = TCPSocketEngine (io_poll.Poll())
         self.engine.set_logger (logger)
         self.engine.set_timeout (10, 10, 1800)
         self.inf_sock = None
         self.jobqueue = JobQueue (logger)
         self._handlers = dict ()
+        self._sendfile_svr_dict = dict ()
 
     def loop (self):
         while self.is_running:
@@ -179,6 +184,72 @@ use chroot=yes
         self._rsync_popen.wait ()
         self.logger.info ("rsync stopped")
 
+    def start_sendfile_svr (self, destfile):
+        """ return server port """
+        assert destfile
+        svr_port = 0
+        if self._sendfile_svr_dict:
+            try:
+                svr_port = max (self._sendfile_svr_dict.keys ())
+            except Exception, e:
+                print e
+        if svr_port > 0:
+            svr_port += 1
+        else:
+            svr_port = self.sendfile_start_port
+        assert isinstance (svr_port, int)
+        for i in xrange (0, 30):
+            p1 = subprocess.Popen (["ncat", "-l", str(svr_port + i)], stdout=subprocess.PIPE, close_fds=True,
+                    stderr=subprocess.PIPE,)
+            p2 = subprocess.Popen ("gunzip -c >%s" % (destfile), shell=True, stdin=p1.stdout, 
+                     close_fds=True)
+            p1.stdout.close ()
+            p = p1
+            time.sleep (1)
+            retcode = p.poll ()
+            if retcode is not None:
+                err = "\n".join (p1.stderr.readlines ())
+                p.stderr.close ()
+                self.logger.error ("returncode=%d, error=%s" % (retcode, err))
+                continue
+            else:
+                self._sendfile_svr_dict[svr_port + i] = p1
+                return svr_port + i
+
+            #cmd = "ncat -l %d | gunzip -c >%s" % (svr_port + i, destfile)
+            #p = Command (cmd)
+            #p.start ()
+            #time.sleep (1)
+            #retcode = p.poll ()
+            #if retcode is not None:
+            #    retcode, out, err = p.get_result ()
+            #    self.logger.error ("returncode=%d, error=%s" % (retcode, err))
+            #    continue
+            #else:
+            #    self._sendfile_svr_dict[svr_port + i]  = p
+            #    return svr_port + i 
+        return None
+
+    def stop_sendfile_svr (self, sendfile_port):
+        p = self._sendfile_svr_dict.get (sendfile_port)
+        if p is None:
+            return
+        time.sleep (0.5)
+        retcode = p.poll ()
+        if retcode is None:
+            self.logger.error ("orz, port=%s, pid=%s is not stopped" % (sendfile_port, p.pid))
+            return False
+        #retcode, out, err = p.get_result ()
+        err = "\n".join (p.stderr.readlines ())
+        p.stderr.close ()
+        del self._sendfile_svr_dict[sendfile_port]
+        if retcode == 0:
+            self.logger.info ("port=%s, pid=%s exit normally" % (sendfile_port, p.pid))
+            return True
+        else:
+            self.logger.error ("port=%s, pid=%s, returncode=%d, error=%s" % (sendfile_port, p.pid, retcode, err))
+            return False
+
     def _send_msg (self, conn, msg):
         head = NetHead ()
         head.write_msg (conn.sock, json.dumps (msg))
@@ -230,6 +301,15 @@ class SyncClientBase (object):
         if str(res) != '0':
             raise Exception ("remote error: %s" % (msg))
         return msg
+
+    def sendfile (self, filepath, remote_ip, remote_port):
+        assert filepath and remote_ip and remote_port
+        cmd = "gzip -1 -c %s | ncat --send-only %s %s" % (filepath, remote_ip, remote_port)
+        print cmd
+        p = Command (cmd)
+        p.start ()
+        retcode, out, err = p.wait ()
+        return retcode, err
 
 
     def rsync (self, mount_point, remote_mount_point, speed=None):
