@@ -319,8 +319,8 @@ class SyncClientBase (object):
                 source += "/"
             if dest and dest[-1] != "/":
                 dest += "/"
-        if remote_mount_point:
-            options += ("--delete", )
+            if dest:
+                options += ("--delete", )
         if speed:
             assert isinstance (speed, (int, float))
             options += ("--bwlimit", str(int(speed * 1000)), )
