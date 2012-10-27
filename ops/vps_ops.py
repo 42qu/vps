@@ -615,10 +615,10 @@ class VPSOps (object):
             swap_port, savefile_port = migclient.prepare_hot_immigrate (xv)
             result = dict ()
             try:
-                th1 = threading.Thread (target=self._send_swap, args=(migclient, dest_ip, swap_port, result,))
+                th1 = threading.Thread (target=self._send_swap, args=(migclient, xv, dest_ip, swap_port, result,))
                 th1.setDaemon (1)
                 th1.start ()
-                th2 = threading.Thread (target=self._send_savefile, args=(migclient, dest_ip, savefile_port, result, ))
+                th2 = threading.Thread (target=self._send_savefile, args=(migclient, xv, dest_ip, savefile_port, result, ))
                 th2.setDaemon (1)
                 th2.start ()
                 for disk in xv.data_disks.values ():
@@ -636,7 +636,7 @@ class VPSOps (object):
                     if swap_result and swap_result[0] != 0:
                         print "sending swap: ", swap_result[1]
                     if savefile_result and savefile_result[0] != 0:
-                        print "sending savefile", 
+                        print "sending savefile:", savefile_result[1]
                     migclient.vps_fail_hot_immigrate (xv, swap_port, savefile_port)
             except Exception, e:
                 print "error %s" % (e)
