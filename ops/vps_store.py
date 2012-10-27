@@ -4,10 +4,12 @@ import os
 import ops.vps_common as vps_common
 import shutil
 import datetime
+import time
 import re
 import ops._env
 import conf
 assert conf.MOUNT_POINT_DIR and os.path.isdir (conf.MOUNT_POINT_DIR)
+from lib.command import CommandException
 
 def _parse_date (s):
     if s is None:
@@ -337,14 +339,20 @@ class VPSStoreLV (VPSStoreBase):
         self._set_expire_days (None)
 
     def delete_trash (self):
-        #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
 
     def delete (self):
-        #TODO check whether in use !!!!!!!!!
         if os.path.exists (self.dev):
-            vps_common.lv_delete (self.dev)
+            for i in xrange (5):
+                try:
+                    vps_common.lv_delete (self.dev)
+                    break
+                except CommandException, e:
+                    if e.msg.find ('deactivate open') >=0: # there maybe bug in udev under ubuntu12.04 that prevent LV to be removed
+                        time.sleep (1)
+                        continue        
+                    raise e
 
     def mount_tmp (self, readonly=False):
         return vps_common.mount_partition_tmp (self.dev, readonly=readonly, temp_dir=conf.MOUNT_POINT_DIR)
