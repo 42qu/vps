@@ -15,6 +15,7 @@ assert conf.XEN_CONFIG_DIR
 assert conf.XEN_AUTO_DIR
 assert conf.DEFAULT_FS_TYPE
 assert conf.VPS_METADATA_DIR
+assert conf.MOUNT_POINT_DIR
 
 
 
@@ -46,7 +47,7 @@ class XenVPS (object):
         self.name = "vps%s" % (str(_id).zfill (2)) # to be compatible with current practice standard
         self.config_path = os.path.join (conf.XEN_CONFIG_DIR, self.name)
         self.auto_config_path = os.path.join (conf.XEN_AUTO_DIR, self.name)
-        self.save_path = os.path.join (conf.VPS_METADATA_DIR, "%s.save" % self.name)
+        self.save_path = os.path.join (conf.MOUNT_POINT_DIR, "%s.save" % self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
         self.xen_inf = xen.get_xen_inf ()

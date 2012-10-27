@@ -596,14 +596,22 @@ class VPSOps (object):
         self.loginfo (xv, "removed %s" % (xv.save_path))
         self.loginfo (xv, "done vps hot immigrate")
 
-    def _send_swap (self, migclient, xv, dest_ip, dest_port, result):
+    def _send_swap (self, migclient, xv, result):
         assert isinstance (result, dict)
-        ret, err = migclient.sendfile (xv.swap_store.file_path, dest_ip, dest_port)
-        result["swap"] = (ret, err)
+        ret, err = migclient.rsync (xv.swap_store.file_path, use_zip=True)
+        if ret != 0:
+            result["swap"] = (ret, "[rsync] " + err)
+            return result
+        try:
+            migclient.import_swap (xv)
+            result["swap"] = (0, "")
+        except Exception, e:
+            result["swap"] = (1, "[import_swap] " + str(e))
+        return result
 
-    def _send_savefile (self, migclient, xv, dest_ip, dest_port, result):
+    def _send_savefile (self, migclient, xv, result):
         assert isinstance (result, dict)
-        ret, err = migclient.sendfile (xv.save_path, dest_ip, dest_port)
+        ret, err = migclient.rsync (xv.save_path, use_zip=True)
         result["savefile"] = (ret, err)
 
 
@@ -612,36 +620,30 @@ class VPSOps (object):
         xv = self.load_vps_meta (vps_id)
         xv.save ()
         try:
-            swap_port, savefile_port = migclient.prepare_hot_immigrate (xv)
+            migclient.prepare_immigrate (xv)
             result = dict ()
-            try:
-                th1 = threading.Thread (target=self._send_swap, args=(migclient, xv, dest_ip, swap_port, result,))
-                th1.setDaemon (1)
-                th1.start ()
-                th2 = threading.Thread (target=self._send_savefile, args=(migclient, xv, dest_ip, savefile_port, result, ))
-                th2.setDaemon (1)
-                th2.start ()
-                for disk in xv.data_disks.values ():
-                    migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
-                self.loginfo (xv, "partition synced")
-                th1.join ()
-                th2.join ()
-                swap_result = result.get ("swap")
-                savefile_result = result.get ("savefile")
-                if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
-                    migclient.vps_hot_immigrate (xv, swap_port, savefile_port)
-                    # ok
-                    return
-                else:
-                    if swap_result and swap_result[0] != 0:
-                        print "sending swap: ", swap_result[1]
-                    if savefile_result and savefile_result[0] != 0:
-                        print "sending savefile:", savefile_result[1]
-                    migclient.vps_fail_hot_immigrate (xv, swap_port, savefile_port)
-            except Exception, e:
-                print "error %s" % (e)
-                self.logger.exception (e)
-                migclient.vps_fail_hot_immigrate (xv, swap_port, savefile_port)
+            th1 = threading.Thread (target=self._send_swap, args=(migclient, xv, result,))
+            th1.setDaemon (1)
+            th1.start ()
+            th2 = threading.Thread (target=self._send_savefile, args=(migclient, xv, result,))
+            th2.setDaemon (1)
+            th2.start ()
+            for disk in xv.data_disks.values ():
+                migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
+            self.loginfo (xv, "partition synced")
+            th1.join ()
+            th2.join ()
+            swap_result = result.get ("swap")
+            savefile_result = result.get ("savefile")
+            if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
+                migclient.vps_hot_immigrate (xv)
+                # ok
+                return
+            else:
+                if swap_result and swap_result[0] != 0:
+                    print "sending swap error: ", swap_result[1]
+                if savefile_result and savefile_result[0] != 0:
+                    print "sending savefile error:", savefile_result[1]
         except Exception, e:
             self.logger.exception (e)
             print "error %s" % (e)
