@@ -554,13 +554,15 @@ class VPSOps (object):
         self.loginfo (xv, "done vps creation")
 
 
-    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None):
+    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None, _xv=None):
         xv = self.load_vps_meta (vps_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
+        if _xv:
+            self._update_vif_setting (xv, _xv)
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         if conf.USE_LVM:
             for disk in xv.data_disks.values ():
@@ -601,8 +603,7 @@ class VPSOps (object):
                 self.loginfo (xv, "vps cannot shutdown, destroyed it")
             self.create_xen_config (xv)
 
-    def change_ip (self, _xv):
-        xv = self.load_vps_meta (_xv.vps_id)
+    def _update_vif_setting (self, xv, _xv):
         xv.vifs = dict ()
         xv.gateway = _xv.gateway
         for vif in _xv.vifs.values ():
@@ -610,6 +611,10 @@ class VPSOps (object):
                 xv.add_netinf_ext (vif.ip_dict, vif.mac, vif.bandwidth)
             else:
                 xv.add_netinf_int (vif.ip_dict, vif.mac, vif.bandwidth)
+
+    def change_ip (self, _xv):
+        xv = self.load_vps_meta (_xv.vps_id)
+        self._update_vif_setting (xv, _xv)
         _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
