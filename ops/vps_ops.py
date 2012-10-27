@@ -601,9 +601,10 @@ class VPSOps (object):
         if not xv.swap_store or xv.swap_store.size_g <= 0:
             return
         try:
-            migclient.sendfile (xv.swap_store, remote_path, block_size=5 * 1024 * 1024)
+            migclient.sendfile (xv.swap_store.file_path, remote_path, block_size=5 * 1024 * 1024)
             result["swap"] = (0, "")
         except Exception, e:
+            self.logger.exception (e)
             result["swap"] = (1, str(e))
         return result
 
