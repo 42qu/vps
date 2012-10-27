@@ -312,10 +312,13 @@ class SyncClientBase (object):
         return retcode, err
 
 
-    def rsync (self, source, remote_mount_point=None, speed=None, use_zip=False):
+    def rsync (self, source, dest=None, speed=None, use_zip=False):
         options = ("-avW", "--inplace", )
-        if os.path.isdir (source) and source[-1] != "/":
-            source += "/"
+        if os.path.isdir (source):
+            if source[-1] != "/":
+                source += "/"
+            if dest and dest[-1] != "/":
+                dest += "/"
         if remote_mount_point:
             options += ("--delete", )
         if speed:
@@ -327,7 +330,7 @@ class SyncClientBase (object):
             
         cmd = ("rsync", ) + options + \
                 (source, \
-                "rsync://%s:%s/%s/%s" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, remote_mount_point and remote_mount_point + "/" or "")
+                "rsync://%s:%s/%s/%s" % (self.server_ip, conf.RSYNC_PORT, RSYNC_SERVER_NAME, dest)
                 )
         print cmd
         p = subprocess.Popen (cmd, stderr=subprocess.PIPE, close_fds=True)
