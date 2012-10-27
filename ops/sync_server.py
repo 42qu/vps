@@ -23,7 +23,6 @@ import conf
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
-assert conf.SENDFILE_PORT
 
 
             
@@ -46,8 +45,8 @@ class InteractJob (Job):
         if callable (cb):
             try:
                 self.migsvr.logger.info ("peer %s, cmd %s" % (conn.peer, cmd))
-                cb (conn, cmd, self.msg_data)
-                self.migsvr.engine.watch_conn (conn)
+                if not cb (conn, cmd, self.msg_data):
+                    self.migsvr.engine.watch_conn (conn)
             except Exception, e:
                 self.migsvr.logger.exception ("peer %s, uncaught exception: %s" % (conn.peer, str(e)))
                 self.migsvr.engine.close_conn (conn)
@@ -71,6 +70,7 @@ class SyncServerBase (object):
         self.inf_sock = None
         self.jobqueue = JobQueue (logger)
         self._handlers = dict ()
+        self._handlers["recv_file"] = self._handler_recv_file
         self._sendfile_svr_dict = dict ()
 
     def loop (self):
@@ -184,71 +184,53 @@ use chroot=yes
         self._rsync_popen.wait ()
         self.logger.info ("rsync stopped")
 
-    def start_sendfile_svr (self, destfile):
-        """ return server port """
-        assert destfile
-        svr_port = 0
-        if self._sendfile_svr_dict:
-            try:
-                svr_port = max (self._sendfile_svr_dict.keys ())
-            except Exception, e:
-                print e
-        if svr_port > 0:
-            svr_port += 1
-        else:
-            svr_port = self.sendfile_start_port
-        assert isinstance (svr_port, int)
-        for i in xrange (0, 30):
-            p1 = subprocess.Popen (["ncat", "-l", str(svr_port + i)], stdout=subprocess.PIPE, close_fds=True,
-                    stderr=subprocess.PIPE,)
-            p2 = subprocess.Popen ("gunzip -c >%s" % (destfile), shell=True, stdin=p1.stdout, 
-                     close_fds=True)
-            p1.stdout.close ()
-            p = p1
-            time.sleep (1)
-            retcode = p.poll ()
-            if retcode is not None:
-                err = "\n".join (p1.stderr.readlines ())
-                p.stderr.close ()
-                self.logger.error ("returncode=%d, error=%s" % (retcode, err))
-                continue
-            else:
-                self._sendfile_svr_dict[svr_port + i] = p1
-                return svr_port + i
 
-            #cmd = "ncat -l %d | gunzip -c >%s" % (svr_port + i, destfile)
-            #p = Command (cmd)
-            #p.start ()
-            #time.sleep (1)
-            #retcode = p.poll ()
-            #if retcode is not None:
-            #    retcode, out, err = p.get_result ()
-            #    self.logger.error ("returncode=%d, error=%s" % (retcode, err))
-            #    continue
-            #else:
-            #    self._sendfile_svr_dict[svr_port + i]  = p
-            #    return svr_port + i 
-        return None
-
-    def stop_sendfile_svr (self, sendfile_port):
-        p = self._sendfile_svr_dict.get (sendfile_port)
-        if p is None:
+    def _handler_recv_file (self, conn, cmd, data):
+        size = self._get_req_attr (data, "size")
+        filepath = self._get_req_attr (data, "filepath")
+        try:
+            f = open (filepath, "w")
+            head = NetHead ()
+            data = json.dump ({"res": 0, 'msg': ''})
+            buf = head.pack (len (data)) + data
+            conn.sock.setblocking (False)
+            self.engine.write_unblock (conn, buf, self._recv_file_content, self._recv_file_content_error, cb_args=(f, filepath, size))
+        except Exception, e:
+            self._send_response (conn, 1, str(e))
+            
+    def _recv_file_content (self, conn, f, filepath, size):
+        def __on_recv_content (self, conn, *cb_args): 
+            buf = conn.get_readbuf ()
+            buf = buf.decode ("zlib")
+            f.write (buf)
+            _size = size
+            _size -= len (buf)
+            if _size == 0:
+                f.close ()
+                self.engine.close_conn (conn)
+                self.logger.info ("file %s recv done" % (filepath))
+                return
+            self._recv_file_content (conn, f, filepath, _size)
             return
-        time.sleep (0.5)
-        retcode = p.poll ()
-        if retcode is None:
-            self.logger.error ("orz, port=%s, pid=%s is not stopped" % (sendfile_port, p.pid))
-            return False
-        #retcode, out, err = p.get_result ()
-        err = "\n".join (p.stderr.readlines ())
-        p.stderr.close ()
-        del self._sendfile_svr_dict[sendfile_port]
-        if retcode == 0:
-            self.logger.info ("port=%s, pid=%s exit normally" % (sendfile_port, p.pid))
-            return True
-        else:
-            self.logger.error ("port=%s, pid=%s, returncode=%d, error=%s" % (sendfile_port, p.pid, retcode, err))
-            return False
+
+        def __on_recv_head (conn, *cb_args):
+            head = None
+            try:
+                head = NetHead.unpack (conn.get_readbuf ())
+            except Exception, e:
+                self.logger.error ("from peer %s, %s" % (str(conn.peer), str (e)))
+                self._recv_file_content_error (conn, f, filepath, size)
+                self.engine.close_conn (conn)
+                return
+            self.engine.read_unblock (conn, head.body_len, __on_recv_content, self._recv_file_content_error, cb_args=(f, filepath, size,))
+            return
+        self.engine.read_unblock (conn, NetHead.size, __on_recv_head, self._recv_file_content_error, cb_args=(f, filepath, size,))
+        return
+
+    def _recv_file_content_error (self, conn, f, filepath, size):
+        f.close ()
+        self.logger.error ("file: %s, %s bytes left, recv error: %s" % (filepath, size, str(conn.error)))
+
 
     def _send_msg (self, conn, msg):
         head = NetHead ()
@@ -302,15 +284,29 @@ class SyncClientBase (object):
             raise Exception ("remote error: %s" % (msg))
         return msg
 
-    def sendfile (self, filepath, remote_ip, remote_port):
-        assert filepath and remote_ip and remote_port
-        cmd = "gzip -1 -c %s | ncat --send-only %s %s" % (filepath, remote_ip, remote_port)
-        print cmd
-        p = Command (cmd)
-        p.start ()
-        retcode, out, err = p.wait ()
-        return retcode, err
-
+    def sendfile (self, filepath, remote_path, block_size=1024*1024):
+        assert filepath and remote_path
+        sock = None
+        st = os.stat (filepath)
+        filesize = st.st_size
+        f = open (filepath, "r")
+        head = NetHead ()
+        try:
+            sock = self.connect ()
+            try:
+                self._send_msg (sock, "recv_file", {'size': filesize, 'filepath': remote_path})
+                self._recv_msg (sock)
+                while filesize > 0:
+                    buf = f.read (block_size)
+                    sent_size = len (buf)
+                    buf = buf.encode ("zlib")
+                    head.write_msg (sock, buf)
+                    filesize -= sent_size
+            finally:
+                sock.close ()
+        finally:
+            f.close ()
+        
 
     def rsync (self, source, dest=None, speed=None, use_zip=False):
         options = ("-avW", "--inplace", )

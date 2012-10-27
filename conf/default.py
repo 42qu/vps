@@ -11,7 +11,6 @@ def prepare(o):
     o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
     o.SAAS_PORT = 50042
     o.SAAS_HOST = "0.0.0.0"
-    o.SENDFILE_PORT = 27310
 
     import socket
     HOSTNAME = socket.gethostname()
