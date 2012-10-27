@@ -24,6 +24,7 @@ def migrate_vps (vps_id, dest_ip, speed=None, force=False):
         vpsops = VPSOps (logger)
         xv = None
         if vps_info:
+            xv = XenVPS (vps_info.id)
             client.setup_vps (xv, vps_info)
         migclient = MigrateClient (logger, dest_ip)
         vpsops.migrate_vps (migclient, vps_id, dest_ip, speed=speed, _xv=xv)
