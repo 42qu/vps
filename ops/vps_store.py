@@ -262,7 +262,7 @@ class VPSStoreLV (VPSStoreBase):
         self.lv_name = partition_name
         self.vg_name = conf.VPS_LVM_VGNAME
         self.dev = "/dev/%s/%s" % (self.vg_name, self.lv_name)
-        self.file_path = dev
+        self.file_path = self.dev
         self.trash_dev = "/dev/%s/trash_%s" % (self.vg_name, self.lv_name)
         xen_path = "phy:" + self.dev
         VPSStoreBase.__init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g)
