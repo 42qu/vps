@@ -7,6 +7,7 @@ from lib.log import Log
 import conf
 from ops.migrate import MigrateClient
 from vps_mgr import VPSMgr
+from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 
 
