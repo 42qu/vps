@@ -598,13 +598,17 @@ class VPSOps (object):
 
     def _send_swap (self, migclient, xv, result):
         assert isinstance (result, dict)
-        swap_realpath = vps_common.get_link_target (xv.swap_store.file_path) # for dm link
-        ret, err = migclient.rsync (swap_realpath, os.path.basename (xv.swap_store.file_path), use_zip=True)
+#        swap_realpath = vps_common.get_link_target (xv.swap_store.file_path) # for dm link
+        file_name = os.path.basename (xv.swap_store.file_path)
+        tmp_swap = os.path.join (conf.MOUNT_POINT_DIR, file_name)
+        vps_common.dd_file (xv.swap_store.file_path, tmp_swap)
+        ret, err = migclient.rsync (swap_realpath, tmp_swap, use_zip=True)
         if ret != 0:
             result["swap"] = (ret, "[rsync] " + err)
             return result
         try:
             migclient.import_swap (xv)
+            os.remove (tmp_swap)
             result["swap"] = (0, "")
         except Exception, e:
             result["swap"] = (1, "[import_swap] " + str(e))
