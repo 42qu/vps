@@ -589,6 +589,9 @@ class VPSOps (object):
         xv.check_storage_integrity ()
         self._clear_nonexisting_trash (xv)
         self.create_xen_config (xv)
+        # test
+        out = call_cmd ("md5sum %s" % (xv.swap_store.file_path))
+        self.loginfo (xv, out)
         xv.restore ()
         if not xv.wait_until_reachable (120):
             raise Exception ("the vps started, seems not reachable")
