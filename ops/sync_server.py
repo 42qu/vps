@@ -168,7 +168,7 @@ use chroot=yes
             f.write (rsync_conf)
         finally:
             f.close ()
-        rsync_cmd = ["rsync", "--daemon", "--config=%s" % (conf.RSYNC_CONF_PATH), "--no-detach", "--log-file=%s" % (os.path.join (conf.log_dir, "rsyncd.log"))]
+        rsync_cmd = ["rsync", "--daemon", "--config=%s" % (conf.RSYNC_CONF_PATH), "--no-detach"]
         rsync_cmd.append ("--address=%s" % (self.listen_ip))
         rsync_cmd.append ("--port=%s" % (self.rsync_port))
         #self._rsync_popen = subprocess.Popen (rsync_cmd, stderr=subprocess.PIPE, close_fds=True)
