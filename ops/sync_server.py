@@ -327,6 +327,8 @@ class SyncClientBase (object):
                 dest += "/"
             if dest:
                 options += ("--delete", )
+        if not dest:
+            dest = ""
         if speed:
             assert isinstance (speed, (int, float))
             options += ("--bwlimit", str(int(speed * 1000)), )
