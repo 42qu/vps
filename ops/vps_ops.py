@@ -603,6 +603,7 @@ class VPSOps (object):
         try:
             migclient.sendfile (xv.swap_store.file_path, remote_path, block_size=5 * 1024 * 1024)
             result["swap"] = (0, "")
+            self.logger.info ("sent %s" % (xv.swap_store.file_path))
         except Exception, e:
             self.logger.exception (e)
             result["swap"] = (1, str(e))
@@ -612,6 +613,11 @@ class VPSOps (object):
         assert isinstance (result, dict)
         ret, err = migclient.rsync (xv.save_path, use_zip=True)
         result["savefile"] = (ret, err)
+        if ret == 0:
+            self.logger.info ("sent %s" % (xv.save_path))
+        else:
+            self.logger.error ("sending %s error: %s" % (xv.save_path, err))
+        return result
 
 
     def migrate_vps_hot (self, migclient, vps_id, dest_ip, speed=None):
