@@ -175,10 +175,6 @@ def create_raw_image (path, size_g, sparse=False):
     else:
         call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
 
-def dd_file (in_file, out_file):
-    assert os.path.exists (in_file)
-    call_cmd ("dd if=%s of=%s" % (in_file, out_file))
-
 def format_fs (fs_type, target):
     if fs_type in ['ext4', 'ext3', 'ext2']:
         mkfs_cmd = "mkfs.%s -F" % (fs_type)
