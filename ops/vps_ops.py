@@ -304,7 +304,7 @@ class VPSOps (object):
         elif os.path.exists (trash_meta_path):
             if check_date:
                 st = os.stat (trash_meta_path)
-                if time.time () - st.st_ctime < 3600 * conf.CLOSE_EXPIRE_DAYS:
+                if time.time () - st.st_ctime < 3600 * 24 * conf.CLOSE_EXPIRE_DAYS:
                     raise Exception ("check_date not pass")
             xv = self._load_vps_meta (trash_meta_path)
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
