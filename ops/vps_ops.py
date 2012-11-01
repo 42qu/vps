@@ -310,7 +310,8 @@ class VPSOps (object):
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
         elif _xv:
             if check_date:
-                raise Exception ("check_date not pass, you should manually delete it")
+                self.loginfo (xv, "missing metadata, skip")
+                return
             xv = _xv
         else:
             raise Exception ("missing metadata or backend data")
