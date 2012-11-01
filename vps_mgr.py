@@ -421,7 +421,7 @@ class VPSMgr (object):
             if vps_info:
                 xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps_info)
-            self.vpsops.delete_vps (vps_id, xv)
+            self.vpsops.delete_vps (vps_id, xv, check_date=True)
             self.done_task(Cmd.RM, vps_id, True)
         except Exception, e:
             self.logger.exception (e)
