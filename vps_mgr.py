@@ -429,7 +429,11 @@ class VPSMgr (object):
             raise e
 
     def vps_delete (self, vps_info):
-        self._vps_delete (vps_info.id, vps_info, check_date=True)
+        try:
+            self._vps_delete (vps_info.id, vps_info, check_date=True)
+        except Exception, e:
+            self.done_task (Cmd.RM, vps_info.id, False, "exception %s" % (str(e)))
+
 
     def vps_close (self, vps_info):
         try:

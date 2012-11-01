@@ -49,7 +49,7 @@ def prepare(o):
     o.INF_PORT = 26550
 
     o.DEFAULT_FS_TYPE = 'ext4'
-    o.CLOSE_EXPIRE_DAYS = 15
+    o.CLOSE_EXPIRE_DAYS = 13
 
     o.OS_IMAGE_DICT = {
             2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},

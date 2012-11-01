@@ -298,19 +298,19 @@ class VPSOps (object):
         trash_meta_path = self._meta_path (vps_id, is_trash=True)
         if os.path.exists (meta_path):
             if check_date:
-                raise Exception ("check_date not pass")
+                raise Exception ("check_date not pass, you should manually delete it")
             xv = self._load_vps_meta (meta_path)
             self.loginfo (xv, "loaded %s" % (meta_path))
         elif os.path.exists (trash_meta_path):
             if check_date:
                 st = os.stat (trash_meta_path)
                 if time.time () - st.st_ctime < 3600 * 24 * conf.CLOSE_EXPIRE_DAYS:
-                    raise Exception ("check_date not pass")
+                    raise Exception ("check_date not pass, you should manually delete it")
             xv = self._load_vps_meta (trash_meta_path)
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
         elif _xv:
             if check_date:
-                raise Exception ("check_date not pass")
+                raise Exception ("check_date not pass, you should manually delete it")
             xv = _xv
         else:
             raise Exception ("missing metadata or backend data")
