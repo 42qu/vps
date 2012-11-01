@@ -11,6 +11,7 @@ import unittest
 import threading
 import conf
 import os
+import time
 
 
 class TestSendfile (unittest.TestCase):
@@ -27,10 +28,11 @@ class TestSendfile (unittest.TestCase):
         th.start ()
 
         client = migrate.MigrateClient (logger, "127.0.0.1")
-        call_cmd ("dd if=/proc/interrupts of=/tmp/test")
-        client.sendfile ("/tmp/test", "/tmp/test1")
+#        call_cmd ("dd if=/proc/interrupts of=/tmp/test")
+        #client.sendfile ("/tmp/test", "/tmp/test1")
+        client.sendfile ("/dev/main/vps00_swap", "/tmp/vps00_swap")
+        time.sleep (3)
         migsvr.stop ()
-
 
 if __name__ == '__main__':
     unittest.main ()

@@ -345,6 +345,8 @@ on_crash = "restart"
 
     def save (self):
         if self.is_running():
+            if os.path.isfile (self.save_path):
+                os.remove (self.save_path)
             self.xen_inf.save (self.name, self.save_path)
         if not os.path.isfile (self.save_path):
             raise Exception ("cannot save %s" % (self.name))

@@ -94,6 +94,12 @@ def get_link_target (l):
         return os.path.abspath (l)
     return l
 
+def get_blk_size (dev):
+    out = call_cmd ("blockdev --getsize64 %s" % (dev))
+    out = out.strip ()
+    return int (out)
+
+
 def get_fs_type (dev_path):
     if os.path.islink (dev_path):
         dev_path = get_link_target (dev_path)
@@ -168,10 +174,6 @@ def create_raw_image (path, size_g, sparse=False):
         call_cmd ("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" % (path, size_m - 1))
     else:
         call_cmd ("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
-
-def dd_file (in_file, out_file):
-    assert os.path.exists (in_file)
-    call_cmd ("dd if=%s of=%s" % (in_file, out_file))
 
 def format_fs (fs_type, target):
     if fs_type in ['ext4', 'ext3', 'ext2']:

@@ -11,7 +11,7 @@ from ops.migrate import MigrateClient
 from ops.vps_ops import VPSOps
 
 
-def live_migrate_vps (vps_id, dest_ip, speed=None):
+def live_migrate_vps (vps_id, dest_ip):
     logger = Log ("vps_mgr", config=conf)
     try:
         vpsops = VPSOps (logger)
@@ -27,15 +27,12 @@ def usage ():
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
-                 "help", "speed=", 
+                 "help", 
                  ])
-    speed = None
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
             os._exit (0)
-        if opt == '--speed':
-            speed = float (v)
     
     if len (args) < 2:
         usage ()
@@ -43,7 +40,7 @@ def main ():
     vps_ids = map (lambda x: int(x), args[0:-1])
     dest_ip = args[-1]
     for vps_id in vps_ids:
-        live_migrate_vps (vps_id, dest_ip, speed=speed)
+        live_migrate_vps (vps_id, dest_ip)
 
 
 if "__main__" == __name__:
