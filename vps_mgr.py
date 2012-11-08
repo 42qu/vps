@@ -452,6 +452,7 @@ class VPSMgr (object):
             
     def loop (self):
         while self.running:
+            self.run_loop(Cmd.BANDWIDTH) # because ovs db searching uses signal and can only work in main thread ...
             time.sleep (1)
         self.timer.stop () 
         self.logger.info ("timer stopped")
@@ -473,7 +474,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.BANDWIDTH, Cmd.RM)
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.RM)
         self.timer.start ()
         self.logger.info ("timer started")
 

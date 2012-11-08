@@ -32,6 +32,7 @@ class OVSDB (object):
         return val
 
     def find (self, columns, table, cond=None):
+        """ which only works in main thread, depends on signal """
         schema_file = "%s/vswitch.ovsschema" % ovs.dirs.PKGDATADIR
         schema = ovs.db.schema.DbSchema.from_json(ovs.json.from_file(schema_file))
 
