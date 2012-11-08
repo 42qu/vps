@@ -31,7 +31,7 @@ class VPSMgr (object):
     def __init__ (self):
         self.logger = Log ("vps_mgr", config=conf)
         self.logger_net = Log ("vps_mgr_net", config=conf)
-        self.logger_misc = Log ("misc", config=conf) 
+        self.logger_misc = Log ("misc", config=conf)
         self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
         self.vpsops = VPSOps (self.logger)
@@ -42,6 +42,7 @@ class VPSMgr (object):
             Cmd.OS: self.__class__.vps_reinstall_os,
             Cmd.UPGRADE: self.__class__.vps_upgrade,
             Cmd.BANDWIDTH: self.__class__.vps_set_bandwidth,
+            Cmd.RM: self.__class__.vps_delete,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -217,7 +218,7 @@ class VPSMgr (object):
         ip_dict = dict ()
         for ip in vps_info.ext_ips:
             ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
-            xenvps.add_netinf_ext (ip_dict, mac=ip.mac)
+            xenvps.add_netinf_ext (ip_dict, mac=ip.mac, bandwidth=vps_info.bandwidth)
         if vps_info.harddisks:
             for disk_id, disk_size in vps_info.harddisks.iteritems ():
                 if disk_id != 0:
@@ -415,17 +416,24 @@ class VPSMgr (object):
         except Exception, e:
             self.logger_net.exception (e)
 
-    def _vps_delete (self, vps_id, vps_info=None):
+    def _vps_delete (self, vps_id, vps_info=None, check_date=False):
         try:
             xv = None
             if vps_info:
                 xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps_info)
-            self.vpsops.delete_vps (vps_id, xv)
+            self.vpsops.delete_vps (vps_id, xv, check_date=check_date)
             self.done_task(Cmd.RM, vps_id, True)
         except Exception, e:
             self.logger.exception (e)
             raise e
+
+    def vps_delete (self, vps_info):
+        try:
+            self._vps_delete (vps_info.id, vps_info, check_date=True)
+        except Exception, e:
+            self.done_task (Cmd.RM, vps_info.id, False, "exception %s" % (str(e)))
+
 
     def vps_close (self, vps_info):
         try:
@@ -465,7 +473,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.BANDWIDTH)
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.BANDWIDTH, Cmd.RM)
         self.timer.start ()
         self.logger.info ("timer started")
 

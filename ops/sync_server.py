@@ -4,7 +4,6 @@ import os
 import socket
 import subprocess
 from lib.command import Command, search_path
-assert search_path ("ncat")
 
 import time
 import signal
