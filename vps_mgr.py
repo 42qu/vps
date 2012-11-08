@@ -41,6 +41,7 @@ class VPSMgr (object):
             Cmd.CLOSE: self.__class__.vps_close,
             Cmd.OS: self.__class__.vps_reinstall_os,
             Cmd.UPGRADE: self.__class__.vps_upgrade,
+            Cmd.BANDWIDTH: self.__class__.vps_set_bandwidth,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -343,7 +344,6 @@ class VPSMgr (object):
             self.done_task(Cmd.UPGRADE, vps_info.id, False, "exception %s" % str(e))
             return False
 
-
     def vps_reboot (self, vps_info):
         xv = XenVPS (vps_info.id) 
         self.logger.info ("to reboot vps %s" % (vps_info.id))
@@ -357,12 +357,12 @@ class VPSMgr (object):
         self.done_task (Cmd.REBOOT, vps_info.id, True)
         return True
 
-    def modify_vif_rate (self, vps_info):
+    def vps_set_bandwidth (self, vps_info):
         xv = XenVPS (vps_info.id)
-        self.logger.info ("to modify vif rate for vps %s" % (vps_info.id))
+        self.logger.info ("to modify bandwidth for vps %s" % (vps_info.id))
         try:
             self.setup_vps (xv, vps_info)
-            self.vpsops.create_xen_config (vps_info)
+            self.vpsops.change_qos (xv)
         except Exception, e:
             self.logger.exception (e)
             self.done_task (Cmd.BANDWIDTH, vps_info.id, False, "exception %s" % (str(e)))
@@ -465,7 +465,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT)
+        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.BANDWIDTH)
         self.timer.start ()
         self.logger.info ("timer started")
 

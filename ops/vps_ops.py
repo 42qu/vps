@@ -545,11 +545,11 @@ class VPSOps (object):
             ovsops.set_traffic_limit (xv.vif_ext.ifname, bandwidth)
             self.save_vps_meta (xv)
         else:
-            if xv.stop ():
-                self.loginfo (xv, "vps stopped")
-            else:
-                xv.destroy ()
-                self.loginfo (xv, "vps cannot shutdown, destroyed it")
+#            if xv.stop ():
+#                self.loginfo (xv, "vps stopped")
+#            else:
+#                xv.destroy ()
+#                self.loginfo (xv, "vps cannot shutdown, destroyed it")
             self.create_xen_config (xv)
 
     def _update_vif_setting (self, xv, _xv):
