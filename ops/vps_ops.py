@@ -547,12 +547,15 @@ class VPSOps (object):
             return
         xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
         bandwidth = _xv.vif_ext.bandwidth
-
+        vif_name = xv.vif_ext.ifname
+        self.save_vps_meta (xv)
         if conf.USE_OVS:
-            ovsops = OVSOps ()
-            ovsops.unset_traffic_limit (xv.vif_ext.ifname)
-            ovsops.set_traffic_limit (xv.vif_ext.ifname, bandwidth)
-            self.save_vps_meta (xv)
+            if xv.is_running ():
+                ovsops = OVSOps ()
+                ovsops.unset_traffic_limit (vif_name)
+                ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
+                if not xv.wait_until_reachable (5):
+                    raise Exception ("ip unreachable!")
         else:
 #            if xv.stop ():
 #                self.loginfo (xv, "vps stopped")
