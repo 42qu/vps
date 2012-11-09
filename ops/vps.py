@@ -272,7 +272,7 @@ memory = "$mem"
 vif = [ $vifs ]
 disk = [ $disks ]
 root = "/dev/xvda1"
-extra = "fastboot independent_wallclock=1"
+extra = "fastboot $extra_boot_param"
 on_shutdown = "destroy"
 on_poweroff = "destroy"
 on_reboot = "restart"
@@ -303,9 +303,12 @@ on_crash = "restart"
             else:
                 vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, 
                     rate=",rate=%dMb/s" % vif.bandwidth) )
-
+        if self.os_id != 1:  # centos 5.8
+            extra_boot_param = " independent_wallclock=1 "
+        else:
+            extra_boot_param = ""
         xen_config = all_t.substitute (name=self.name, vcpu=str(self.vcpu), mem=str(self.mem_m), 
-                    disks=",".join (disks), vifs=",".join (vifs)
+                    disks=",".join (disks), vifs=",".join (vifs), extra_boot_param=extra_boot_param,
                 )
         return xen_config
        
