@@ -548,19 +548,10 @@ class VPSOps (object):
         xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
         bandwidth = _xv.vif_ext.bandwidth
         vif_name = xv.vif_ext.ifname
-        bridge = xv.vif_ext.bridge
         self.save_vps_meta (xv)
         if conf.USE_OVS:
             if xv.is_running ():
                 ovsops = OVSOps ()
-                ofport = ovsops.find_ofport_by_name (vif_name)
-                if ofport < 0:
-                    self.logger.error ("vif %s ofport=%s, fix it by delete the port from bridge " % (vif_name, ofport))
-                    ovsops.del_port_from_bridge (bridge, vif_name)
-                    ovsops.add_port_to_bridge (bridge, vif_name)
-                    ofport = ovsops.find_ofport_by_name (vif_name)
-                    if ofport < 0:
-                        raise Exception ("vif %s ofport=%s, impossible " % (vif_name, ofport))
                 ovsops.unset_traffic_limit (vif_name)
                 ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
                 if not xv.wait_until_reachable (5):
