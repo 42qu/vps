@@ -566,11 +566,11 @@ class VPSOps (object):
                 if not xv.wait_until_reachable (5):
                     raise Exception ("ip unreachable!")
         else:
-            if xv.stop ():
-                self.loginfo (xv, "vps stopped")
-            else:
-                xv.destroy ()
-                self.loginfo (xv, "vps cannot shutdown, destroyed it")
+#            if xv.stop ():
+#                self.loginfo (xv, "vps stopped")
+#            else:
+#                xv.destroy ()
+#                self.loginfo (xv, "vps cannot shutdown, destroyed it")
             self.create_xen_config (xv)
 
     def _update_vif_setting (self, xv, _xv):
