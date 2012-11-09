@@ -8,6 +8,11 @@ from ops.vps import XenVPS
 import string
 import time
 import crypt
+import shutil
+import conf
+TIMEZONE = None
+if 'TIME_ZONE' in dir(conf):
+    TIME_ZONE = conf.TIME_ZONE
 
 def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True, to_init_fstab=True):
     assert isinstance (xv, XenVPS)
@@ -22,6 +27,7 @@ def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True, to_in
         arch_init (xv, vps_mountpoint)
     else:
         raise NotImplementedError ()
+    set_timezone (vps_mountpoint)
     if to_init_passwd:
         set_root_passwd_2 (xv, vps_mountpoint)
     if to_init_fstab:
@@ -137,6 +143,12 @@ proc                    /proc                   proc    defaults        0 0
     finally:
         f.close ()
 
+def set_timezone (vps_mountpoint):
+    if TIME_ZONE:
+        localtime_path = os.path.join (vps_mountpoint, "etc/localtime")
+        zone_info_path = os.path.join (vps_mountpoint, "usr/share/zoneinfo/", TIME_ZONE)
+    shutil.copy (zone_info_path, localtime_path)
+
 def set_root_passwd (xv, vps_mountpoint):
     if not xv.root_pw:
         print "orz, root passwd is empty, skip"
@@ -216,7 +228,7 @@ config_eth$NUMBER="$IPS"
         if not os.path.islink (runlevel_net_eth_path):
             os.symlink ("/etc/init.d/net.eth%d" % (i), runlevel_net_eth_path)
         vm_net_config += vm_net_eth
-        if i ==0 and xv.gateway: 
+        if i == 0 and xv.gateway: 
             vm_route = string.Template ("""routes_eth0="default via $GATEWAY"
     """).substitute (GATEWAY=xv.gateway)
             vm_net_config += vm_route
