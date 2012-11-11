@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 
 import _env
-from saas.ttypes import Cmd, Vps
-import saas.VPS
+from _saas.ttypes import Cmd, Vps
+import _saas.VPS
 from zkit.ip import ip2int, int2ip
 import zthrift.server 
 from zthrift.client import get_client

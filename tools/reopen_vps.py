@@ -5,7 +5,7 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import conf
-from saas.ttypes import Cmd
+from _saas.ttypes import Cmd
 from ops.vps import XenVPS
 
 import getopt
