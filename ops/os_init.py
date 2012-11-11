@@ -11,11 +11,16 @@ import crypt
 import shutil
 import conf
 TIMEZONE = None
+
+DNS_SERVERS = None
 if 'TIME_ZONE' in dir(conf):
     TIME_ZONE = conf.TIME_ZONE
+if 'DNS_SERVERS' in dir(conf):
+    DNS_SERVERS = conf.DNS_SERVERS
 
-def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True, to_init_fstab=True):
+def os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=False, to_init_fstab=False):
     assert isinstance (xv, XenVPS)
+    assert vps_mountpoint and os.path.exists (vps_mountpoint)
     
     if os_type.find ('gentoo') == 0:
         gentoo_init (xv, vps_mountpoint)
@@ -28,10 +33,26 @@ def os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True, to_in
     else:
         raise NotImplementedError ()
     set_timezone (vps_mountpoint)
-    if to_init_passwd:
+    if is_new or to_init_passwd:
         set_root_passwd_2 (xv, vps_mountpoint)
-    if to_init_fstab:
+    if is_new or to_init_fstab:
         gen_fstab (xv, vps_mountpoint)
+    if is_new:
+        clean_up (vps_mountpoint)
+
+def clean_up (vps_mountpoint):
+    files = [
+            "root/.bash_history",
+            "root/.ssh/known_hosts",
+            "var/log/syslog",
+            "var/log/messages",
+            "var/log/audit.log",
+            ]
+    for file_path in files:
+        a_path = os.path.join (vps_mountpoint, file_path)
+        if os.path.isfile (a_path):
+            print "remove %s" % (a_path)
+            os.remove (a_path)
 
 def migrate_users (xv, vps_mountpoint, vps_mountpoint_old):
     passwd_path_old = os.path.join (vps_mountpoint_old, "etc", "passwd")
@@ -143,6 +164,21 @@ proc                    /proc                   proc    defaults        0 0
     finally:
         f.close ()
 
+def gen_resolv (vps_mountpoint):
+    if DNS_SERVERS:
+        resolv_path = os.path.join (vps_mountpoint, "etc/resolv.conf")
+        if not os.path.isfile (resolv_path):
+            return False
+        resolv_content = "".join (
+                map (lambda s: "nameserver %s\n" % (s), DNS_SERVERS) 
+                )
+        f = open (resolv_path, "w")
+        try:
+            f.write (resolv_content)
+        finally:
+            f.close ()
+        return True
+
 def set_timezone (vps_mountpoint):
     if TIME_ZONE:
         localtime_path = os.path.join (vps_mountpoint, "etc/localtime")
@@ -207,7 +243,7 @@ def gentoo_init (xv, vps_mountpoint):
         f.write ('hostname="%s"\n' % (xv.name))
     finally:
         f.close ()
-
+    gen_resolv (vps_mountpoint)
     vm_net_config = ""
     vif_keys = xv.vifs.keys ()
     vif_keys.sort ()
@@ -249,7 +285,9 @@ iface $ETH inet static
     netmask $NETMASK
 """).substitute (ETH=eth_name, ADDRESS=ips[0][0], NETMASK=ips[0][1])
     if gateway_ip:
-        eth_conf += "gateway %s\n" % (gateway_ip)
+        eth_conf += "\tgateway %s\n" % (gateway_ip)
+    if DNS_SERVERS:
+        eth_conf += "\tdns-nameservers %s" % (" ".join (DNS_SERVERS))
 
     if len (ips) > 1:
         for i in xrange (1, len (ips)):
@@ -269,6 +307,7 @@ def debian_init (xv, vps_mountpoint):
         f.write ('%s\n' % (xv.name))
     finally:
         f.close ()
+    gen_resolv (vps_mountpoint)
 
     vm_net_config = """
 auto lo
@@ -325,6 +364,9 @@ NETMASK=$NETMASK
 
 
 def redhat_init (xv, vps_mountpoint):
+
+    gen_resolv (vps_mountpoint)
+
     network = """
 NETWORKING=yes
 HOSTNAME=%s
@@ -345,6 +387,9 @@ HOSTNAME=%s
    
 
 def arch_init (xv, vps_mountpoint):
+
+    gen_resolv (vps_mountpoint)
+
     rcconf = string.Template ("""
 LOCALE="en_US.utf8"
 HARDWARECLOCK="UTC"

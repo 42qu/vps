@@ -172,7 +172,7 @@ class VPSOps (object):
             self.loginfo (xv, "synced vps os to %s" % (str(xv.root_store)))
             
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=is_new)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=is_new)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -310,7 +310,7 @@ class VPSOps (object):
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
         elif _xv:
             if check_date:
-                self.loginfo (xv, "missing metadata, skip")
+                self.loginfo (_xv, "missing metadata, skip")
                 return
             xv = _xv
         else:
@@ -378,41 +378,45 @@ class VPSOps (object):
                 new_disk.create (fs_type)
             else:
                 assert new_disk.size_g
-                if old_disk and old_disk.get_size () != new_disk.size_g:
-                    old_disk, new_disk = xv_new.renew_storage (xen_dev)
-                    vps_mountpoint_bak = old_disk.mount_trash_temp ()
-                    self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
-                    try:
-                        fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
-                        new_disk.create (fs_type)
-                        self.loginfo (xv_new, "create new %s" % (str(new_disk)))
-                        vps_mountpoint = new_disk.mount_tmp ()
-                        self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
-                        try:
-                            call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
-                            self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
-                        finally:
-                            vps_common.umount_tmp (vps_mountpoint)
-                    finally:
-                        vps_common.umount_tmp (vps_mountpoint_bak)
-#                else: 
-#                    # we have to know fs_type for fstab generation
-#                    vps_mountpoint = new_disk.mount_tmp ()
-#                    try:
-#                        fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint)
-#                        new_disk.fs_type = fs_type
-#                    finally:
-#                        vps_common.umount_tmp (vps_mountpoint)
+                if old_disk:
+                    old_size = old_disk.get_size ()
+                    new_size = new_disk.size_g
+                    if old_size == new_size:
+                        pass
+                    elif old_size <= new_size:
+                        if new_disk.can_resize ():
+                            new_disk.resize (new_disk.size_g)
+                            self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
+                        else:
+                            old_disk, new_disk = xv_new.renew_storage (xen_dev)
+                            vps_mountpoint_bak = old_disk.mount_trash_temp ()
+                            self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
+                            try:
+                                fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
+                                new_disk.create (fs_type)
+                                self.loginfo (xv_new, "create new %s" % (str(new_disk)))
+                                vps_mountpoint = new_disk.mount_tmp ()
+                                self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
+                                try:
+                                    call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
+                                    self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
+                                finally:
+                                    vps_common.umount_tmp (vps_mountpoint)
+                            finally:
+                                vps_common.umount_tmp (vps_mountpoint_bak)
+                    else:
+                        raise Exception ("cannot shrink %s to %s" % (str(new_disk), new_size))
 
         for xen_dev, old_disk in xv_old.data_disks.iteritems ():
             if not xv_new.data_disks.has_key (xen_dev):
                 xv_new.data_disks[xen_dev] = old_disk
                 xv_new.dump_storage_to_trash (old_disk)
+                self.logger.info (xv_new, "%s dump to trash" % (str(old_disk)))
         self.create_xen_config (xv_new)
         self.loginfo (xv_new, "begin to init os")
         vps_mountpoint = xv_new.root_store.mount_tmp ()
         try:
-            os_init.os_init (xv_new, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+            os_init.os_init (xv_new, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True)
             self.loginfo (xv_new, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -495,9 +499,9 @@ class VPSOps (object):
                 self.loginfo (xv, "begin to init os")
                 if _xv:
                     xv.root_pw = _xv.root_pw
-                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=True)
+                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True)
                 else: # if no user data provided from backend
-                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False)
+                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True, to_init_passwd=False)
                     os_init.migrate_users (xv, vps_mountpoint, vps_mountpoint_bak)
                 self.loginfo (xv, "done init os")
             finally:
@@ -587,7 +591,7 @@ class VPSOps (object):
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -693,7 +697,7 @@ class VPSOps (object):
         try:
             _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, to_init_passwd=False, to_init_fstab=False)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)

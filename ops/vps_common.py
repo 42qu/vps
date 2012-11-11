@@ -41,6 +41,28 @@ def call_cmd_via_ssh (ip, user, password, cmd):
     finally:
         client.close ()
 
+def _lv_resize (dev, new_size_g):
+    assert isinstance (new_size_g, int)
+    call_cmd ("lvresize --size %dG %s" % (new_size_g, dev))
+
+def lv_resizefs (dev, new_size_g):
+    fs_type = get_fs_type (dev)
+    if fs_type in ['ext2', 'ext3', 'ext4']:
+        _lv_resize (dev, new_size_g)
+        call_cmd ("resize2fs -f %s" % (dev))
+    elif fs_type == 'reiserfs':
+        _lv_resize (dev, new_size_g)
+        call_cmd ("resize_reiserfs -f %s" % (dev))
+    elif fs_type == 'xfs':
+        _lv_resize (dev, new_size_g)
+        mp = mount_partition_tmp (dev)
+        try:
+            call_cmd ("xfs_growfs %s" % (dev))
+        finally:
+            umount_tmp (mp)
+    else:
+        raise Exception ("unsupported fs_type=%s on %s" % (fs_type, dev))
+        
 
 def gen_password (length=10):
     return "".join ([ random.choice(string.hexdigits) for i in xrange (0, length) ])

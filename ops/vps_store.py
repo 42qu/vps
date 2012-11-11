@@ -43,6 +43,12 @@ class VPSStoreBase (object):
         self.xen_path = xen_path
         self.mount_point = mount_point
 
+    def can_resize (self):
+        raise NotImplementedError ()
+
+    def resize (self, new_size_g):
+        raise NotImplementedError ()
+
     def get_fs_type (self):
         raise NotImplementedError ()
 
@@ -157,6 +163,8 @@ class VPSStoreImage (VPSStoreBase):
         xen_path = "file:" + self.file_path
         VPSStoreBase.__init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g)
 
+    def can_resize (self):
+        return False
 
 
     def to_meta (self):
@@ -299,6 +307,15 @@ class VPSStoreLV (VPSStoreBase):
 
     def trash_exists (self):
         return os.path.exists (self.trash_dev)
+
+    def can_resize (self):
+        fs_type = self.get_fs_type ()
+        if fs_type in ['ext2', 'ext3', 'ext4', 'reiserfs', 'xfs']:
+            return True
+        return False
+
+    def resize (self, new_size_g):
+        vps_common.lv_resizefs (self.dev, new_size_g)
 
     def get_fs_type (self):
         if self.exists ():
