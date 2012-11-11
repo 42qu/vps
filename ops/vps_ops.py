@@ -376,6 +376,7 @@ class VPSOps (object):
             old_disk = xv_old.data_disks.get (xen_dev)
             if not new_disk.exists ():
                 new_disk.create (fs_type)
+                self.loginfo (xv_new, "create %s" % (str(new_disk)))
             else:
                 assert new_disk.size_g
                 if old_disk:
