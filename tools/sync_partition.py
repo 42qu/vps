@@ -9,7 +9,7 @@ from lib.log import Log
 import conf
 from ops.migrate import MigrateClient
 
-def hotsync_partition (dev, dest_ip, speed=None):
+def sync_partition (dev, dest_ip, speed=None):
     logger = Log ("vps_mgr", config=conf)
     try:
         client = MigrateClient (logger, dest_ip)
@@ -40,7 +40,7 @@ def main ():
     dev = args[0]
     dest_ip = args[1]
     if os.path.exists(dev):
-        hotsync_partition (dev, dest_ip, speed)
+        sync_partition (dev, dest_ip, speed)
     else:
         print >> sys.stderr, "%s is not a partition or file" % (dev)
         os._exit (1)
