@@ -18,22 +18,23 @@ if 'TIME_ZONE' in dir(conf):
 if 'DNS_SERVERS' in dir(conf):
     DNS_SERVERS = conf.DNS_SERVERS
 
-def os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=False, to_init_fstab=False):
+def os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True, to_init_fstab=False):
     assert isinstance (xv, XenVPS)
     assert vps_mountpoint and os.path.exists (vps_mountpoint)
     
     if os_type.find ('gentoo') == 0:
-        gentoo_init (xv, vps_mountpoint)
+        gentoo_init (xv, vps_mountpoint, is_new=is_new)
     elif re.match (r'^(redhat|rhel|centos).*', os_type):
-        redhat_init (xv, vps_mountpoint)
+        redhat_init (xv, vps_mountpoint, is_new=is_new)
     elif re.match (r'^(debian|ubuntu).*$', os_type):
-        debian_init (xv, vps_mountpoint)
+        debian_init (xv, vps_mountpoint, is_new=is_new)
     elif os_type.find ('arch') == 0:
-        arch_init (xv, vps_mountpoint)
+        arch_init (xv, vps_mountpoint, is_new=is_new)
     else:
         raise NotImplementedError ()
-    set_timezone (vps_mountpoint)
-    if is_new or to_init_passwd:
+    if is_new and to_init_passwd:
+        set_timezone (vps_mountpoint)
+    if to_init_passwd:
         set_root_passwd_2 (xv, vps_mountpoint)
     if is_new or to_init_fstab:
         gen_fstab (xv, vps_mountpoint)
@@ -236,13 +237,14 @@ def set_root_passwd_2 (xv, vps_mountpoint):
         f.close ()
     os.chmod (shadow_path, old_mode)
 
-def gentoo_init (xv, vps_mountpoint):
+def gentoo_init (xv, vps_mountpoint, is_new=True):
 
-    f = open (os.path.join (vps_mountpoint, "etc/conf.d/hostname"), "w+")
-    try:
-        f.write ('hostname="%s"\n' % (xv.name))
-    finally:
-        f.close ()
+    if is_new:
+        f = open (os.path.join (vps_mountpoint, "etc/conf.d/hostname"), "w+")
+        try:
+            f.write ('hostname="%s"\n' % (xv.name))
+        finally:
+            f.close ()
     gen_resolv (vps_mountpoint)
     vm_net_config = ""
     vif_keys = xv.vifs.keys ()
@@ -301,12 +303,13 @@ iface $ETH:$NUMBER inet static
 
 
 
-def debian_init (xv, vps_mountpoint):
-    f = open (os.path.join (vps_mountpoint, "etc/hostname"), "w+")
-    try:
-        f.write ('%s\n' % (xv.name))
-    finally:
-        f.close ()
+def debian_init (xv, vps_mountpoint, is_new=True):
+    if is_new:
+        f = open (os.path.join (vps_mountpoint, "etc/hostname"), "w+")
+        try:
+            f.write ('%s\n' % (xv.name))
+        finally:
+            f.close ()
     gen_resolv (vps_mountpoint)
 
     vm_net_config = """
@@ -363,19 +366,19 @@ NETMASK=$NETMASK
      
 
 
-def redhat_init (xv, vps_mountpoint):
+def redhat_init (xv, vps_mountpoint, is_new=True):
+    if is_new:
+        network = """
+    NETWORKING=yes
+    HOSTNAME=%s
+    """ % (xv.name)
+        f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network"), "w+")
+        try:
+            f.write (network)
+        finally:
+            f.close ()
 
     gen_resolv (vps_mountpoint)
-
-    network = """
-NETWORKING=yes
-HOSTNAME=%s
-""" % (xv.name)
-    f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network"), "w+")
-    try:
-        f.write (network)
-    finally:
-        f.close ()
 
     vif_keys = xv.vifs.keys ()
     vif_keys.sort ()
@@ -386,7 +389,7 @@ HOSTNAME=%s
 
    
 
-def arch_init (xv, vps_mountpoint):
+def arch_init (xv, vps_mountpoint, is_new=True):
 
     gen_resolv (vps_mountpoint)
 

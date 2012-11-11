@@ -172,7 +172,7 @@ class VPSOps (object):
             self.loginfo (xv, "synced vps os to %s" % (str(xv.root_store)))
             
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=is_new)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=is_new, to_init_passwd=is_new, to_init_fstab=True)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -417,7 +417,7 @@ class VPSOps (object):
         self.loginfo (xv_new, "begin to init os")
         vps_mountpoint = xv_new.root_store.mount_tmp ()
         try:
-            os_init.os_init (xv_new, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True)
+            os_init.os_init (xv_new, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=True)
             self.loginfo (xv_new, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -500,9 +500,9 @@ class VPSOps (object):
                 self.loginfo (xv, "begin to init os")
                 if _xv:
                     xv.root_pw = _xv.root_pw
-                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True)
+                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True, to_init_fstab=True)
                 else: # if no user data provided from backend
-                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True, to_init_passwd=False)
+                    os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=False, to_init_fstab=True,)
                     os_init.migrate_users (xv, vps_mountpoint, vps_mountpoint_bak)
                 self.loginfo (xv, "done init os")
             finally:
@@ -592,7 +592,7 @@ class VPSOps (object):
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=False)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
@@ -698,7 +698,7 @@ class VPSOps (object):
         try:
             _vps_image, os_type, os_version = os_image.find_os_image (xv.os_id)
             self.loginfo (xv, "begin to init os")
-            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_fstab=True)
+            os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=True)
             self.loginfo (xv, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
