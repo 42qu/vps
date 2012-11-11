@@ -437,10 +437,12 @@ class VPSMgr (object):
 
     def vps_close (self, vps_info):
         try:
-            assert vps_info.state == vps_const.VM_STATE.CLOSE
-            xv = XenVPS (vps_info.id)
-            self.setup_vps (xv, vps_info)
-            self.vpsops.close_vps (vps_info.id, xv)
+            if vps_info.state == vps_const.VM_STATE.CLOSE or vps_info.host_id != self.host_id:
+                xv = XenVPS (vps_info.id)
+                self.setup_vps (xv, vps_info)
+                self.vpsops.close_vps (vps_info.id, xv)
+            else:
+                raise Exception ("state check not passed")
         except Exception, e:
             self.logger.exception (e)
             self.done_task (Cmd.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
