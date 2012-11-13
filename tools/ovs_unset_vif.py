@@ -26,13 +26,14 @@ def main ():
         ofport = ovsops.find_ofport_by_name (vif_name)
         if ofport < 0:
             client.logger.error ("vif %s ofport=%s, which is impossible , you can fix it by delete the port from bridge" % (vif_name, ofport))
-            return 1
+            ovsops.del_port_from_bridge (bridge, vif_name)
+            return 0
         ovsops.unset_mac_filter (bridge, ofport)
         return 0
     except Exception, e:
         client.logger.exception (e)
         print >> sys.stderr, str(e)
-        return 1
+        return 0
  
 if __name__ == '__main__':
     if len (sys.argv) <= 1:

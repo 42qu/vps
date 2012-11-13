@@ -107,6 +107,7 @@ class OVSOps (object):
         return self.ovsdb.find_one ('ofport', "Interface", {'name': if_name})
 
     def set_mac_filter (self, bridge, ofport, ips):
+        call_cmd ("ovs-ofctl del-flows %s in_port=%s" % (bridge, ofport))
         if isinstance (ips, basestring):
             ips = [ips]
         for ip in ips:
