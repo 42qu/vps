@@ -6,23 +6,31 @@ import _env
 from vps_mgr import VPSMgr
 import getopt
 from ops.vps_ops import VPSOps
+from zkit.ip import int2ip 
 
 def usage ():
     print "usage: %s vps_id int_ip netmask" % (sys.argv[0])
     return
 
-def add_vif_int (vps_id, ip, netmask):
-    print "adding vps_id=", vps_id, "ip=", ip, "netmask=", netmask
-    vpsmgr = VPSMgr ()
-    vpsops = VPSOps (vpsmgr.logger)
+def add_vif_int (vps_id):
+    client = VPSMgr ()
+    vps_info = None
     try:
-        vpsops.set_vif_int (vps_id, ip, netmask)
+        vps_info = client.query_vps (vps_id)
     except Exception, e:
-        vpsmgr.logger.exception (e)
+        print "failed to query vps state: [%s] %s" % (type(e), str(e))
+        os._exit (1)
+    if not vps_info.int_ip or not vps_info.int_ip.ipv4:
+        print "not internal ip for %s" % (vps_id)
+    vpsops = VPSOps (client.logger)
+    try:
+        vpsops.set_vif_int (vps_id, int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
+    except Exception, e:
+        client.logger.exception (e)
         raise e
     
 if __name__ == '__main__':
-    if len (sys.argv) < 4:
+    if len (sys.argv) < 2:
         usage ()
         os._exit (0)
 
@@ -30,14 +38,12 @@ if __name__ == '__main__':
                  "help", 
                  ])
     vps_id = int(args[0])
-    ip = args[1]
-    netmask = args[2]
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
             os._exit (0)
 
-    add_vif_int (vps_id, ip, netmask)
+    add_vif_int (vps_id)
 
 
 
