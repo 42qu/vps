@@ -433,6 +433,7 @@ class VPSOps (object):
                 xv.os_id = os_id
             elif _xv: 
                 xv.os_id = _xv.os_id
+                self._update_vif_setting (xv, _xv)
             else:
                 raise Exception ("missing os_id")
         elif _xv:
@@ -469,12 +470,6 @@ class VPSOps (object):
                 continue
             if disk.exists ():
                 pass
-                #vps_mountpoint = disk.mount_tmp ()
-                #try:
-                #    fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint)
-                #    disk.fs_type = fs_type
-                #finally:
-                #    vps_common.umount_tmp (vps_mountpoint)
             else:
                 disk.create (fs_type)
 

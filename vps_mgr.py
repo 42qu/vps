@@ -219,6 +219,10 @@ class VPSMgr (object):
         for ip in vps_info.ext_ips:
             ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
             xenvps.add_netinf_ext (ip_dict, mac=ip.mac, bandwidth=vps_info.bandwidth)
+        ip_inner_dict = dict ()
+        if vps_info.int_ip and vps_info.int_ip.ipv4:
+            ip_inner_dict[int2ip (vps_info.int_ip.ipv4)] = int2ip (vps_info.int_ip.ipv4_netmask)
+            xenvps.add_netinf_int (ip_inner_dict)
         if vps_info.harddisks:
             for disk_id, disk_size in vps_info.harddisks.iteritems ():
                 if disk_id != 0:
