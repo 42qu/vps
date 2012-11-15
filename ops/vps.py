@@ -279,7 +279,7 @@ on_reboot = "restart"
 on_crash = "restart"
 """ )
 
-        vif_t = Template ("""  "vifname=$ifname,mac=$mac,ip=$ip,bridge=$bridge"$rate  """)
+        vif_t = Template ("""  "vifname=$ifname,mac=$mac,ip=$ip,bridge=$bridge$rate"  """)
         disk_t = Template (""" "$path,$dev,$mod" """)
         disks = []
         vifs = []
