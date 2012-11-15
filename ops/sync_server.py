@@ -156,6 +156,7 @@ class SyncServerBase (object):
 uid=root
 gid=root
 use chroot=yes
+og file=/dev/null
 [%s]
     path=%s
     read only=no
