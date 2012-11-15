@@ -172,7 +172,10 @@ class MigrateClient (SyncClientBase):
 
 
     def snapshot_sync (self, dev, speed=None):
-        snapshot_dev = vps_common.lv_snapshot (dev, "sync_%s" % (os.path.basename(dev)) , conf.VPS_LVM_VGNAME)
+        snapshot_name = "sync_%s" % (os.path.basename(dev))
+        snapshot_dev = "/dev/%s/%s" % (conf.VPS_LVM_VGNAME, snapshot_name)
+        if not os.path.exists (snapshot_dev):
+            vps_common.lv_snapshot (dev, snapshot_name, conf.VPS_LVM_VGNAME)
         self.logger.info ("made snapshot %s for %s" % (snapshot_dev, dev))
         try:
             self.sync_partition (snapshot_dev, partition_name=os.path.basename(dev), speed=speed)
@@ -254,10 +257,9 @@ class MigrateClient (SyncClientBase):
             print "remote umounted %s" % (partition_name)
             self.logger.info ("remote(%s) umounted" % (remote_mount_point))
         finally:
+            vps_common.umount_tmp (mount_point) # probably not work when keyboard cancel
             if sock:
                 sock.close ()
-            vps_common.umount_tmp (mount_point)
-            time.sleep (1)
             
     def create_vps (self, xv):
         meta = xv.to_meta ()

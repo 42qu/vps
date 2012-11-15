@@ -383,7 +383,7 @@ class VPSStoreLV (VPSStoreBase):
 
     def snapshot (self):
         snapshot_name = "snap_%s" % self.lv_name
-        snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name) 
+        snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name)
         return snapshot_dev
 
 ##############

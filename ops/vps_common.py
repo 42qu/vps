@@ -186,7 +186,7 @@ def get_mountpoint (dev):
 
 def umount_tmp (tmp_mount):
     """ umount loop file and delete temporary mount point """
-    call_cmd ("umount %s" % (tmp_mount))
+    call_cmd ("umount -f %s" % (tmp_mount))
     os.rmdir (tmp_mount)
 
 def create_raw_image (path, size_g, sparse=False):
