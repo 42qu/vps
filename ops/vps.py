@@ -342,7 +342,7 @@ on_crash = "restart"
             if not self.is_running ():
                 return True
             now = time.time ()
-            if now - start_ts > 90:
+            if now - start_ts > 120:
                 # shutdown failed
                 return False
 

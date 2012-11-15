@@ -22,12 +22,12 @@ def main ():
     client = VPSMgr ()
     try:
         ovsops = OVSOps ()
-        ovsops.unset_traffic_limit (vif_name)
         ofport = ovsops.find_ofport_by_name (vif_name)
         if ofport < 0:
             client.logger.error ("vif %s ofport=%s, skip it" % (vif_name, ofport))
-            return 0
-        ovsops.unset_mac_filter (bridge, ofport)
+        else:
+            ovsops.unset_mac_filter (bridge, ofport)
+        ovsops.unset_traffic_limit (vif_name)  # it's strange that if you unset traffic first, might find ofport==-1
         return 0
     except Exception, e:
         client.logger.exception (e)
