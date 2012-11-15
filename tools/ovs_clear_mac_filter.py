@@ -42,7 +42,7 @@ def main ():
             print if_name, of_port
             using_ofport[of_port] = 1
         except LookupError, e:
-            unused_ofport[of_port]
+            unused_ofport[of_port] = 1
     print "of_port that are not used:"
     print unused_ofport.keys ()
     for of_port in unused_ofport.keys ():
