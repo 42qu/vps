@@ -91,7 +91,7 @@ class OVSDB (object):
             val = results[0].get (column)
             if val:
                 return val
-        raise Exception ("cannot find %s from table %s %s" % (
+        raise LookupError ("cannot find %s from table %s %s" % (
             column,
             table,
             " ".join (map (lambda v: "%s=%s" % (v[0], v[1]), cond.items()))
@@ -155,7 +155,7 @@ class OVSOps (object):
 
 if __name__ == '__main__': 
     import pprint
-    #ovsops = OVSOps ()
+    ovsops = OVSOps ()
     #pprint.pprint (ovsops.find_ofport_by_name ('vps2'))
     #pprint.pprint (ovsops.ovsdb.find ([], "Interface", {'mtu':1500}))
     #pprint.pprint (ovsops.ovsdb.find (['ofport'], "Interface", {'name': 'vps2'}))
