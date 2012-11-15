@@ -368,7 +368,8 @@ class VPSStoreLV (VPSStoreBase):
                     vps_common.lv_delete (self.dev)
                     break
                 except CommandException, e:
-                    if e.msg.find ('deactivate open') >=0: # there maybe bug in udev under ubuntu12.04 that prevent LV to be removed
+                    print e
+                    if e.msg.find ('deactivate open') >=0 or e.msg.find ('in used'): # there maybe bug in udev under ubuntu12.04 that prevent LV to be removed
                         time.sleep (1)
                         continue        
                     raise e
