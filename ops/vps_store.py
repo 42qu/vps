@@ -371,6 +371,7 @@ class VPSStoreLV (VPSStoreBase):
                     print e
                     if e.msg.find ('deactivate open') >=0 or e.msg.find ('in used'): # there maybe bug in udev under ubuntu12.04 that prevent LV to be removed
                         time.sleep (1)
+                        print "try again"
                         continue        
                     raise e
 
