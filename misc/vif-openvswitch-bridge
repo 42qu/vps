@@ -3,8 +3,8 @@
 ################################################################################
 # vif-open-vswitch-bridge                                                       
 # ---------------------------                                                   
-# Last Changes: 2012/08/19   (by plan frostyplanet@gmail.com)			
-#                                                      				
+# Last Changes: 2012/08/19   (by plan frostyplanet@gmail.com)            
+#                                                                      
 #                                                                               
 # Usage:                                                                        
 #                                                                               
@@ -98,16 +98,16 @@ case "$command" in
         else
             ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
         fi
-	    ip link set ${dev} up
-		/data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
+        ip link set ${dev} up
+        /data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
         ;;
 
     offline)
-		/data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
-		do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
-		if $(ifconfig ${dev} >/dev/null); then
-			ifconfig ${dev} down
-		fi
+        /data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
+        do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
+        if $(ifconfig ${dev} >/dev/null); then
+            ifconfig ${dev} down
+        fi
         ;;
 esac
 
