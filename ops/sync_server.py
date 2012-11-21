@@ -331,7 +331,7 @@ class SyncClientBase (object):
             dest = ""
         if speed:
             assert isinstance (speed, (int, float))
-            options += ("--bwlimit", str(int(speed * 1000)), )
+            options += ("--bwlimit", str(int(speed * 1000 / 8)), )
             use_zip = True
         if use_zip:
             options += ("-z", )
