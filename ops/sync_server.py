@@ -319,6 +319,7 @@ class SyncClientBase (object):
         
 
     def rsync (self, source, dest=None, speed=None, use_zip=False):
+        """ speed is in Mbit/s """
         options = ("-avW", "--inplace", )
         if os.path.isdir (source):
             if source[-1] != "/":
