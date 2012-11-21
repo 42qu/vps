@@ -20,7 +20,7 @@ def sync_partition (dev, dest_ip, speed=None):
         raise e
     
 def usage ():
-    print "usage: %s  [ --speed MByte/s] lvm_dev dest_ip " % (sys.argv[0])
+    print "usage: %s  [ --speed MBit/s] lvm_dev dest_ip " % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [

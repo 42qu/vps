@@ -35,7 +35,7 @@ def migrate_vps (vps_id, dest_ip, speed=None, force=False):
         raise e
 
 def usage ():
-    print "usage: %s  [ --speed MByte/s] vps_id [vps_id2 ...] dest_ip" % (sys.argv[0])
+    print "usage: %s  [ --speed MBbit/s] vps_id [vps_id2 ...] dest_ip" % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "f", [

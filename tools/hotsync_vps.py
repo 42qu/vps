@@ -23,7 +23,7 @@ def hotsync_vps (vps_id, dest_ip, speed=None):
         raise e
  
 def usage ():
-    print "usage: %s [ --speed MByte/s] vps_id1  vps_id2 ... dest_ip " % (sys.argv[0])
+    print "usage: %s [ --speed Mbit/s] vps_id1  vps_id2 ... dest_ip " % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
