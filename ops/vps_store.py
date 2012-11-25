@@ -34,6 +34,7 @@ class VPSStoreBase (object):
     trash_date = None
     expire_date = None
     file_path = None
+    trash_path = None
     
     def __init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g):
         self.partition_name = partition_name
@@ -142,8 +143,6 @@ class VPSStoreBase (object):
     
 class VPSStoreImage (VPSStoreBase):
 
-    file_path = None
-    trash_path = None
     trash_dir = None
 
     def __init__ (self, partition_name, xen_dev, fs_type=None, mount_point=None, size_g=None):
@@ -272,6 +271,7 @@ class VPSStoreLV (VPSStoreBase):
         self.dev = "/dev/%s/%s" % (self.vg_name, self.lv_name)
         self.file_path = self.dev
         self.trash_dev = "/dev/%s/trash_%s" % (self.vg_name, self.lv_name)
+        self.trash_path = self.trash_dev
         xen_path = "phy:" + self.dev
         VPSStoreBase.__init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g)
 

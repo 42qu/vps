@@ -27,6 +27,7 @@ class MigrateServer (SyncServerBase):
         self._handlers["create_vps"] = self._handler_create_vps
         self._handlers["prepare_immigrate"] = self._handler_prepare_immigrate
         self._handlers["hot_immigrate"] = self._handler_hot_immigrate
+        self._handlers["save_closed_vps"] = self._handler_save_closed_vps
 #        self._handlers["import_swap"] = self._handler_import_swap
 #        self._handlers["fail_hot_immigrate"] = self._handler_fail_hot_immigrate
 
@@ -164,6 +165,21 @@ class MigrateServer (SyncServerBase):
             self.logger.exception (e)
             self._send_response (conn, 1, str(e))
 
+    def _handler_save_closed_vps (self, conn, cmd, data):
+        meta = self._get_req_attr (data, "meta")
+        origin_host_id = self._get_req_attr (data, "origin_host_id")
+        try:
+            xv = XenVPS.from_meta (meta)
+            self.logger.info ("closed vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
+            vpsops = VPSOps (self.logger)
+            vpsops.save_vps_meta (xv, is_trash=True)
+            self._send_response (conn, 0, "")
+        except socket.error, e:
+            raise e
+        except Exception, e:
+            self.logger.exception (e)
+            self._send_response (conn, 1, str(e))
+
 
 class MigrateClient (SyncClientBase):
 
@@ -267,6 +283,20 @@ class MigrateClient (SyncClientBase):
         try:
             sock = self.connect (timeout=120)
             self._send_msg (sock, "create_vps", {
+                    'meta': meta,
+                    'origin_host_id': conf.HOST_ID,
+                })
+            msg = self._recv_response (sock)
+        finally:
+            if sock:
+                sock.close ()
+
+    def save_closed_vps (self, xv):
+        meta = xv.to_meta ()
+        sock = None
+        try:
+            sock = self.connect (timeout=120)
+            self._send_msg (sock, "save_closed_vps", {
                     'meta': meta,
                     'origin_host_id': conf.HOST_ID,
                 })

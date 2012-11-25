@@ -254,6 +254,8 @@ class VPSOps (object):
         if os.path.exists (trash_meta_path):
             xv = self._load_vps_meta (trash_meta_path)
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
+            if _xv:
+                self._update_vif_setting (xv, _xv)
         elif _xv:
             xv = _xv
         else:
@@ -274,15 +276,14 @@ class VPSOps (object):
         xv.check_storage_integrity ()
         self._clear_nonexisting_trash (xv)
 
-
         if os.path.exists (trash_meta_path):
             os.remove (trash_meta_path)
             self.loginfo (xv, "removed %s" % (trash_meta_path))
         self.create_xen_config (xv)
 
         self._boot_and_test (xv, is_new=False)
-
         self.loginfo (xv, "done vps creation")
+
 
     def _delete_disk (self, xv, disk):
         if disk.exists ():
@@ -541,27 +542,35 @@ class VPSOps (object):
 
 
     def change_qos (self, _xv):
-        xv = self.load_vps_meta (_xv.vps_id)
-        if not _xv.vif_ext or not xv.vif_ext:
-            return
-        xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
-        bandwidth = _xv.vif_ext.bandwidth
-        vif_name = xv.vif_ext.ifname
-        self.save_vps_meta (xv)
-        if conf.USE_OVS:
-            if xv.is_running ():
-                ovsops = OVSOps ()
-                ovsops.unset_traffic_limit (vif_name)
-                ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
-                if not xv.wait_until_reachable (5):
-                    raise Exception ("ip unreachable!")
+        meta_path = self._meta_path (_xv.vps_id)
+        if not os.path.exists (meta_path):
+            xv = self.load_vps_meta(_xv.vps_id, is_trash=True)
+            xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
+            bandwidth = _xv.vif_ext.bandwidth
+            vif_name = xv.vif_ext.ifname
+            self.save_vps_meta (xv, is_trash=True)
         else:
-#            if xv.stop ():
-#                self.loginfo (xv, "vps stopped")
-#            else:
-#                xv.destroy ()
-#                self.loginfo (xv, "vps cannot shutdown, destroyed it")
-            self.create_xen_config (xv)
+            xv = self._load_vps_meta (meta_path)
+            if not _xv.vif_ext or not xv.vif_ext:
+                return
+            xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
+            bandwidth = _xv.vif_ext.bandwidth
+            vif_name = xv.vif_ext.ifname
+            self.save_vps_meta (xv)
+            if conf.USE_OVS:
+                if xv.is_running ():
+                    ovsops = OVSOps ()
+                    ovsops.unset_traffic_limit (vif_name)
+                    ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
+                    if not xv.wait_until_reachable (5):
+                        raise Exception ("ip unreachable!")
+            else:
+#               if xv.stop ():
+#                   self.loginfo (xv, "vps stopped")
+#               else:
+#                   xv.destroy ()
+#                   self.loginfo (xv, "vps cannot shutdown, destroyed it")
+                self.create_xen_config (xv)
 
     def _update_vif_setting (self, xv, _xv):
         xv.vifs = dict ()
@@ -719,6 +728,19 @@ class VPSOps (object):
         migclient.create_vps (xv)
         self.loginfo (xv, "remote vps started, going to close local vps")
         self.close_vps (vps_id)
+
+    def migrate_closed_vps (self, migclient, vps_id, dest_ip, speed=None, _xv=None):
+        """client side """
+        xv = self.load_vps_meta (vps_id, is_trash=True)
+        if xv.is_running ():
+            raise Exception ("vps %s is still running" % (vps_id))
+        self.loginfo (xv, "going to be move to %s" % (dest_ip))
+        for disk in xv.data_disks.values ():
+            migclient.sync_partition (disk.trash_path, partition_name="trash_%s" % (disk.partition_name), speed=speed)
+        migclient.save_closed_vps (xv)
+        self.loginfo (xv, "done")
+
+
 
     def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
         if not conf.USE_LVM:
