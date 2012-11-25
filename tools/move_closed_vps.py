@@ -12,7 +12,7 @@ from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 
-def move_closed_vps (vps_id, dest_ip, speed=None, force=False)
+def move_closed_vps (vps_id, dest_ip, speed=None, force=False):
     logger = Log ("vps_mgr", config=conf)
     client = VPSMgr ()
     vps_info = None
