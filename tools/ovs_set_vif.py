@@ -6,7 +6,7 @@ import sys
 import _env
 import conf
 import re
-from vps_mgr import VPSMgr
+from lib.log import Log
 from ops.vps_ops import VPSOps
 from ops.openvswitch import OVSOps
 import getopt
@@ -21,7 +21,9 @@ def main ():
     bridge = args[0]
     vif_name = args[1]
 
-    client = VPSMgr ()
+    logger = Log ("vps_mgr", config=conf)
+    vpsops = VPSOps (logger)
+    logger.debug ("set %s" % vif_name)
     try:
         ovsops = OVSOps ()
         om = re.match (r'^\w+?(\d+)\w*?$', vif_name)
@@ -29,19 +31,19 @@ def main ():
             print >> sys.stderr, "wrong vif format %s" % (vif_name)
             return 1
         vps_id = int (om.group (1))
-        xv = client.vpsops.load_vps_meta (vps_id)
+        xv = vpsops.load_vps_meta (vps_id)
         vif = xv.vifs.get (vif_name)
         if not vif:
-            client.logger.error ("no vif %s in metadata of %s" % (vif_name, vps_id))
+            logger.error ("no vif %s in metadata of %s" % (vif_name, vps_id))
             return 1
         ofport = ovsops.find_ofport_by_name (vif_name)
         if ofport < 0:
-            client.logger.error ("vif %s ofport=%s, fix it by delete the port from bridge " % (vif_name, ofport))
+            logger.error ("vif %s ofport=%s, fix it by delete the port from bridge " % (vif_name, ofport))
             ovsops.del_port_from_bridge (bridge, vif_name)
             ovsops.add_port_to_bridge (bridge, vif_name)
             ofport = ovsops.find_ofport_by_name (vif_name)
             if ofport < 0:
-                client.logger.error ("vif %s ofport=%s, impossible " % (vif_name, ofport))
+                logger.error ("vif %s ofport=%s, impossible " % (vif_name, ofport))
         if ofport >= 0:
             ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
         ovsops.unset_traffic_limit (vif_name)
@@ -50,7 +52,7 @@ def main ():
         print "set vif %s bandwidth %sm/s" % (vif_name, vif.bandwidth)
         return 0
     except Exception, e:
-        client.logger.exception (e)
+        logger.exception (e)
         print >> sys.stderr, str(e)
         return 1
  

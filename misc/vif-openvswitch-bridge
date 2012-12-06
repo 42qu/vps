@@ -49,6 +49,7 @@ dir=$(dirname "$0")
 bridge=${bridge:-}
 bridge=$(xenstore_read_default "$XENBUS_PATH/bridge" "$bridge")
 
+RET=0
 if [ -z "$bridge" ]
 then
   bridge=$(ovs-vsctl list-br | cut -d "
@@ -57,60 +58,47 @@ then
   then
      fatal "Could not find bridge, and none was specified"
   fi
-fi
-
-touch /var/lock/vpsmgr_ovs
-OVSLOCK="flock /var/lock/ovs "
-
-##Domain on VLAN tagged bridge?
-#RET=0
-#ovs-vsctl list-br | grep -c ${bridge} 1>/dev/null 2>&1 || RET=1
-#if [ $RET -eq 1 ]
-#then
-#    if [[ $bridge =~ \.[[:digit:]]{1,4}$ ]]
-#    then
-#        tag=$(echo ${bridge} | cut -d "." -f 2)
-#        bridge=$(echo ${bridge} | cut -d "." -f 1)
-#    else
-#        fatal "Could not find bridge device ${bridge}"
-#    fi
-#fi
-
-RET=0
-ovs-vsctl list-br | grep -c ${bridge} 1>/dev/null 2>&1 || RET=1
-if [ $RET -eq 1 ]
-then
+else
+  ovs-vsctl list-br | grep -c ${bridge} 1>/dev/null 2>&1 || RET=1
+  if [ $RET -eq 1 ]
+  then
     fatal "Could not find bridge device ${bridge}"
+  fi
 fi
+
+_LOCK_FILE="/tmp/lock_vpsmgr_$dev"
+touch $_LOCK_FILE 
+
 
 mac=$(xenstore_read "$XENBUS_PATH/mac")
-log debug "Successful vif-bridge $command for ${dev}, ${mac},  bridge ${bridge}."
 
 case "$command" in
     online|add)
+	(
+	flock 9 || exit 1
+	log debug "vif-bridge $command for ${dev}, ${mac},  bridge ${bridge}."
         setup_virtual_bridge_port "$dev"
         mtu="`ip link show $bridge | awk '/mtu/ { print $5 }'`"
         if [ -n "$mtu" ] && [ "$mtu" -gt 0 ]
         then
-                ip link set $dev mtu $mtu || :
+            ip link set $dev mtu $mtu || :
         fi
-
-        if [ -z $tag ]
-        then
-            ovs-vsctl -- --may-exist add-port ${bridge} ${dev}
-        else
-            ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
-        fi
+        do_without_error ovs-vsctl -- --may-exist add-port ${bridge} ${dev}
         ip link set ${dev} up
-        $OVSLOCK /data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
+        do_without_error python /data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
+	) 9>$_LOCK_FILE
         ;;
 
     offline)
-        $OVSLOCK /data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
+	(
+	log debug "vif-bridge $command for ${dev}, ${mac},  bridge ${bridge}."
+	flock 9 || exit 1
+        do_without_error python /data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
         do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
-        if $(ifconfig ${dev} >/dev/null); then
+        if $(ifconfig ${dev}>/dev/null); then
             ifconfig ${dev} down
         fi
+	) 9>$_LOCK_FILE
         ;;
 esac
 
