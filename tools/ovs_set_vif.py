@@ -42,7 +42,8 @@ def main ():
             ofport = ovsops.find_ofport_by_name (vif_name)
             if ofport < 0:
                 client.logger.error ("vif %s ofport=%s, impossible " % (vif_name, ofport))
-        ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
+        if ofport >= 0:
+            ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
         ovsops.unset_traffic_limit (vif_name)
 
         if vif.bandwidth:
