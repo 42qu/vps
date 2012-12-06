@@ -546,7 +546,7 @@ class VPSOps (object):
         if not os.path.exists (meta_path):
             xv = self.load_vps_meta(_xv.vps_id, is_trash=True)
             xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
-            bandwidth = _xv.vif_ext.bandwidth
+            bandwidth = _xv.vif_ext.bandwidth or 0
             vif_name = xv.vif_ext.ifname
             self.save_vps_meta (xv, is_trash=True)
         else:
@@ -554,7 +554,7 @@ class VPSOps (object):
             if not _xv.vif_ext or not xv.vif_ext:
                 return
             xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
-            bandwidth = _xv.vif_ext.bandwidth
+            bandwidth = _xv.vif_ext.bandwidth or 0
             vif_name = xv.vif_ext.ifname
             self.save_vps_meta (xv)
             if conf.USE_OVS:

@@ -142,8 +142,8 @@ class OVSOps (object):
                     if queues:
                         for q in queues:
                             call_cmd ("ovs-vsctl destroy queue %s" % (q.uuid))
-        call_cmd ("ovs-vsctl set interface %s ingress_policing_rate=0" % (if_name))
-        call_cmd ("ovs-vsctl set interface %s ingress_policing_burst=0" % (if_name))
+#        call_cmd ("ovs-vsctl set interface %s ingress_policing_rate=0" % (if_name))
+#        call_cmd ("ovs-vsctl set interface %s ingress_policing_burst=0" % (if_name))
 
     def del_port_from_bridge (self, bridge, if_name):
         call_cmd ("ovs-vsctl del-port %s %s" % (bridge, if_name)) 

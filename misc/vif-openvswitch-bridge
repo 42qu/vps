@@ -97,17 +97,17 @@ case "$command" in
 
         if [ -z $tag ]
         then
-            $OVSLOCK ovs-vsctl -- --may-exist add-port ${bridge} ${dev}
+            ovs-vsctl -- --may-exist add-port ${bridge} ${dev}
         else
-            $OVSLOCK ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
+            ovs-vsctl -- --may-exist add-port ${bridge} ${dev} tag=${tag}
         fi
-        do_without_error ip link set ${dev} up
+        ip link set ${dev} up
         $OVSLOCK /data/vps/code/tools/ovs_set_vif.py ${bridge} ${dev}
         ;;
 
     offline)
         $OVSLOCK /data/vps/code/tools/ovs_unset_vif.py ${bridge} ${dev}
-        $OVSLOCK do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
+        do_without_error ovs-vsctl -- --if-exists del-port ${bridge} ${dev}
         if $(ifconfig ${dev} >/dev/null); then
             ifconfig ${dev} down
         fi
