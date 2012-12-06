@@ -562,6 +562,7 @@ class VPSOps (object):
                     ovsops = OVSOps ()
                     ovsops.unset_traffic_limit (vif_name)
                     ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
+                    self.loginfo (xv, "updated vif=%s bandwidth to %s Mbps" % (vif_name, bandwidth))
                     if not xv.wait_until_reachable (5):
                         raise Exception ("ip unreachable!")
             else:
