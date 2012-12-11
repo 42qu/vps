@@ -10,13 +10,15 @@ from lib.job_queue import JobQueue
 from lib.alarm import EmailAlarm, AlarmJob
 import time
 import signal
-import _saas
+from _saas import VPS
 from zthrift.client import get_client
+import socket
 
 class SaasMonitor (object):
 
     def __init__ (self):
         self.is_running = False
+        self.hostname = socket.gethostname ()
         self.logger = Log ("saas_mon", config=conf)
         self.recover_thres = conf.SAAS_RECOVER_THRESHOLD or (30 * 5)
         self.bad_thres = conf.SAAS_BAD_THRESHOLD or 5
@@ -39,16 +41,18 @@ class SaasMonitor (object):
         self.logger.info ("stopped")
 
     def check (self):
-        trans, client = get_client (_saas.VPS)
-        trans.open ()
+        trans, client = get_client (VPS)
         vps = None
         try:
-            vps = client.vps (0)
-            trans.close ()
+            trans.open ()
+            try:
+                vps = client.vps (0)
+            finally:
+                trans.close ()
+            self.logger.info ("ok")
             return True
         except Exception, e:
             self.logger.exception (e)
-            trans.close ()
             return False
 
     def _alarm_enqueue (self, state, bad_count=0):
@@ -56,9 +60,9 @@ class SaasMonitor (object):
         ts = "[%s]" % (time.strftime (t, time.localtime()))
         text = None
         if state:
-            text = "recovered"
+            text = "from %s to saas server recovered" % (self.hostname)
         else:
-            text = "bad %s" % (bad_count)
+            text = "from %s to saas server bad (try %s)" % (self.hostname, bad_count)
         job = AlarmJob (self.emailalarm, ts + text)
         self.alarm_q.put_job (job)
 
@@ -67,6 +71,7 @@ class SaasMonitor (object):
         bad_count = 0
         recover_count = 0
         while self.is_running:
+            time.sleep(2)
             if self.check (): 
                 if self.last_state:
                     bad_count = 0
