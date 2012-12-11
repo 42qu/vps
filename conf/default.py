@@ -49,7 +49,7 @@ def prepare(o):
     o.RSYNC_PORT = 26554
     o.INF_PORT = 26550
     o.SAAS_RECOVER_THRESHOLD = 5
-    o.SAAS_BAD_THRESHOLD = 30 * 5
+    o.SAAS_BAD_THRESHOLD = 60 * 3
 
     o.DEFAULT_FS_TYPE = 'ext4'
     o.CLOSE_EXPIRE_DAYS = 6

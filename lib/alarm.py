@@ -2,7 +2,7 @@
 # coding:utf-8
 
 import _env
-import conf.email
+import conf.private.email as config_email
 # config_email.SMTP
 # config_email.SMTP_USERNAME
 # config_email.SMTP_PASSWORD
@@ -19,7 +19,7 @@ import socket
 
 class AlarmJob (Job):
     
-    def __init__ (self, email_alarm, subject, body):
+    def __init__ (self, email_alarm, subject, body=""):
         Job.__init__ (self)
         self.email_alarm = email_alarm
         self.subject = subject
