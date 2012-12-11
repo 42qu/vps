@@ -39,6 +39,8 @@ enum Cmd{
   BANDWIDTH   = 5, //调整带宽
   OS          = 6, //更换操作系统
   UPGRADE     = 7,
+  MIGRATE     = 8,
+  MONITOR     = 9,
 }
 
 

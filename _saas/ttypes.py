@@ -25,6 +25,8 @@ class Cmd:
   BANDWIDTH = 5
   OS = 6
   UPGRADE = 7
+  MIGRATE = 8
+  MONITOR = 9
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -35,6 +37,8 @@ class Cmd:
     5: "BANDWIDTH",
     6: "OS",
     7: "UPGRADE",
+    8: "MIGRATE",
+    9: "MONITOR",
   }
 
   _NAMES_TO_VALUES = {
@@ -46,6 +50,8 @@ class Cmd:
     "BANDWIDTH": 5,
     "OS": 6,
     "UPGRADE": 7,
+    "MIGRATE": 8,
+    "MONITOR": 9,
   }
 
 
