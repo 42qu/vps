@@ -14,6 +14,8 @@ from _saas import VPS
 from zthrift.client import get_client
 import socket
 
+# you need to checkout https://bitbucket.org/zsp042/private.git into conf/
+
 class SaasMonitor (object):
 
     def __init__ (self):
