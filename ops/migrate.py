@@ -14,6 +14,7 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 import ops.vps_common as vps_common
 import conf
+import threading
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
@@ -22,6 +23,9 @@ class MigrateServer (SyncServerBase):
 
     def __init__ (self, logger):
         SyncServerBase.__init__ (self, logger)
+        self._partition_jobs = dict ()
+        self._lock = threading.Lock ()
+        self._rsync_running = False
         self._handlers["alloc_partition"] = self._handler_alloc_partition
         self._handlers["umount"] = self._handler_umount
         self._handlers["create_vps"] = self._handler_create_vps
@@ -31,6 +35,35 @@ class MigrateServer (SyncServerBase):
 #        self._handlers["import_swap"] = self._handler_import_swap
 #        self._handlers["fail_hot_immigrate"] = self._handler_fail_hot_immigrate
 
+    def _start_rsync (self, name):
+        self._lock.acquire ()
+        if not self._rsync_running:
+            self.start_rsync ()
+            self._rsync_running = True
+        self._partition_jobs[name] = 1
+        self._lock.release ()
+
+    def _stop_rsync (self, name):
+        self._lock.acquire ()
+        if self._partition_jobs.has_key (name):
+            del self._partition_jobs[name]
+        if len(self._partition_jobs.keys ()) == 0 and  self._rsync_running:
+            self.stop_rsync ()
+            self._rsync_running = False
+        self._lock.release ()
+        
+#    def poll (self):
+#        SyncServerBase.poll ()
+#        returncode = self._rsync_popen.poll ()
+#        if returncode is not None:
+#            if self.is_running:
+#                #err = "\n".join (self._rsync_popen.stderr.readlines ())
+#                returncode, out, err = self._rsync_popen.get_result ()
+#                self.logger.error ("returncode=%d, error=%s" % (returncode, err)) 
+#                #self._rsync_popen.stderr.close ()
+#                self.logger.error ("rsync daemon exited, restart it")
+#                self.start_rsync ()
+#
 
     def _handler_alloc_partition (self, conn, cmd, data):
         try:
@@ -52,6 +85,7 @@ class MigrateServer (SyncServerBase):
             else:
                 self.logger.info ("%s already mounted on %s" % (str(storage), mount_point))
             mount_point_name = os.path.basename (mount_point)
+            self._start_rsync (mount_point_name)
             self._send_response (conn, 0, {"mount_point": mount_point_name})
         except socket.error, e:
             raise e
@@ -66,6 +100,7 @@ class MigrateServer (SyncServerBase):
         try:
             vps_common.umount_tmp (mount_point_path)
             self.logger.info ("%s umounted" % (mount_point_path))
+            self._stop_rsync (mount_point)
             self._send_response (conn, 0, "")
         except socket.error, e:
             raise e
@@ -125,8 +160,6 @@ class MigrateServer (SyncServerBase):
 #            self._send_response (conn, 1, str(e))
 
 
-
-            
 
     def _handler_hot_immigrate (self, conn, cmd, data):
         vps_id = self._get_req_attr (data, "vps_id")

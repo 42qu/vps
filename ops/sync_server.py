@@ -78,15 +78,6 @@ class SyncServerBase (object):
 
     def poll (self):
         self.engine.poll ()
-        returncode = self._rsync_popen.poll ()
-        if returncode is not None:
-            if self.is_running:
-                #err = "\n".join (self._rsync_popen.stderr.readlines ())
-                returncode, out, err = self._rsync_popen.get_result ()
-                self.logger.error ("returncode=%d, error=%s" % (returncode, err)) 
-                #self._rsync_popen.stderr.close ()
-                self.logger.error ("rsync daemon exited, restart it")
-                self.start_rsync ()
 
     def _server_handler (self, conn):
         sock = conn.sock
@@ -135,7 +126,7 @@ class SyncServerBase (object):
         if self.is_running:
             return
         self.is_running = True
-        self.start_rsync ()
+        #self.start_rsync ()
         self.jobqueue.start_worker (5)
         self.logger.info ("job_queue started")
         self.inf_sock = self.engine.listen_addr (self.inf_addr, readable_cb=self._server_handler)
@@ -149,7 +140,7 @@ class SyncServerBase (object):
         self.logger.info ("server stopped")
         self.jobqueue.stop ()
         self.logger.info ("job_queue stopped")
-        self.stop_rsync ()
+        #self.stop_rsync ()
 
     def start_rsync (self):
         rsync_conf = """
