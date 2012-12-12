@@ -18,11 +18,20 @@ import threading
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
+try:
+    from conf.private.migrate_svr import ALLOWED_IPS
+except ImportError:
+    ALLOWED_IPS = None
 
 class MigrateServer (SyncServerBase):
 
     def __init__ (self, logger):
-        SyncServerBase.__init__ (self, logger)
+        ip_dict = None
+        if ALLOWED_IPS:
+            ip_dict = dict ()
+            for ip in ALLOWED_IPS:
+                ip_dict[ip] = None
+        SyncServerBase.__init__ (self, logger, ip_dict)
         self._partition_jobs = dict ()
         self._lock = threading.Lock ()
         self._rsync_running = False

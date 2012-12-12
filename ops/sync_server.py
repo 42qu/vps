@@ -56,8 +56,9 @@ class InteractJob (Job):
 class SyncServerBase (object):
 
 
-    def __init__ (self, logger):
+    def __init__ (self, logger, allow_ip_dict=None):
         self.logger = logger
+        self.allow_ip_dict = allow_ip_dict
         self.host_id = conf.HOST_ID
         self._rsync_popen = None
         self.is_running = False
@@ -135,8 +136,16 @@ class SyncServerBase (object):
         #self.start_rsync ()
         self.jobqueue.start_worker (5)
         self.logger.info ("job_queue started")
-        self.inf_sock = self.engine.listen_addr (self.inf_addr, readable_cb=self._server_handler)
+        self.inf_sock = self.engine.listen_addr (self.inf_addr, readable_cb=self._server_handler, new_conn_cb=self._check_ip)
         self.logger.info ("server started")
+
+    def _check_ip (self, sock, *args):
+        peer = sock.getpeername ()
+        if len(peer) == 2 and self.allow_ip_dict:
+            if self.allow_ip_dict.has_key (peer[0]):
+                return sock
+            return None
+        return sock
 
     def stop (self):
         if not self.is_running:
