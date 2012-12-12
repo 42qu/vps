@@ -16,7 +16,7 @@ except:
   fastbinary = None
 
 
-class Cmd:
+class CMD:
   NONE = 0
   OPEN = 1
   CLOSE = 2
@@ -357,6 +357,210 @@ class Vps:
     if self.template_image is not None:
       oprot.writeFieldBegin('template_image', TType.STRING, 14)
       oprot.writeString(self.template_image)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class Host:
+  """
+  Attributes:
+   - id
+   - ext_ip
+   - int_ip
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'id', None, None, ), # 1
+    (2, TType.I64, 'ext_ip', None, None, ), # 2
+    (3, TType.I64, 'int_ip', None, None, ), # 3
+  )
+
+  def __init__(self, id=None, ext_ip=None, int_ip=None,):
+    self.id = id
+    self.ext_ip = ext_ip
+    self.int_ip = int_ip
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.ext_ip = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.int_ip = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('Host')
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I64, 1)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
+    if self.ext_ip is not None:
+      oprot.writeFieldBegin('ext_ip', TType.I64, 2)
+      oprot.writeI64(self.ext_ip)
+      oprot.writeFieldEnd()
+    if self.int_ip is not None:
+      oprot.writeFieldBegin('int_ip', TType.I64, 3)
+      oprot.writeI64(self.int_ip)
+      oprot.writeFieldEnd()
+    oprot.writeFieldStop()
+    oprot.writeStructEnd()
+
+  def validate(self):
+    return
+
+
+  def __repr__(self):
+    L = ['%s=%r' % (key, value)
+      for key, value in self.__dict__.iteritems()]
+    return '%s(%s)' % (self.__class__.__name__, ', '.join(L))
+
+  def __eq__(self, other):
+    return isinstance(other, self.__class__) and self.__dict__ == other.__dict__
+
+  def __ne__(self, other):
+    return not (self == other)
+
+class MigrateTask:
+  """
+  Attributes:
+   - vps_id
+   - from_host_id
+   - to_host_id
+   - from_ip
+   - to_ip
+   - state
+  """
+
+  thrift_spec = (
+    None, # 0
+    (1, TType.I64, 'vps_id', None, None, ), # 1
+    (2, TType.I64, 'from_host_id', None, None, ), # 2
+    (3, TType.I64, 'to_host_id', None, None, ), # 3
+    (4, TType.I64, 'from_ip', None, None, ), # 4
+    (5, TType.I64, 'to_ip', None, None, ), # 5
+    (6, TType.I16, 'state', None, None, ), # 6
+  )
+
+  def __init__(self, vps_id=None, from_host_id=None, to_host_id=None, from_ip=None, to_ip=None, state=None,):
+    self.vps_id = vps_id
+    self.from_host_id = from_host_id
+    self.to_host_id = to_host_id
+    self.from_ip = from_ip
+    self.to_ip = to_ip
+    self.state = state
+
+  def read(self, iprot):
+    if iprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and isinstance(iprot.trans, TTransport.CReadableTransport) and self.thrift_spec is not None and fastbinary is not None:
+      fastbinary.decode_binary(self, iprot.trans, (self.__class__, self.thrift_spec))
+      return
+    iprot.readStructBegin()
+    while True:
+      (fname, ftype, fid) = iprot.readFieldBegin()
+      if ftype == TType.STOP:
+        break
+      if fid == 1:
+        if ftype == TType.I64:
+          self.vps_id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 2:
+        if ftype == TType.I64:
+          self.from_host_id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 3:
+        if ftype == TType.I64:
+          self.to_host_id = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 4:
+        if ftype == TType.I64:
+          self.from_ip = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 5:
+        if ftype == TType.I64:
+          self.to_ip = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
+        if ftype == TType.I16:
+          self.state = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      else:
+        iprot.skip(ftype)
+      iprot.readFieldEnd()
+    iprot.readStructEnd()
+
+  def write(self, oprot):
+    if oprot.__class__ == TBinaryProtocol.TBinaryProtocolAccelerated and self.thrift_spec is not None and fastbinary is not None:
+      oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
+      return
+    oprot.writeStructBegin('MigrateTask')
+    if self.vps_id is not None:
+      oprot.writeFieldBegin('vps_id', TType.I64, 1)
+      oprot.writeI64(self.vps_id)
+      oprot.writeFieldEnd()
+    if self.from_host_id is not None:
+      oprot.writeFieldBegin('from_host_id', TType.I64, 2)
+      oprot.writeI64(self.from_host_id)
+      oprot.writeFieldEnd()
+    if self.to_host_id is not None:
+      oprot.writeFieldBegin('to_host_id', TType.I64, 3)
+      oprot.writeI64(self.to_host_id)
+      oprot.writeFieldEnd()
+    if self.from_ip is not None:
+      oprot.writeFieldBegin('from_ip', TType.I64, 4)
+      oprot.writeI64(self.from_ip)
+      oprot.writeFieldEnd()
+    if self.to_ip is not None:
+      oprot.writeFieldBegin('to_ip', TType.I64, 5)
+      oprot.writeI64(self.to_ip)
+      oprot.writeFieldEnd()
+    if self.state is not None:
+      oprot.writeFieldBegin('state', TType.I16, 6)
+      oprot.writeI16(self.state)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
     oprot.writeStructEnd()

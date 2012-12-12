@@ -23,13 +23,15 @@ if len(sys.argv) <= 1 or sys.argv[1] == '--help':
   print 'Usage: ' + sys.argv[0] + ' [-h host[:port]] [-u url] [-f[ramed]] function [arg1 [arg2...]]'
   print ''
   print 'Functions:'
-  print '  Id todo(i64 host_id, Cmd cmd)'
-  print '  void done(i64 host_id, Cmd cmd, Id id, i32 state, string message)'
+  print '  Id todo(i64 host_id, CMD cmd)'
+  print '  void done(i64 host_id, CMD cmd, Id id, i32 state, string message)'
   print '  Vps vps(i64 vps_id)'
   print '  void netflow_save(i64 host_id,  netflow, i64 timestamp)'
   print '  void plot(i64 cid, i64 rid, i64 value)'
   print '  string sms( number_list, string txt)'
   print '  void host_refresh(i64 host_id, i16 hd_remain, i64 ram_remain, i16 hd_total, i64 ram_total)'
+  print '   host_list()'
+  print '  MigrateTask migrate_task(i64 vps_id)'
   print ''
   sys.exit(0)
 
@@ -122,6 +124,18 @@ elif cmd == 'host_refresh':
     print 'host_refresh requires 5 args'
     sys.exit(1)
   pp.pprint(client.host_refresh(eval(args[0]),eval(args[1]),eval(args[2]),eval(args[3]),eval(args[4]),))
+
+elif cmd == 'host_list':
+  if len(args) != 0:
+    print 'host_list requires 0 args'
+    sys.exit(1)
+  pp.pprint(client.host_list())
+
+elif cmd == 'migrate_task':
+  if len(args) != 1:
+    print 'migrate_task requires 1 args'
+    sys.exit(1)
+  pp.pprint(client.migrate_task(eval(args[0]),))
 
 else:
   print 'Unrecognized method %s' % cmd
