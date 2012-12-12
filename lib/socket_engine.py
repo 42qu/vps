@@ -646,7 +646,7 @@ try:
                         csock = new_conn_cb (csock, *readable_cb_args)
                         if not csock:
                             continue
-                        csock = ssl.wrap_socket (csock, certfile=self.cert_file, server_side=True, ssl_version=self.ssl_version)
+                    csock = ssl.wrap_socket (csock, certfile=self.cert_file, server_side=True, ssl_version=self.ssl_version)
                     _put_sock (csock, readable_cb=readable_cb, readable_cb_args=readable_cb_args, 
                             idle_timeout_cb=idle_timeout_cb, stack=False, lock=False)
                 except (socket.error, ssl.SSLError), e:
