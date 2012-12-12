@@ -538,6 +538,9 @@ class TCPSocketEngine (SocketEngine):
 
     bind_addr = None
 
+    def __init__ (self, poll, debug=False):
+        SocketEngine.__init__(self, poll, debug=debug)
+
     def listen_addr (self, addr, readable_cb, readable_cb_args=(), idle_timeout_cb=None, 
             new_conn_cb=None, backlog=10):
 
@@ -613,4 +616,47 @@ class TCPSocketEngine (SocketEngine):
             if callable(err_cb):
                 self._callback_indirect (err_cb, (ConnectNonblockError (res, err_msg), ) + cb_args, stack)
             return False
+
+try:
+    import ssl
+
+    class SSLSocketEngine (TCPSocketEngine):
+
+        def __init__ (self, poll, cert_file, debug=False, ssl_version=None):
+            TCPSocketEngine.__init__(self, poll, debug=debug)
+            self.cert_file = cert_file
+            self.ssl_version = ssl_version
+            
+
+        def _accept_conn (self, sock, readable_cb, readable_cb_args, idle_timeout_cb, new_conn_cb):
+            """ socket will set FD_CLOEXEC upon accepted """
+            _accept = sock.accept
+            _put_sock = self._put_sock
+            while True: 
+            # have to make sure the socket is non-block, so we can accept multiple connection
+                try:
+                    (csock, addr) = _accept ()
+                    try:
+                        flags = fcntl.fcntl(csock, fcntl.F_GETFD)
+                        fcntl.fcntl(csock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
+                    except IOError, e:
+                        self.log_error ("cannot set FD_CLOEXEC on accepted socket fd, %s" % (str(e)))
+
+                    if callable (new_conn_cb):
+                        csock = new_conn_cb (csock, *readable_cb_args)
+                        if not csock:
+                            continue
+                        csock = ssl.wrap_socket (csock, certfile=self.cert_file, server_side=True, ssl_version=self.ssl_version)
+                    _put_sock (csock, readable_cb=readable_cb, readable_cb_args=readable_cb_args, 
+                            idle_timeout_cb=idle_timeout_cb, stack=False, lock=False)
+                except (socket.error, ssl.SSLError), e:
+                    if e[0] == errno.EAGAIN:
+                        return #no more
+                    if e[0] != errno.EINTR:
+                        msg = "accept error (unlikely): " + str(e)
+                        self.log_error (msg)
+            return
+
+except ImportError:
+    pass
 

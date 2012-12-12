@@ -2,6 +2,7 @@
 
 import os
 import socket
+import ssl
 import subprocess
 from lib.command import Command, search_path
 
@@ -16,7 +17,7 @@ except ImportError:
 import ops.vps_common as vps_common
 import ops._env
 from lib.job_queue import JobQueue, Job
-from lib.socket_engine import TCPSocketEngine, Connection
+from lib.socket_engine import SSLSocketEngine, Connection
 import lib.io_poll as io_poll
 from lib.net_io import NetHead
 import conf
@@ -63,7 +64,8 @@ class SyncServerBase (object):
         self.listen_ip = "0.0.0.0"
         self.inf_addr = (self.listen_ip, conf.INF_PORT)
         self.rsync_port = conf.RSYNC_PORT
-        self.engine = TCPSocketEngine (io_poll.Poll())
+        assert conf.SSL_CERT
+        self.engine = SSLSocketEngine (io_poll.Poll(), cert_file=conf.SSL_CERT)
         self.engine.set_logger (logger)
         self.engine.set_timeout (10, 10, 1800)
         self.inf_sock = None
@@ -249,6 +251,7 @@ class SyncClientBase (object):
         addr = (self.server_ip, conf.INF_PORT)
         sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
         sock.settimeout (timeout)
+        sock = ssl.wrap_socket (sock)
         sock.connect (addr)
         return sock
 
