@@ -1,18 +1,18 @@
 namespace py _saas 
 
 struct Ip {
-	1: i64 ipv4						,
-	2: i64 ipv4_netmask				,
-	3: optional string mac          ,
+    1: i64 ipv4                     ,
+    2: i64 ipv4_netmask             ,
+    3: optional string mac          ,
 }
 
 
 struct Vps {
    1 : i64 id                       ,
-   2 : list<Ip> ext_ips           	,
-   3 : Ip gateway      				,
+   2 : list<Ip> ext_ips             ,
+   3 : Ip gateway                   ,
    4 : string password              ,
-   5 : i32 os                    ,                       // os类型
+   5 : i32 os                    ,                       //os的id
    6 : map<i32, i32> harddisks      ,                       //
    7 : i64 ram                      ,                       //单位M
    8 : i16 cpu                      ,                       //几个core
@@ -21,7 +21,22 @@ struct Vps {
   11 : optional Ip int_ip           ,                       //内网IP
   12 : optional i64 bandwidth       ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
   13 : optional i32 qos             ,                       //带宽优先级 0 为默认值 , 1 为高优先级
-  14 : optional string template_image		,
+  14 : optional string template_image  ,
+}
+
+struct Host {
+  1 : i64 id,
+  2 : i64 ext_ip,
+  3 : i64 int_ip,
+}
+
+struct MigrateTask {
+  1 : i64 vps_id,
+  2 : i64 from_host_id,
+  3 : i64 to_host_id,
+  4 : i64 from_ip, 
+  5 : i64 to_ip,
+  6 : i16 state,
 }
 
 struct NetFlow {
@@ -30,7 +45,7 @@ struct NetFlow {
 	3: i64 tx						,
 }
 
-enum Cmd{
+enum CMD{
   NONE        = 0,
   OPEN        = 1,
   CLOSE       = 2,
@@ -40,7 +55,7 @@ enum Cmd{
   OS          = 6, //更换操作系统
   UPGRADE     = 7,
   MIGRATE     = 8,
-  MONITOR     = 9,
+  MONITOR     = 9, //监控
 }
 
 
@@ -49,8 +64,8 @@ typedef i64 Id
 
 service VPS {
 
-   Id    todo            ( 1:i64  host_id , 2:Cmd cmd),
-   void  done            ( 1:i64  host_id , 2:Cmd cmd, 3:Id id, 4:i32 state=0, 5:string message=''), 
+   Id    todo            ( 1:i64  host_id , 2:CMD cmd),
+   void  done            ( 1:i64  host_id , 2:CMD cmd, 3:Id id, 4:i32 state=0, 5:string message=''), 
 
    Vps   vps             ( 1:i64 vps_id   ),
    void  netflow_save    ( 1:i64 host_id, 2:list<NetFlow> netflow, 3:i64 timestamp),
@@ -58,7 +73,12 @@ service VPS {
    void  plot            ( 1:i64 cid, 2:i64 rid, 3:i64 value ),
 
    string   sms          ( 1:list<string>  number_list, 2:string txt),
+
    void  host_refresh    ( 1:i64 host_id , 2:i16 hd_remain, 3:i64 ram_remain, 4:i16 hd_total=0, 5:i64 ram_total=0),
+
+   list<Host> host_list (),
+
+   MigrateTask migrate_task (1:i64 vps_id),
 }
 
 
