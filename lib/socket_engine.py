@@ -622,7 +622,7 @@ try:
 
     class SSLSocketEngine (TCPSocketEngine):
 
-        def __init__ (self, poll, cert_file, debug=False, ssl_version=None):
+        def __init__ (self, poll, cert_file, debug=False, ssl_version=ssl.PROTOCOL_SSLv23):
             TCPSocketEngine.__init__(self, poll, debug=debug)
             self.cert_file = cert_file
             self.ssl_version = ssl_version

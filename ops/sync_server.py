@@ -90,6 +90,10 @@ class SyncServerBase (object):
         except socket.error:
             self.engine.close_conn (conn)
             return
+        except Exception, e:
+            self.logger.exception (e)
+            self.engine.close_conn (conn)
+            return
         try:
             if head.body_len == 0:
                 self.logger.error ("from peer: %s, zero len head received" % (conn.peer))
