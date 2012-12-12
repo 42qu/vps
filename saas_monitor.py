@@ -11,6 +11,7 @@ from lib.alarm import EmailAlarm, AlarmJob
 import time
 import signal
 from _saas import VPS
+from _saas.ttypes import CMD
 from zthrift.client import get_client
 import socket
 
@@ -48,7 +49,7 @@ class SaasMonitor (object):
         try:
             trans.open ()
             try:
-                vps = client.vps (0)
+                _id = client.todo (0, CMD.MONITOR)
             finally:
                 trans.close ()
             self.logger.info ("ok")

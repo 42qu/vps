@@ -6,7 +6,7 @@ import os
 import conf
 import const as vps_const
 from _saas import VPS
-from _saas.ttypes import Cmd, NetFlow
+from _saas.ttypes import CMD, NetFlow
 from zthrift.client import get_client
 from zkit.ip import int2ip 
 from ops.vps import XenVPS
@@ -36,13 +36,13 @@ class VPSMgr (object):
         self.host_id = conf.HOST_ID
         self.vpsops = VPSOps (self.logger)
         self.handlers = {
-            Cmd.OPEN: self.__class__.vps_open,
-            Cmd.REBOOT: self.__class__.vps_reboot,
-            Cmd.CLOSE: self.__class__.vps_close,
-            Cmd.OS: self.__class__.vps_reinstall_os,
-            Cmd.UPGRADE: self.__class__.vps_upgrade,
-            Cmd.BANDWIDTH: self.__class__.vps_set_bandwidth,
-            Cmd.RM: self.__class__.vps_delete,
+            CMD.OPEN: self.__class__.vps_open,
+            CMD.REBOOT: self.__class__.vps_reboot,
+            CMD.CLOSE: self.__class__.vps_close,
+            CMD.OS: self.__class__.vps_reinstall_os,
+            CMD.UPGRADE: self.__class__.vps_upgrade,
+            CMD.BANDWIDTH: self.__class__.vps_set_bandwidth,
+            CMD.RM: self.__class__.vps_delete,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -237,12 +237,12 @@ class VPSMgr (object):
         if vps_info.host_id != self.host_id:
             msg = "vpsopen : vps %s host_id=%s != current host %s , abort" % (vps_id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_id, False, msg)
+            self.done_task (CMD.OPEN, vps_id, False, msg)
             return
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OPEN, vps_id, False, msg)
+            self.done_task (CMD.OPEN, vps_id, False, msg)
             return
         xv = XenVPS (vps_id)
         try:
@@ -253,13 +253,13 @@ class VPSMgr (object):
             if limit and len (domain_dict.keys ()) >= limit + 1:
                 msg = "vps open: cannot open more than %d vps" % (limit)
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_id, False, msg)
+                self.done_task (CMD.OPEN, vps_id, False, msg)
                 return
             self.setup_vps (xv, vps_info)
             if xv.is_running ():
                 msg = "vps %s is running" % (vps_id)
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_id, True, msg)
+                self.done_task (CMD.OPEN, vps_id, True, msg)
                 return
             if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN, vps_const.VM_STATE.CLOSE]:
                 if self.vpsops.is_normal_exists (vps_id):
@@ -275,13 +275,13 @@ class VPSMgr (object):
             else:
                 msg = "vps%s state is %s(%s)" % (str(vps_id), vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
                 self.logger.error (msg)
-                self.done_task (Cmd.OPEN, vps_id, False, msg)
+                self.done_task (CMD.OPEN, vps_id, False, msg)
                 return
         except Exception, e:
             self.logger.exception ("vps %s: %s" % (str(vps_id), str(e)))
-            self.done_task (Cmd.OPEN, vps_id, False, "error, " + str(e))
+            self.done_task (CMD.OPEN, vps_id, False, "error, " + str(e))
             return
-        self.done_task (Cmd.OPEN, vps_id, True)
+        self.done_task (CMD.OPEN, vps_id, True)
         self.refresh_host_space ()
         return True
 
@@ -305,12 +305,12 @@ class VPSMgr (object):
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_info.id)
             self.logger.error (msg)
-            self.done_task (Cmd.OS, vps_info.id, False, msg)
+            self.done_task (CMD.OS, vps_info.id, False, msg)
             return
         if vps_info.host_id != self.host_id:
             msg = "vps reinstall_os : vps %s host_id=%s != current host %s , abort" % (vps_info.id, vps_info.host_id, self.host_id)
             self.logger.error (msg)
-            self.done_task (Cmd.OS, vps_info.id, False, msg)
+            self.done_task (CMD.OS, vps_info.id, False, msg)
             return
         return self._reinstall_os (vps_info.id, vps_info)
 
@@ -322,12 +322,12 @@ class VPSMgr (object):
                 self.setup_vps (xv, vps_info)
             self.vpsops.reinstall_os (vps_id, xv, os_id, vps_image)
             if vps_info:
-                self.done_task (Cmd.OS, vps_id, True, "os:%s" % (vps_info.os))
+                self.done_task (CMD.OS, vps_id, True, "os:%s" % (vps_info.os))
             return True
         except Exception, e:
             self.logger.exception ("vps %s: %s" % (str(vps_id), str(e)))
             if vps_info:
-                self.done_task (Cmd.OS, vps_id, False, "os:%s, error: %s "% (vps_info.os,  str(e)))
+                self.done_task (CMD.OS, vps_id, False, "os:%s, error: %s "% (vps_info.os,  str(e)))
             return False
 
     def vps_upgrade (self, vps_info):
@@ -336,18 +336,18 @@ class VPSMgr (object):
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_info.id)
             self.logger.error (msg)
-            self.done_task (Cmd.UPGRADE, vps_info.id, False, msg)
+            self.done_task (CMD.UPGRADE, vps_info.id, False, msg)
             return
         try:
             xv = XenVPS (vps_info.id)
             self.setup_vps (xv, vps_info)
             self.vpsops.upgrade_vps (xv)
             self.refresh_host_space ()
-            self.done_task(Cmd.UPGRADE, vps_info.id, True)
+            self.done_task(CMD.UPGRADE, vps_info.id, True)
             return True
         except Exception, e:
             self.logger.exception ("vps %s: %s" % (str(vps_info.id), str(e)))
-            self.done_task(Cmd.UPGRADE, vps_info.id, False, "exception %s" % str(e))
+            self.done_task(CMD.UPGRADE, vps_info.id, False, "exception %s" % str(e))
             return False
 
     def vps_reboot (self, vps_info):
@@ -358,9 +358,9 @@ class VPSMgr (object):
             self.vpsops.reboot_vps (xv)
         except Exception, e:
             self.logger.exception (e)
-            self.done_task (Cmd.REBOOT, vps_info.id, False, "exception %s" % (str(e)))
+            self.done_task (CMD.REBOOT, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.REBOOT, vps_info.id, True)
+        self.done_task (CMD.REBOOT, vps_info.id, True)
         return True
 
     def vps_set_bandwidth (self, vps_info):
@@ -371,9 +371,9 @@ class VPSMgr (object):
             self.vpsops.change_qos (xv)
         except Exception, e:
             self.logger.exception (e)
-            self.done_task (Cmd.BANDWIDTH, vps_info.id, False, "exception %s" % (str(e)))
+            self.done_task (CMD.BANDWIDTH, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.BANDWIDTH, vps_info.id, True)
+        self.done_task (CMD.BANDWIDTH, vps_info.id, True)
         return True
 
 
@@ -428,7 +428,7 @@ class VPSMgr (object):
                 xv = XenVPS (vps_id)
                 self.setup_vps (xv, vps_info)
             self.vpsops.delete_vps (vps_id, xv, check_date=check_date)
-            self.done_task(Cmd.RM, vps_id, True)
+            self.done_task(CMD.RM, vps_id, True)
         except Exception, e:
             self.logger.exception (e)
             raise e
@@ -437,7 +437,7 @@ class VPSMgr (object):
         try:
             self._vps_delete (vps_info.id, vps_info, check_date=True)
         except Exception, e:
-            self.done_task (Cmd.RM, vps_info.id, False, "exception %s" % (str(e)))
+            self.done_task (CMD.RM, vps_info.id, False, "exception %s" % (str(e)))
 
 
     def vps_close (self, vps_info):
@@ -450,16 +450,16 @@ class VPSMgr (object):
                 raise Exception ("state check not passed")
         except Exception, e:
             self.logger.exception (e)
-            self.done_task (Cmd.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
+            self.done_task (CMD.CLOSE, vps_info.id, False, "exception %s" % (str(e)))
             return
-        self.done_task (Cmd.CLOSE, vps_info.id, True)
+        self.done_task (CMD.CLOSE, vps_info.id, True)
         self.refresh_host_space ()
         return True
 
             
     def loop (self):
         while self.running:
-            self.run_loop(Cmd.BANDWIDTH) # because ovs db searching uses signal and can only work in main thread ...
+            self.run_loop(CMD.BANDWIDTH) # because ovs db searching uses signal and can only work in main thread ...
             time.sleep (1)
         self.timer.stop () 
         self.logger.info ("timer stopped")
@@ -481,7 +481,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (Cmd.OPEN, Cmd.CLOSE, Cmd.OS, Cmd.UPGRADE, Cmd.REBOOT, Cmd.RM)
+        self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.UPGRADE, CMD.REBOOT, CMD.RM)
         self.timer.start ()
         self.logger.info ("timer started")
 
