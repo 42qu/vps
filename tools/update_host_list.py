@@ -16,8 +16,10 @@ def update_iplist (host_list):
     conf_path = os.path.join (dirname (dirname (abspath (__file__))), "conf/private/migrate_svr.py")
     ip_list = []
     for host in host_list:
-        ip_list.append (int2ip(host.ext_ip))
-        ip_list.append (int2ip(host.int_ip))
+        if host.ext_ip:
+            ip_list.append (int2ip(host.ext_ip))
+        if host.int_ip:
+            ip_list.append (int2ip(host.int_ip))
     conf_content = """#!/usr/bin/python
 
 ALLOWED_IPS = [
