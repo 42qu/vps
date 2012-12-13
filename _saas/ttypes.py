@@ -466,33 +466,39 @@ class Host:
 class MigrateTask:
   """
   Attributes:
+   - id
    - vps_id
    - from_host_id
    - to_host_id
    - to_host_ip
    - new_ext_ips
    - new_int_ip
+   - new_gateway
    - state
   """
 
   thrift_spec = (
     None, # 0
-    (1, TType.I64, 'vps_id', None, None, ), # 1
-    (2, TType.I64, 'from_host_id', None, None, ), # 2
-    (3, TType.I64, 'to_host_id', None, None, ), # 3
-    (4, TType.I64, 'to_host_ip', None, None, ), # 4
-    (5, TType.LIST, 'new_ext_ips', (TType.STRUCT,(Ip, Ip.thrift_spec)), None, ), # 5
-    (6, TType.STRUCT, 'new_int_ip', (Ip, Ip.thrift_spec), None, ), # 6
-    (7, TType.I16, 'state', None, None, ), # 7
+    (1, TType.I64, 'id', None, None, ), # 1
+    (2, TType.I64, 'vps_id', None, None, ), # 2
+    (3, TType.I64, 'from_host_id', None, None, ), # 3
+    (4, TType.I64, 'to_host_id', None, None, ), # 4
+    (5, TType.I64, 'to_host_ip', None, None, ), # 5
+    (6, TType.LIST, 'new_ext_ips', (TType.STRUCT,(Ip, Ip.thrift_spec)), None, ), # 6
+    (7, TType.STRUCT, 'new_int_ip', (Ip, Ip.thrift_spec), None, ), # 7
+    (8, TType.STRUCT, 'new_gateway', (Ip, Ip.thrift_spec), None, ), # 8
+    (9, TType.I16, 'state', None, None, ), # 9
   )
 
-  def __init__(self, vps_id=None, from_host_id=None, to_host_id=None, to_host_ip=None, new_ext_ips=None, new_int_ip=None, state=None,):
+  def __init__(self, id=None, vps_id=None, from_host_id=None, to_host_id=None, to_host_ip=None, new_ext_ips=None, new_int_ip=None, new_gateway=None, state=None,):
+    self.id = id
     self.vps_id = vps_id
     self.from_host_id = from_host_id
     self.to_host_id = to_host_id
     self.to_host_ip = to_host_ip
     self.new_ext_ips = new_ext_ips
     self.new_int_ip = new_int_ip
+    self.new_gateway = new_gateway
     self.state = state
 
   def read(self, iprot):
@@ -506,25 +512,30 @@ class MigrateTask:
         break
       if fid == 1:
         if ftype == TType.I64:
-          self.vps_id = iprot.readI64();
+          self.id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 2:
         if ftype == TType.I64:
-          self.from_host_id = iprot.readI64();
+          self.vps_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 3:
         if ftype == TType.I64:
-          self.to_host_id = iprot.readI64();
+          self.from_host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 4:
         if ftype == TType.I64:
-          self.to_host_ip = iprot.readI64();
+          self.to_host_id = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 5:
+        if ftype == TType.I64:
+          self.to_host_ip = iprot.readI64();
+        else:
+          iprot.skip(ftype)
+      elif fid == 6:
         if ftype == TType.LIST:
           self.new_ext_ips = []
           (_etype19, _size16) = iprot.readListBegin()
@@ -535,13 +546,19 @@ class MigrateTask:
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
-      elif fid == 6:
+      elif fid == 7:
         if ftype == TType.STRUCT:
           self.new_int_ip = Ip()
           self.new_int_ip.read(iprot)
         else:
           iprot.skip(ftype)
-      elif fid == 7:
+      elif fid == 8:
+        if ftype == TType.STRUCT:
+          self.new_gateway = Ip()
+          self.new_gateway.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 9:
         if ftype == TType.I16:
           self.state = iprot.readI16();
         else:
@@ -556,35 +573,43 @@ class MigrateTask:
       oprot.trans.write(fastbinary.encode_binary(self, (self.__class__, self.thrift_spec)))
       return
     oprot.writeStructBegin('MigrateTask')
+    if self.id is not None:
+      oprot.writeFieldBegin('id', TType.I64, 1)
+      oprot.writeI64(self.id)
+      oprot.writeFieldEnd()
     if self.vps_id is not None:
-      oprot.writeFieldBegin('vps_id', TType.I64, 1)
+      oprot.writeFieldBegin('vps_id', TType.I64, 2)
       oprot.writeI64(self.vps_id)
       oprot.writeFieldEnd()
     if self.from_host_id is not None:
-      oprot.writeFieldBegin('from_host_id', TType.I64, 2)
+      oprot.writeFieldBegin('from_host_id', TType.I64, 3)
       oprot.writeI64(self.from_host_id)
       oprot.writeFieldEnd()
     if self.to_host_id is not None:
-      oprot.writeFieldBegin('to_host_id', TType.I64, 3)
+      oprot.writeFieldBegin('to_host_id', TType.I64, 4)
       oprot.writeI64(self.to_host_id)
       oprot.writeFieldEnd()
     if self.to_host_ip is not None:
-      oprot.writeFieldBegin('to_host_ip', TType.I64, 4)
+      oprot.writeFieldBegin('to_host_ip', TType.I64, 5)
       oprot.writeI64(self.to_host_ip)
       oprot.writeFieldEnd()
     if self.new_ext_ips is not None:
-      oprot.writeFieldBegin('new_ext_ips', TType.LIST, 5)
+      oprot.writeFieldBegin('new_ext_ips', TType.LIST, 6)
       oprot.writeListBegin(TType.STRUCT, len(self.new_ext_ips))
       for iter22 in self.new_ext_ips:
         iter22.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.new_int_ip is not None:
-      oprot.writeFieldBegin('new_int_ip', TType.STRUCT, 6)
+      oprot.writeFieldBegin('new_int_ip', TType.STRUCT, 7)
       self.new_int_ip.write(oprot)
       oprot.writeFieldEnd()
+    if self.new_gateway is not None:
+      oprot.writeFieldBegin('new_gateway', TType.STRUCT, 8)
+      self.new_gateway.write(oprot)
+      oprot.writeFieldEnd()
     if self.state is not None:
-      oprot.writeFieldBegin('state', TType.I16, 7)
+      oprot.writeFieldBegin('state', TType.I16, 9)
       oprot.writeI16(self.state)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

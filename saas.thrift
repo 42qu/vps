@@ -31,13 +31,15 @@ struct Host {
 }
 
 struct MigrateTask {
-  1 : i64 vps_id,
-  2 : i64 from_host_id,
-  3 : i64 to_host_id,
-  4 : i64 to_host_ip,
-  5 : list<Ip> new_ext_ips,
-  6 : Ip new_int_ip,
-  7 : i16 state,
+  1 : i64 id,
+  2 : i64 vps_id,
+  3 : i64 from_host_id,
+  4 : i64 to_host_id,
+  5 : i64 to_host_ip,
+  6 : list<Ip> new_ext_ips,
+  7 : Ip new_int_ip,
+  8 : Ip new_gateway,
+  9 : i16 state,
 }
 
 struct NetFlow {

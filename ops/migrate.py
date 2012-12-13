@@ -39,7 +39,7 @@ class MigrateServer (SyncServerBase):
         self._handlers["umount"] = self._handler_umount
         self._handlers["create_vps"] = self._handler_create_vps
         self._handlers["prepare_immigrate"] = self._handler_prepare_immigrate
-        self._handlers["hot_immigrate"] = self._handler_hot_immigrate
+#        self._handlers["hot_immigrate"] = self._handler_hot_immigrate
         self._handlers["save_closed_vps"] = self._handler_save_closed_vps
 #        self._handlers["import_swap"] = self._handler_import_swap
 #        self._handlers["fail_hot_immigrate"] = self._handler_fail_hot_immigrate
@@ -170,26 +170,26 @@ class MigrateServer (SyncServerBase):
 
 
 
-    def _handler_hot_immigrate (self, conn, cmd, data):
-        vps_id = self._get_req_attr (data, "vps_id")
-        savefile_size = self._get_req_attr (data, "savefile_size")
-        try:
-            vpsops = VPSOps (self.logger)
-            xv = vpsops.load_vps_meta (int(vps_id))
-            if not os.path.isfile (xv.save_path):
-                self.logger.error ("%s does not exist" % xv.save_path)
-                return self._send_response (conn, 1, "receiving savefile error")
-            st = os.stat (xv.save_path)
-            if savefile_size != st.st_size:
-                self.logger.error ("%s size not right, %s!=%s" % (xv.save_path, savefile_size, st.st_size))
-                return self._send_response (conn, 1, "save file size not right")
-            vpsops.create_from_hot_migrate (xv)
-            self._send_response (conn, 0, "")
-        except socket.error, e:
-            raise e
-        except Exception, e:
-            self.logger.exception (e)
-            self._send_response (conn, 1, str(e))
+#    def _handler_hot_immigrate (self, conn, cmd, data):
+#        vps_id = self._get_req_attr (data, "vps_id")
+#        savefile_size = self._get_req_attr (data, "savefile_size")
+#        try:
+#            vpsops = VPSOps (self.logger)
+#            xv = vpsops.load_vps_meta (int(vps_id))
+#            if not os.path.isfile (xv.save_path):
+#                self.logger.error ("%s does not exist" % xv.save_path)
+#                return self._send_response (conn, 1, "receiving savefile error")
+#            st = os.stat (xv.save_path)
+#            if savefile_size != st.st_size:
+#                self.logger.error ("%s size not right, %s!=%s" % (xv.save_path, savefile_size, st.st_size))
+#                return self._send_response (conn, 1, "save file size not right")
+#            vpsops.create_from_hot_migrate (xv)
+#            self._send_response (conn, 0, "")
+#        except socket.error, e:
+#            raise e
+#        except Exception, e:
+#            self.logger.exception (e)
+#            self._send_response (conn, 1, str(e))
 
 
     def _handler_create_vps (self, conn, cmd, data):

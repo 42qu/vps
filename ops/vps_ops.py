@@ -605,88 +605,88 @@ class VPSOps (object):
         self.loginfo (xv, "done vps change ip")
       
 
-    def create_from_hot_migrate (self, xv):
-        """ server side """
-        xv.check_storage_integrity ()
-        self._clear_nonexisting_trash (xv)
-        self.create_xen_config (xv)
-        # test
-        xv.restore ()
-        if not xv.wait_until_reachable (120):
-            raise Exception ("the vps started, seems not reachable")
-        os.remove (xv.save_path)
-        self.loginfo (xv, "removed %s" % (xv.save_path))
-        self.loginfo (xv, "done vps hot immigrate")
+#    def create_from_hot_migrate (self, xv):
+#        """ server side """
+#        xv.check_storage_integrity ()
+#        self._clear_nonexisting_trash (xv)
+#        self.create_xen_config (xv)
+#        # test
+#        xv.restore ()
+#        if not xv.wait_until_reachable (120):
+#            raise Exception ("the vps started, seems not reachable")
+#        os.remove (xv.save_path)
+#        self.loginfo (xv, "removed %s" % (xv.save_path))
+#        self.loginfo (xv, "done vps hot immigrate")
 
-    def _send_swap (self, migclient, xv, remote_path, result):
-        assert isinstance (result, dict)
-        if not xv.swap_store or xv.swap_store.size_g <= 0:
-            return
-        try:
-            self.logger.info ("going to send %s" % (xv.swap_store.file_path))
-            migclient.sendfile (xv.swap_store.file_path, remote_path, block_size=5 * 1024 * 1024)
-            result["swap"] = (0, "")
-            self.logger.info ("sent %s" % (xv.swap_store.file_path))
-        except Exception, e:
-            self.logger.exception (e)
-            result["swap"] = (1, str(e))
-        return result
+#    def _send_swap (self, migclient, xv, remote_path, result):
+#        assert isinstance (result, dict)
+#        if not xv.swap_store or xv.swap_store.size_g <= 0:
+#            return
+#        try:
+#            self.logger.info ("going to send %s" % (xv.swap_store.file_path))
+#            migclient.sendfile (xv.swap_store.file_path, remote_path, block_size=5 * 1024 * 1024)
+#            result["swap"] = (0, "")
+#            self.logger.info ("sent %s" % (xv.swap_store.file_path))
+#        except Exception, e:
+#            self.logger.exception (e)
+#            result["swap"] = (1, str(e))
+#        return result
 
-    def _send_savefile (self, migclient, xv, result):
-        assert isinstance (result, dict)
-        self.logger.info ("going to send %s" % (xv.save_path))
-        ret, err = migclient.rsync (xv.save_path, use_zip=True)
-        result["savefile"] = (ret, err)
-        if ret == 0:
-            self.logger.info ("sent %s" % (xv.save_path))
-        else:
-            self.logger.error ("sending %s error: %s" % (xv.save_path, err))
-        return result
+#    def _send_savefile (self, migclient, xv, result):
+#        assert isinstance (result, dict)
+#        self.logger.info ("going to send %s" % (xv.save_path))
+#        ret, err = migclient.rsync (xv.save_path, use_zip=True)
+#        result["savefile"] = (ret, err)
+#        if ret == 0:
+#            self.logger.info ("sent %s" % (xv.save_path))
+#        else:
+#            self.logger.error ("sending %s error: %s" % (xv.save_path, err))
+#        return result
 
 
-    def migrate_vps_hot (self, migclient, vps_id, dest_ip, speed=None):
-        """client size"""
-        xv = self.load_vps_meta (vps_id)
-        xv.save ()
-        try:
-            swap_path = migclient.prepare_immigrate (xv)
-            result = dict ()
-            th1 = threading.Thread (target=self._send_swap, args=(migclient, xv, swap_path, result,))
-            th1.setDaemon (1)
-            th1.start ()
-            th2 = threading.Thread (target=self._send_savefile, args=(migclient, xv, result,))
-            th2.setDaemon (1)
-            th2.start ()
-            for disk in xv.data_disks.values ():
-                migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
-            self.loginfo (xv, "partition synced")
-            th1.join ()
-            th2.join ()
-            swap_result = result.get ("swap")
-            savefile_result = result.get ("savefile")
-            if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
-                migclient.vps_hot_immigrate (xv)
-                self.loginfo (xv, "emigrated to %s" % (dest_ip))
-                #TODO
-                print "ok"
-                # ok
-                return
-            else:
-                if swap_result and swap_result[0] != 0:
-                    print "sending swap error: ", swap_result[1]
-                if savefile_result and savefile_result[0] != 0:
-                    print "sending savefile error:", savefile_result[1]
-        except Exception, e:
-            self.logger.exception (e)
-            print "error %s" % (e)
-        # error
-        print "going to restore vps %s" % (xv.vps_id)
-        xv.restore ()
-        msg = "vps %s restored" % (xv.vps_id)
-        print msg
-        self.logger.info (msg)
-        os.remove (xv.save_path)
-        return False
+#    def migrate_vps_hot (self, migclient, vps_id, dest_ip, speed=None):
+#        """client size"""
+#        xv = self.load_vps_meta (vps_id)
+#        xv.save ()
+#        try:
+#            swap_path = migclient.prepare_immigrate (xv)
+#            result = dict ()
+#            th1 = threading.Thread (target=self._send_swap, args=(migclient, xv, swap_path, result,))
+#            th1.setDaemon (1)
+#            th1.start ()
+#            th2 = threading.Thread (target=self._send_savefile, args=(migclient, xv, result,))
+#            th2.setDaemon (1)
+#            th2.start ()
+#            for disk in xv.data_disks.values ():
+#                migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
+#            self.loginfo (xv, "partition synced")
+#            th1.join ()
+#            th2.join ()
+#            swap_result = result.get ("swap")
+#            savefile_result = result.get ("savefile")
+#            if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
+#                migclient.vps_hot_immigrate (xv)
+#                self.loginfo (xv, "emigrated to %s" % (dest_ip))
+#                #TODO
+#                print "ok"
+#                # ok
+#                return
+#            else:
+#                if swap_result and swap_result[0] != 0:
+#                    print "sending swap error: ", swap_result[1]
+#                if savefile_result and savefile_result[0] != 0:
+#                    print "sending savefile error:", savefile_result[1]
+#        except Exception, e:
+#            self.logger.exception (e)
+#            print "error %s" % (e)
+#        # error
+#        print "going to restore vps %s" % (xv.vps_id)
+#        xv.restore ()
+#        msg = "vps %s restored" % (xv.vps_id)
+#        print msg
+#        self.logger.info (msg)
+#        os.remove (xv.save_path)
+#        return False
         
 
     def create_from_migrate (self, xv):
