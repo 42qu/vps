@@ -12,7 +12,7 @@ struct Vps {
    2 : list<Ip> ext_ips             ,
    3 : Ip gateway                   ,
    4 : string password              ,
-   5 : i32 os                    ,                       //os的id
+   5 : i32 os                       ,                       //os的id
    6 : map<i32, i32> harddisks      ,                       //
    7 : i64 ram                      ,                       //单位M
    8 : i16 cpu                      ,                       //几个core
@@ -34,9 +34,10 @@ struct MigrateTask {
   1 : i64 vps_id,
   2 : i64 from_host_id,
   3 : i64 to_host_id,
-  4 : i64 from_ip, 
-  5 : i64 to_ip,
-  6 : i16 state,
+  4 : i64 to_host_ip,
+  5 : list<Ip> new_ext_ips,
+  6 : Ip new_int_ip,
+  7 : i16 state,
 }
 
 struct NetFlow {
@@ -45,7 +46,7 @@ struct NetFlow {
 	3: i64 tx						,
 }
 
-enum CMD{
+enum CMD {
   NONE        = 0,
   OPEN        = 1,
   CLOSE       = 2,
@@ -56,6 +57,7 @@ enum CMD{
   UPGRADE     = 7,
   MIGRATE     = 8,
   MONITOR     = 9, //监控
+  PRE_SYNC    = 10,
 }
 
 

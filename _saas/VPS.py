@@ -954,11 +954,11 @@ class netflow_save_args:
       elif fid == 2:
         if ftype == TType.LIST:
           self.netflow = []
-          (_etype19, _size16) = iprot.readListBegin()
-          for _i20 in xrange(_size16):
-            _elem21 = NetFlow()
-            _elem21.read(iprot)
-            self.netflow.append(_elem21)
+          (_etype26, _size23) = iprot.readListBegin()
+          for _i27 in xrange(_size23):
+            _elem28 = NetFlow()
+            _elem28.read(iprot)
+            self.netflow.append(_elem28)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -984,8 +984,8 @@ class netflow_save_args:
     if self.netflow is not None:
       oprot.writeFieldBegin('netflow', TType.LIST, 2)
       oprot.writeListBegin(TType.STRUCT, len(self.netflow))
-      for iter22 in self.netflow:
-        iter22.write(oprot)
+      for iter29 in self.netflow:
+        iter29.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.timestamp is not None:
@@ -1207,10 +1207,10 @@ class sms_args:
       if fid == 1:
         if ftype == TType.LIST:
           self.number_list = []
-          (_etype26, _size23) = iprot.readListBegin()
-          for _i27 in xrange(_size23):
-            _elem28 = iprot.readString();
-            self.number_list.append(_elem28)
+          (_etype33, _size30) = iprot.readListBegin()
+          for _i34 in xrange(_size30):
+            _elem35 = iprot.readString();
+            self.number_list.append(_elem35)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1232,8 +1232,8 @@ class sms_args:
     if self.number_list is not None:
       oprot.writeFieldBegin('number_list', TType.LIST, 1)
       oprot.writeListBegin(TType.STRING, len(self.number_list))
-      for iter29 in self.number_list:
-        oprot.writeString(iter29)
+      for iter36 in self.number_list:
+        oprot.writeString(iter36)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     if self.txt is not None:
@@ -1534,11 +1534,11 @@ class host_list_result:
       if fid == 0:
         if ftype == TType.LIST:
           self.success = []
-          (_etype33, _size30) = iprot.readListBegin()
-          for _i34 in xrange(_size30):
-            _elem35 = Host()
-            _elem35.read(iprot)
-            self.success.append(_elem35)
+          (_etype40, _size37) = iprot.readListBegin()
+          for _i41 in xrange(_size37):
+            _elem42 = Host()
+            _elem42.read(iprot)
+            self.success.append(_elem42)
           iprot.readListEnd()
         else:
           iprot.skip(ftype)
@@ -1555,8 +1555,8 @@ class host_list_result:
     if self.success is not None:
       oprot.writeFieldBegin('success', TType.LIST, 0)
       oprot.writeListBegin(TType.STRUCT, len(self.success))
-      for iter36 in self.success:
-        iter36.write(oprot)
+      for iter43 in self.success:
+        iter43.write(oprot)
       oprot.writeListEnd()
       oprot.writeFieldEnd()
     oprot.writeFieldStop()

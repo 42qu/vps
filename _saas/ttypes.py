@@ -27,6 +27,7 @@ class CMD:
   UPGRADE = 7
   MIGRATE = 8
   MONITOR = 9
+  PRE_SYNC = 10
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -39,6 +40,7 @@ class CMD:
     7: "UPGRADE",
     8: "MIGRATE",
     9: "MONITOR",
+    10: "PRE_SYNC",
   }
 
   _NAMES_TO_VALUES = {
@@ -52,6 +54,7 @@ class CMD:
     "UPGRADE": 7,
     "MIGRATE": 8,
     "MONITOR": 9,
+    "PRE_SYNC": 10,
   }
 
 
@@ -466,8 +469,9 @@ class MigrateTask:
    - vps_id
    - from_host_id
    - to_host_id
-   - from_ip
-   - to_ip
+   - to_host_ip
+   - new_ext_ips
+   - new_int_ip
    - state
   """
 
@@ -476,17 +480,19 @@ class MigrateTask:
     (1, TType.I64, 'vps_id', None, None, ), # 1
     (2, TType.I64, 'from_host_id', None, None, ), # 2
     (3, TType.I64, 'to_host_id', None, None, ), # 3
-    (4, TType.I64, 'from_ip', None, None, ), # 4
-    (5, TType.I64, 'to_ip', None, None, ), # 5
-    (6, TType.I16, 'state', None, None, ), # 6
+    (4, TType.I64, 'to_host_ip', None, None, ), # 4
+    (5, TType.LIST, 'new_ext_ips', (TType.STRUCT,(Ip, Ip.thrift_spec)), None, ), # 5
+    (6, TType.STRUCT, 'new_int_ip', (Ip, Ip.thrift_spec), None, ), # 6
+    (7, TType.I16, 'state', None, None, ), # 7
   )
 
-  def __init__(self, vps_id=None, from_host_id=None, to_host_id=None, from_ip=None, to_ip=None, state=None,):
+  def __init__(self, vps_id=None, from_host_id=None, to_host_id=None, to_host_ip=None, new_ext_ips=None, new_int_ip=None, state=None,):
     self.vps_id = vps_id
     self.from_host_id = from_host_id
     self.to_host_id = to_host_id
-    self.from_ip = from_ip
-    self.to_ip = to_ip
+    self.to_host_ip = to_host_ip
+    self.new_ext_ips = new_ext_ips
+    self.new_int_ip = new_int_ip
     self.state = state
 
   def read(self, iprot):
@@ -515,15 +521,27 @@ class MigrateTask:
           iprot.skip(ftype)
       elif fid == 4:
         if ftype == TType.I64:
-          self.from_ip = iprot.readI64();
+          self.to_host_ip = iprot.readI64();
         else:
           iprot.skip(ftype)
       elif fid == 5:
-        if ftype == TType.I64:
-          self.to_ip = iprot.readI64();
+        if ftype == TType.LIST:
+          self.new_ext_ips = []
+          (_etype19, _size16) = iprot.readListBegin()
+          for _i20 in xrange(_size16):
+            _elem21 = Ip()
+            _elem21.read(iprot)
+            self.new_ext_ips.append(_elem21)
+          iprot.readListEnd()
         else:
           iprot.skip(ftype)
       elif fid == 6:
+        if ftype == TType.STRUCT:
+          self.new_int_ip = Ip()
+          self.new_int_ip.read(iprot)
+        else:
+          iprot.skip(ftype)
+      elif fid == 7:
         if ftype == TType.I16:
           self.state = iprot.readI16();
         else:
@@ -550,16 +568,23 @@ class MigrateTask:
       oprot.writeFieldBegin('to_host_id', TType.I64, 3)
       oprot.writeI64(self.to_host_id)
       oprot.writeFieldEnd()
-    if self.from_ip is not None:
-      oprot.writeFieldBegin('from_ip', TType.I64, 4)
-      oprot.writeI64(self.from_ip)
+    if self.to_host_ip is not None:
+      oprot.writeFieldBegin('to_host_ip', TType.I64, 4)
+      oprot.writeI64(self.to_host_ip)
       oprot.writeFieldEnd()
-    if self.to_ip is not None:
-      oprot.writeFieldBegin('to_ip', TType.I64, 5)
-      oprot.writeI64(self.to_ip)
+    if self.new_ext_ips is not None:
+      oprot.writeFieldBegin('new_ext_ips', TType.LIST, 5)
+      oprot.writeListBegin(TType.STRUCT, len(self.new_ext_ips))
+      for iter22 in self.new_ext_ips:
+        iter22.write(oprot)
+      oprot.writeListEnd()
+      oprot.writeFieldEnd()
+    if self.new_int_ip is not None:
+      oprot.writeFieldBegin('new_int_ip', TType.STRUCT, 6)
+      self.new_int_ip.write(oprot)
       oprot.writeFieldEnd()
     if self.state is not None:
-      oprot.writeFieldBegin('state', TType.I16, 6)
+      oprot.writeFieldBegin('state', TType.I16, 7)
       oprot.writeI16(self.state)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
