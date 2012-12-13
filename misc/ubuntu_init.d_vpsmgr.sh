@@ -6,7 +6,7 @@
 # Required-Start:       $xend
 # Required-Stop:        $xend
 # Default-Start:        2 3 4 5
-# Default-Stop:         
+# Default-Stop:        0 1 6 
 # Short-Description:   vpsmgr 
 ### END INIT INFO
 
