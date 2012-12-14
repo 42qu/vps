@@ -22,6 +22,7 @@ import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 import conf
+from ops.migrate import MigrateClient
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -376,6 +377,18 @@ class VPSMgr (object):
         self.done_task (CMD.BANDWIDTH, vps_info.id, True)
         return True
 
+    def vps_host_sync (self, vps_id):
+        try:
+            task = query_migrate_task (vps_id)
+            if not task:
+                self.logger.warn ("no migrate task for vps%s" % (vps_id))
+                return
+                return
+            to_host_ip = int2ip (task.to_host_ip)
+            mgclient = MigrateClient (self.logger, to_host_ip)
+            # TODO speed
+            self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=5)
+
 
     def query_vps (self, vps_id):
         trans, client = self.get_client ()
@@ -388,6 +401,20 @@ class VPSMgr (object):
         if vps_info is None or vps_info.id <= 0:
             return None
         return vps_info
+
+    def query_migrate_task (self, vps_id):
+        trans, client = self.get_client ()
+        trans.open ()
+        task = None
+        try:
+            task = client.migrate_task (vps_id)
+        finally:
+            trans.close ()
+        if task is None or task.id <= 0:
+            return None
+        if task.to_host_ip <= 0:
+            raise Exception ("no destination host ip for task%s vps%s" % (task.id, vps_id))
+        return task
 
     def refresh_host_space (self):
         disk_remain = None

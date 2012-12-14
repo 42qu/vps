@@ -743,12 +743,12 @@ class VPSOps (object):
 
 
 
-    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
-        if not conf.USE_LVM:
-            raise Exception ("only lvm host support hotsync")
-        xv = self.load_vps_meta (vps_id)
-        for disk in xv.data_disks.values ():
-            migclient.snapshot_sync (disk.dev, speed=speed)
+#    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
+#        if not conf.USE_LVM:
+#            raise Exception ("only lvm host support hotsync")
+#        xv = self.load_vps_meta (vps_id)
+#        for disk in xv.data_disks.values ():
+#            migclient.snapshot_sync (disk.dev, speed=speed)
         
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

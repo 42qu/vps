@@ -38,7 +38,7 @@ class MigrateServer (SyncServerBase):
         self._handlers["alloc_partition"] = self._handler_alloc_partition
         self._handlers["umount"] = self._handler_umount
         self._handlers["create_vps"] = self._handler_create_vps
-        self._handlers["prepare_immigrate"] = self._handler_prepare_immigrate
+#        self._handlers["prepare_immigrate"] = self._handler_prepare_immigrate
 #        self._handlers["hot_immigrate"] = self._handler_hot_immigrate
         self._handlers["save_closed_vps"] = self._handler_save_closed_vps
 #        self._handlers["import_swap"] = self._handler_import_swap
@@ -118,33 +118,33 @@ class MigrateServer (SyncServerBase):
             self._send_response (conn, 1, str(e))
 
 
-    def _handler_prepare_immigrate (self, conn, cmd, data):
-        meta = self._get_req_attr (data, "meta")
-        origin_host_id = self._get_req_attr (data, "origin_host_id")
-        response = {}
-        try:
-            vpsops = VPSOps (self.logger)
-            xv = XenVPS.from_meta (meta)
-            self.logger.info ("prepare vps %s 's immigration from host=%s" % (xv.vps_id, origin_host_id))
-            xv.check_resource_avail (ignore_trash=True)
-            if xv.swap_store.size_g > 0:
-                if not xv.swap_store.exists ():
-                    xv.swap_store.create ()
-                self.logger.info ("swap image %s created" % (str(xv.swap_store)))
-                response["swap_path"] = xv.swap_store.file_path
-            else:
-                response["swap_path"] = None
-#            swap_port = self.start_sendfile_svr (xv.swap_store.file_path)
-#            response["swap_port"] = swap_port
-#            save_port = self.start_sendfile_svr (xv.save_path)
-#            response["savefile_port"] = save_port
-            vpsops.save_vps_meta (xv)
-            self._send_response (conn, 0, response)
-        except socket.error, e:
-            raise e
-        except Exception, e:
-            self.logger.exception (e)
-            self._send_response (conn, 1, str(e))
+#    def _handler_prepare_immigrate (self, conn, cmd, data):
+#        meta = self._get_req_attr (data, "meta")
+#        origin_host_id = self._get_req_attr (data, "origin_host_id")
+#        response = {}
+#        try:
+#            vpsops = VPSOps (self.logger)
+#            xv = XenVPS.from_meta (meta)
+#            self.logger.info ("prepare vps %s 's immigration from host=%s" % (xv.vps_id, origin_host_id))
+#            xv.check_resource_avail (ignore_trash=True)
+#            if xv.swap_store.size_g > 0:
+#                if not xv.swap_store.exists ():
+#                    xv.swap_store.create ()
+#                self.logger.info ("swap image %s created" % (str(xv.swap_store)))
+#                response["swap_path"] = xv.swap_store.file_path
+#            else:
+#                response["swap_path"] = None
+##            swap_port = self.start_sendfile_svr (xv.swap_store.file_path)
+##            response["swap_port"] = swap_port
+##            save_port = self.start_sendfile_svr (xv.save_path)
+##            response["savefile_port"] = save_port
+#            vpsops.save_vps_meta (xv)
+#            self._send_response (conn, 0, response)
+#        except socket.error, e:
+#            raise e
+#        except Exception, e:
+#            self.logger.exception (e)
+#            self._send_response (conn, 1, str(e))
 
 #    def _handler_import_swap (self, conn, cmd, data):
 #        file_name = self._get_req_attr (data, "swap_file_name")
@@ -347,22 +347,22 @@ class MigrateClient (SyncClientBase):
             if sock:
                 sock.close ()
 
-    def prepare_immigrate (self, xv):
-        meta = xv.to_meta ()
-        swap_path = None
-        sock = None
-        try:
-            sock = self.connect (timeout=10)
-            self._send_msg (sock, "prepare_immigrate", {
-                    'meta': meta,
-                    'origin_host_id': conf.HOST_ID,
-                })
-            msg = self._recv_response (sock)
-            swap_path = msg["swap_path"]
-        finally:
-            if sock:
-                sock.close ()
-        return swap_path
+#    def prepare_immigrate (self, xv):
+#        meta = xv.to_meta ()
+#        swap_path = None
+#        sock = None
+#        try:
+#            sock = self.connect (timeout=10)
+#            self._send_msg (sock, "prepare_immigrate", {
+#                    'meta': meta,
+#                    'origin_host_id': conf.HOST_ID,
+#                })
+#            msg = self._recv_response (sock)
+#            swap_path = msg["swap_path"]
+#        finally:
+#            if sock:
+#                sock.close ()
+#        return swap_path
         
 #    def import_swap (self, xv):
 #        filename = os.path.basename (xv.swap_store.file_path)
@@ -380,20 +380,20 @@ class MigrateClient (SyncClientBase):
 #                sock.close ()
 
 
-    def vps_hot_immigrate (self, xv):
-        sock = None
-        try:
-            st = os.stat (xv.save_path)
-            sock = self.connect (timeout=120)
-            self._send_msg (sock, "hot_immigrate", {
-                "vps_id": xv.vps_id,
-#                "savefile_port": savefile_port,
-#                "swap_port": swap_port,
-                "savefile_size": st.st_size,
-                })
-            msg = self._recv_response (sock)
-        finally:
-            if sock:
-                sock.close ()
-
+#    def vps_hot_immigrate (self, xv):
+#        sock = None
+#        try:
+#            st = os.stat (xv.save_path)
+#            sock = self.connect (timeout=120)
+#            self._send_msg (sock, "hot_immigrate", {
+#                "vps_id": xv.vps_id,
+##                "savefile_port": savefile_port,
+##                "swap_port": swap_port,
+#                "savefile_size": st.st_size,
+#                })
+#            msg = self._recv_response (sock)
+#        finally:
+#            if sock:
+#                sock.close ()
+#
 

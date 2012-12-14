@@ -26,6 +26,16 @@ class VM_STATE:
     OPEN = 15
     CLOSE = 20
 
+class MIGRATE_STATE:
+    NEW = 1
+    TO_PRE_SYNC = 2
+    PRE_SYNCING = 3
+    PRE_SYNCED = 4
+    TO_MIGRATE = 5
+    MIGRATING = 6
+    DONE = 7
+    CANCELED = 8
+
 VM_STATE_CN = _dictcls()
 VM_STATE_CN[VM_STATE.OPEN] = '运行中'
 VM_STATE_CN[VM_STATE.PAY] = '待开通'

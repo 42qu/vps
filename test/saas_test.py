@@ -5,7 +5,7 @@ import sys
 import _env
 import conf
 import _saas
-from _saas.ttypes import Cmd
+from _saas.ttypes import CMD
 from vps_mgr import VPSMgr
 import time
 from zthrift.client import get_client
@@ -43,11 +43,17 @@ class TestSAASClient (unittest.TestCase):
 
     def test_done (self):
         m = VPSMgr ()
-        m.done_task (Cmd.OPEN, 4, True)
+        m.done_task (CMD.OPEN, 4, True)
+
+    def test_migrate_task (self):
+        m = VPSMgr ()
+        task = m.query_migrate_task (9)
+        print task.id, task.to_host_ip, task.to_host_id 
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner ()
-    runner.run (TestSAASClient ("test_state"))
+    #runner.run (TestSAASClient ("test_state"))
+    runner.run (TestSAASClient ("test_migrate_task"))
     #runner.run (TestSAASClient ("test_done"))
     #runner.run (TestSAASClient ("test_netflow"))
 
