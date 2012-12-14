@@ -40,6 +40,7 @@ struct MigrateTask {
   7 : Ip new_int_ip,
   8 : Ip new_gateway,
   9 : i16 state,
+ 10 : i16 speed,
 }
 
 struct NetFlow {
