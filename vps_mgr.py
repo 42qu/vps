@@ -21,7 +21,6 @@ import signal
 import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
-import conf
 from ops.migrate import MigrateClient
 
 class VPSMgr (object):
@@ -378,62 +377,63 @@ class VPSMgr (object):
         self.done_task (CMD.BANDWIDTH, vps_info.id, True)
         return True
 
-    def vps_host_sync (self, vps_id):
+    def vps_hot_sync (self, vps_info):
+        return self._vps_hot_sync (vps_info.id)
+
+    def _vps_hot_sync (self, vps_id, force=False, to_host_ip=None, speed=None):
         task = None
         try:
-            task = query_migrate_task (vps_id)
-            if not task:
-                self.logger.warn ("no migrate task for vps%s" % (vps_id))
-                return False
-            if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC:
-                self.logger.warn ("task%s state is not TO_PRE_SYNC" % (task.id))
-                return False
-        except Exception, e:
-            self.logger.exception (e)
-            return False
-        try:
-            to_host_ip = int2ip (task.to_host_ip)
+            task = self.query_migrate_task (vps_id)
+            if task:
+                if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC and not force:
+                    raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
+                to_host_ip = int2ip (task.to_host_ip)
+                speed = task.speed
+            elif not to_host_ip:
+                raise Exception ("no destination host ip for vps%s" % (vps_id))
             mgclient = MigrateClient (self.logger, to_host_ip)
-            self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=task.speed or 2)
+            self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=speed)
         except Exception, e:
+            print str(e)
             self.logger.exception (e)
             self.done_task (CMD.PRE_SYNC, vps_id, False, "exception %s" % (str(e)))
             return False
         self.done_task (CMD.PRE_SYNC, vps_id, True)
 
-    def vps_migrate (self, vps_id):
-        task = None
+    def vps_migrate (self, vps_info):
+        return self._vps_migrate (vps_info.id)
+
+    def _vps_migrate (self, vps_id, force=False, to_host_ip=None, speed=None):
         try:
-            task = query_migrate_task (vps_id)
-            if not task:
-                self.logger.warn ("no migrate task for vps%s" % (vps_id))
-                return False
-            if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE:
-                self.logger.warn ("task%s state is not TO_MIGRATE" % (task.id))
-                return False
-        except Exception, e:
-            self.logger.exception (e)
-            return False
-        try:
-            to_host_ip = int2ip (task.to_host_ip)
-            mgclient = MigrateClient (self.logger, to_host_ip)
             xv = self.vpsops.load_vps_meta (vps_id)
-            xv.vifs = dict ()
-            if task.new_ext_ips:
-                ip_dict = dict ()
-                for ip in task.new_ext_ips:
-                    ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
-                xv.add_netinf_ext (ip_dict, mac=task.new_ext_ips[0].mac, bandwidth=task.bandwidth)
-            ip_inner_dict = dict ()
-            if task.new_int_ip and task.new_int_ip.ipv4:
-                ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
-                xv.add_netinf_int (ip_inner_dict)
-            vpsops.migrate_vps (migclient, vps_id, to_host_ip, speed=task.speed or 2, xv=xv)
+            task = self.query_migrate_task (vps_id)
+            if task:
+                if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and not force:
+                    raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
+                to_host_ip = int2ip (task.to_host_ip)
+                xv.vifs = dict ()
+                if task.new_ext_ips:
+                    ip_dict = dict ()
+                    for ip in task.new_ext_ips:
+                        ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+                    xv.add_netinf_ext (ip_dict, mac=task.new_ext_ips[0].mac, bandwidth=task.bandwidth)
+                ip_inner_dict = dict ()
+                if task.new_int_ip and task.new_int_ip.ipv4:
+                    ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
+                    xv.add_netinf_int (ip_inner_dict)
+                speed = task.speed
+            elif not force:
+                raise Exception ("no migrate task for vps%s" % (vps_id))
+            assert to_host_ip
+            migclient = MigrateClient (self.logger, to_host_ip)
+            self.vpsops.migrate_vps (migclient, vps_id, to_host_ip, xv, speed=speed)
         except Exception, e:
+            print str(e)
             self.logger.exception (e)
             self.done_task (CMD.MIGRATE, vps_id, False, "exception %s" % (str(e)))
             return False
         self.done_task (CMD.MIGRATE, vps_id, True)
+        return True
 
 
 
@@ -556,6 +556,8 @@ class VPSMgr (object):
             return
         self.running = True
         self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.UPGRADE, CMD.REBOOT, CMD.RM)
+        self.start_worker (CMD.PRE_SYNC)
+        self.start_worker (CMD.MIGRATE)
         self.timer.start ()
         self.logger.info ("timer started")
 

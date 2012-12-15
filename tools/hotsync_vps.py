@@ -12,11 +12,9 @@ from ops.vps_ops import VPSOps
 
 
 def hotsync_vps (vps_id, dest_ip, speed=None):
-    logger = Log ("vps_mgr", config=conf)
+    client = VPSMgr ()
     try:
-        vpsops = VPSOps (logger)
-        client = MigrateClient (logger, dest_ip)
-        vpsops.hotsync_vps (client, vps_id, dest_ip, speed=speed)
+        client._vps_hot_sync (vps_id, dest_ip, speed=speed)
         print "%s ok" % (vps_id)
     except Exception, e:
         logger.exception (e)
@@ -40,7 +38,11 @@ def main ():
         usage ()
         os._exit (1)
     vps_ids = map (lambda x: int(x), args[0:-1])
-    dest_ip = args[-1]
+    dest_ip = None
+    if re.match (r'^\d+\.\d+\.\d+\.\d+$', args[-1]):
+        dest_ip = args[-1]
+    else:
+        vps_ids.append (args[-1])
     for vps_id in vps_ids:
         hotsync_vps (vps_id, dest_ip, speed)
 

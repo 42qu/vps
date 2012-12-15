@@ -11,31 +11,18 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 
 
-def migrate_vps (vps_id, dest_ip, speed=None, force=False):
-    logger = Log ("vps_mgr", config=conf)
+def migrate_vps (vps_id, dest_ip=None, speed=None, force=False):
     client = VPSMgr ()
-    vps_info = None
-    try:
-        vps_info = client.query_vps (vps_id)
-    except Exception, e:
-        print "failed to query vps state: [%s] %s" % (type(e), str(e))
-        if not force:
-            os._exit (1)
-    try:
-        vpsops = VPSOps (logger)
-        xv = None
-        if vps_info:
-            xv = XenVPS (vps_info.id)
-            client.setup_vps (xv, vps_info)
-        migclient = MigrateClient (logger, dest_ip)
-        vpsops.migrate_vps (migclient, vps_id, dest_ip, speed=speed, _xv=xv)
+    if force:
+        assert dest_ip
+    if client._vps_migrate (vps_id, force=force, to_host_ip=dest_ip, speed=speed):
         print "ok"
-    except Exception, e:
-        logger.exception (e)
-        raise e
+    else:
+        print "error, pls see log"
 
 def usage ():
-    print "usage: %s  [ --speed MBbit/s] vps_id [vps_id2 ...] dest_ip" % (sys.argv[0])
+    print "usage: %s  [ --speed MBbit/s] [-f] vps_id [vps_id2 ...] dest_ip" % (sys.argv[0])
+    print "usage: %s  vps_id" % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "f", [
@@ -52,11 +39,15 @@ def main ():
         if opt == '-f' or opt == '--force':
             force = True
     
-    if len (args) < 2:
+    if len (args) < 1:
         usage ()
         os._exit (1)
     vps_ids = map (lambda x: int(x), args[0:-1])
-    dest_ip = args[-1]
+    dest_ip = None
+    if re.match (r'^\d+\.\d+\.\d+\.\d+$', args[-1]):
+        dest_ip = args[-1]
+    else:
+        vps_ids.append (args[-1])
     for vps_id in vps_ids:
         migrate_vps (vps_id, dest_ip, speed=speed, force=force)
 

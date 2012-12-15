@@ -712,8 +712,10 @@ class VPSOps (object):
         self.loginfo (xv, "done vps creation")
        
 
-    def migrate_vps (self, migclient, vps_id, dest_ip, xv, speed=None):
+    def migrate_vps (self, migclient, vps_id, dest_ip, xv=None, speed=None):
         """client side """
+        if not xv:
+            xv = self.load_vps_meta (vps_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
         else:
