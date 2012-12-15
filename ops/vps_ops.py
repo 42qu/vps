@@ -712,16 +712,14 @@ class VPSOps (object):
         self.loginfo (xv, "done vps creation")
        
 
-    def migrate_vps (self, migclient, vps_id, dest_ip, speed=None, _xv=None):
+    def migrate_vps (self, migclient, vps_id, dest_ip, xv, speed=None):
         """client side """
-        xv = self.load_vps_meta (vps_id)
         if xv.stop ():
             self.loginfo (xv, "vps stopped")
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
-        if _xv:
-            self._update_vif_setting (xv, _xv)
+        xv.vifs = dict ()
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         for disk in xv.data_disks.values ():
             migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)
@@ -743,12 +741,12 @@ class VPSOps (object):
 
 
 
-#    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
-#        if not conf.USE_LVM:
-#            raise Exception ("only lvm host support hotsync")
-#        xv = self.load_vps_meta (vps_id)
-#        for disk in xv.data_disks.values ():
-#            migclient.snapshot_sync (disk.dev, speed=speed)
+    def hotsync_vps (self, migclient, vps_id, dest_ip, speed=None):
+        if not conf.USE_LVM:
+            raise Exception ("only lvm host support hotsync")
+        xv = self.load_vps_meta (vps_id)
+        for disk in xv.data_disks.values ():
+            migclient.snapshot_sync (disk.dev, speed=speed)
         
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

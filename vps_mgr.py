@@ -217,10 +217,11 @@ class VPSMgr (object):
         root_size = vps_info.harddisks and vps_info.harddisks[0] or 0
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
                 disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway and int2ip (vps_info.gateway.ipv4) or 0)
-        ip_dict = dict ()
-        for ip in vps_info.ext_ips:
-            ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
-            xenvps.add_netinf_ext (ip_dict, mac=ip.mac, bandwidth=vps_info.bandwidth)
+        if vps_info.ext_ips:
+            ip_dict = dict ()
+            for ip in vps_info.ext_ips:
+                ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+            xenvps.add_netinf_ext (ip_dict, mac=vps_info.ext_ips[0].mac, bandwidth=vps_info.bandwidth)
         ip_inner_dict = dict ()
         if vps_info.int_ip and vps_info.int_ip.ipv4:
             ip_inner_dict[int2ip (vps_info.int_ip.ipv4)] = int2ip (vps_info.int_ip.ipv4_netmask)
@@ -378,16 +379,62 @@ class VPSMgr (object):
         return True
 
     def vps_host_sync (self, vps_id):
+        task = None
         try:
             task = query_migrate_task (vps_id)
             if not task:
                 self.logger.warn ("no migrate task for vps%s" % (vps_id))
-                return
-                return
+                return False
+            if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC:
+                self.logger.warn ("task%s state is not TO_PRE_SYNC" % (task.id))
+                return False
+        except Exception, e:
+            self.logger.exception (e)
+            return False
+        try:
             to_host_ip = int2ip (task.to_host_ip)
             mgclient = MigrateClient (self.logger, to_host_ip)
-            # TODO speed
-            self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=5)
+            self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=task.speed or 2)
+        except Exception, e:
+            self.logger.exception (e)
+            self.done_task (CMD.PRE_SYNC, vps_id, False, "exception %s" % (str(e)))
+            return False
+        self.done_task (CMD.PRE_SYNC, vps_id, True)
+
+    def vps_migrate (self, vps_id):
+        task = None
+        try:
+            task = query_migrate_task (vps_id)
+            if not task:
+                self.logger.warn ("no migrate task for vps%s" % (vps_id))
+                return False
+            if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE:
+                self.logger.warn ("task%s state is not TO_MIGRATE" % (task.id))
+                return False
+        except Exception, e:
+            self.logger.exception (e)
+            return False
+        try:
+            to_host_ip = int2ip (task.to_host_ip)
+            mgclient = MigrateClient (self.logger, to_host_ip)
+            xv = self.vpsops.load_vps_meta (vps_id)
+            xv.vifs = dict ()
+            if task.new_ext_ips:
+                ip_dict = dict ()
+                for ip in task.new_ext_ips:
+                    ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+                xv.add_netinf_ext (ip_dict, mac=task.new_ext_ips[0].mac, bandwidth=task.bandwidth)
+            ip_inner_dict = dict ()
+            if task.new_int_ip and task.new_int_ip.ipv4:
+                ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
+                xv.add_netinf_int (ip_inner_dict)
+            vpsops.migrate_vps (migclient, vps_id, to_host_ip, speed=task.speed or 2, xv=xv)
+        except Exception, e:
+            self.logger.exception (e)
+            self.done_task (CMD.MIGRATE, vps_id, False, "exception %s" % (str(e)))
+            return False
+        self.done_task (CMD.MIGRATE, vps_id, True)
+
 
 
     def query_vps (self, vps_id):
