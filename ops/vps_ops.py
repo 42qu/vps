@@ -721,7 +721,6 @@ class VPSOps (object):
         else:
             xv.destroy ()
             self.loginfo (xv, "vps cannot shutdown, destroyed it")
-        xv.vifs = dict ()
         self.loginfo (xv, "going to be migrated to %s" % (dest_ip))
         for disk in xv.data_disks.values ():
             migclient.sync_partition (disk.file_path, partition_name=disk.partition_name, speed=speed)

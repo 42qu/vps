@@ -5,7 +5,7 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import conf
-from _saas.ttypes import Cmd
+from _saas.ttypes import CMD
 from ops.vps import XenVPS
 
 import getopt
@@ -30,11 +30,11 @@ def reopen_vps (vps_id):
         xv = XenVPS (vps_info.id)
         client.setup_vps (xv, vps_info)
         client.vpsops.reopen_vps (vps_id, xv)
-        client.done_task (Cmd.OPEN, vps_id, True)
+        client.done_task (CMD.OPEN, vps_id, True)
         return True
     except Exception, e:
         client.logger.exception ("for %s: %s" % (str(vps_id), str(e)))
-        client.done_task (Cmd.OPEN, vps_id, False, "error, " + str(e))
+        client.done_task (CMD.OPEN, vps_id, False, "error, " + str(e))
         return False
 
 if __name__ == '__main__':

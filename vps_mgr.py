@@ -43,6 +43,8 @@ class VPSMgr (object):
             CMD.UPGRADE: self.__class__.vps_upgrade,
             CMD.BANDWIDTH: self.__class__.vps_set_bandwidth,
             CMD.RM: self.__class__.vps_delete,
+            CMD.PRE_SYNC: self.__class__.vps_hot_sync,
+            CMD.MIGRATE: self.__class__.vps_migrate,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -389,8 +391,9 @@ class VPSMgr (object):
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
                 to_host_ip = int2ip (task.to_host_ip)
                 speed = task.speed
-            elif not to_host_ip:
+            elif not force or not to_host_ip:
                 raise Exception ("no destination host ip for vps%s" % (vps_id))
+            self.logger.info ("to pre sync vps%s to host %s" % (vps_id, to_host_ip))
             mgclient = MigrateClient (self.logger, to_host_ip)
             self.vpsops.hotsync_vps (mgclient, vps_id, to_host_ip, speed=speed)
         except Exception, e:
@@ -422,11 +425,11 @@ class VPSMgr (object):
                     ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
                     xv.add_netinf_int (ip_inner_dict)
                 speed = task.speed
-            elif not force:
+            elif not force or not to_host_ip:
                 raise Exception ("no migrate task for vps%s" % (vps_id))
-            assert to_host_ip
             migclient = MigrateClient (self.logger, to_host_ip)
-            self.vpsops.migrate_vps (migclient, vps_id, to_host_ip, xv, speed=speed)
+            self.logger.info ("to migrate vps%s to host %s" % (vps_id, to_host_ip))
+            self.vpsops.migrate_vps (migclient, vps_id, to_host_ip, xv=xv, speed=speed)
         except Exception, e:
             print str(e)
             self.logger.exception (e)

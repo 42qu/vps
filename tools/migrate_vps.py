@@ -5,10 +5,9 @@ import getopt
 import _env
 from lib.log import Log
 import conf
-from ops.migrate import MigrateClient
+import re
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
-from ops.vps_ops import VPSOps
 
 
 def migrate_vps (vps_id, dest_ip=None, speed=None, force=False):
@@ -22,7 +21,7 @@ def migrate_vps (vps_id, dest_ip=None, speed=None, force=False):
 
 def usage ():
     print "usage: %s  [ --speed MBbit/s] [-f] vps_id [vps_id2 ...] dest_ip" % (sys.argv[0])
-    print "usage: %s  vps_id" % (sys.argv[0])
+    print "usage with migrate task: %s  vps_id" % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "f", [
@@ -47,7 +46,7 @@ def main ():
     if re.match (r'^\d+\.\d+\.\d+\.\d+$', args[-1]):
         dest_ip = args[-1]
     else:
-        vps_ids.append (args[-1])
+        vps_ids.append (int(args[-1]))
     for vps_id in vps_ids:
         migrate_vps (vps_id, dest_ip, speed=speed, force=force)
 

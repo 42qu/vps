@@ -7,8 +7,8 @@ import getopt
 import _env
 from lib.log import Log
 import conf
-from ops.migrate import MigrateClient
-from ops.vps_ops import VPSOps
+import re
+from vps_mgr import VPSMgr
 
 
 def hotsync_vps (vps_id, dest_ip, speed=None):
@@ -22,6 +22,7 @@ def hotsync_vps (vps_id, dest_ip, speed=None):
  
 def usage ():
     print "usage: %s [ --speed Mbit/s] vps_id1  vps_id2 ... dest_ip " % (sys.argv[0])
+    print "usage with migrate task: %s vps_id1 vps_id2 ... " % (sys.argv[0])
 
 def main ():
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
@@ -34,7 +35,7 @@ def main ():
             os._exit (0)
         if opt == '--speed':
             speed = float (v)
-    if len (args) < 2:
+    if len (args) < 1:
         usage ()
         os._exit (1)
     vps_ids = map (lambda x: int(x), args[0:-1])
@@ -42,7 +43,7 @@ def main ():
     if re.match (r'^\d+\.\d+\.\d+\.\d+$', args[-1]):
         dest_ip = args[-1]
     else:
-        vps_ids.append (args[-1])
+        vps_ids.append (int(args[-1]))
     for vps_id in vps_ids:
         hotsync_vps (vps_id, dest_ip, speed)
 
