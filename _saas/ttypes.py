@@ -474,6 +474,7 @@ class MigrateTask:
    - new_ext_ips
    - new_int_ip
    - new_gateway
+   - bandwidth
    - state
    - speed
   """
@@ -488,11 +489,12 @@ class MigrateTask:
     (6, TType.LIST, 'new_ext_ips', (TType.STRUCT,(Ip, Ip.thrift_spec)), None, ), # 6
     (7, TType.STRUCT, 'new_int_ip', (Ip, Ip.thrift_spec), None, ), # 7
     (8, TType.STRUCT, 'new_gateway', (Ip, Ip.thrift_spec), None, ), # 8
-    (9, TType.I16, 'state', None, None, ), # 9
-    (10, TType.I16, 'speed', None, None, ), # 10
+    (9, TType.I16, 'bandwidth', None, None, ), # 9
+    (10, TType.I16, 'state', None, None, ), # 10
+    (11, TType.I16, 'speed', None, None, ), # 11
   )
 
-  def __init__(self, id=None, vps_id=None, from_host_id=None, to_host_id=None, to_host_ip=None, new_ext_ips=None, new_int_ip=None, new_gateway=None, state=None, speed=None,):
+  def __init__(self, id=None, vps_id=None, from_host_id=None, to_host_id=None, to_host_ip=None, new_ext_ips=None, new_int_ip=None, new_gateway=None, bandwidth=None, state=None, speed=None,):
     self.id = id
     self.vps_id = vps_id
     self.from_host_id = from_host_id
@@ -501,6 +503,7 @@ class MigrateTask:
     self.new_ext_ips = new_ext_ips
     self.new_int_ip = new_int_ip
     self.new_gateway = new_gateway
+    self.bandwidth = bandwidth
     self.state = state
     self.speed = speed
 
@@ -563,10 +566,15 @@ class MigrateTask:
           iprot.skip(ftype)
       elif fid == 9:
         if ftype == TType.I16:
-          self.state = iprot.readI16();
+          self.bandwidth = iprot.readI16();
         else:
           iprot.skip(ftype)
       elif fid == 10:
+        if ftype == TType.I16:
+          self.state = iprot.readI16();
+        else:
+          iprot.skip(ftype)
+      elif fid == 11:
         if ftype == TType.I16:
           self.speed = iprot.readI16();
         else:
@@ -616,12 +624,16 @@ class MigrateTask:
       oprot.writeFieldBegin('new_gateway', TType.STRUCT, 8)
       self.new_gateway.write(oprot)
       oprot.writeFieldEnd()
+    if self.bandwidth is not None:
+      oprot.writeFieldBegin('bandwidth', TType.I16, 9)
+      oprot.writeI16(self.bandwidth)
+      oprot.writeFieldEnd()
     if self.state is not None:
-      oprot.writeFieldBegin('state', TType.I16, 9)
+      oprot.writeFieldBegin('state', TType.I16, 10)
       oprot.writeI16(self.state)
       oprot.writeFieldEnd()
     if self.speed is not None:
-      oprot.writeFieldBegin('speed', TType.I16, 10)
+      oprot.writeFieldBegin('speed', TType.I16, 11)
       oprot.writeI16(self.speed)
       oprot.writeFieldEnd()
     oprot.writeFieldStop()
