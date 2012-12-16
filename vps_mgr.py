@@ -414,7 +414,7 @@ class VPSMgr (object):
                 if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and not force:
                     raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
                 to_host_ip = int2ip (task.to_host_ip)
-                xv.gateway = task.new_gateway and int(task.new_gateway.ipv4) or None
+                xv.gateway = task.new_gateway and int2ip(task.new_gateway.ipv4) or None
                 xv.vifs = dict ()
                 if task.new_ext_ips:
                     ip_dict = dict ()
