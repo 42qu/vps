@@ -400,7 +400,7 @@ class VPSMgr (object):
         try:
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC and not force:
+                if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
                 to_host_ip = int2ip (task.to_host_ip)
                 speed = task.speed
