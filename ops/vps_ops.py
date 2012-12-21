@@ -425,6 +425,23 @@ class VPSOps (object):
         self._boot_and_test (xv_new, is_new=False)
         self.loginfo (xv_new, "done vps upgrade")
 
+    def reset_pw (self, xv):
+        if not xv.root_pw:
+            raise Exception ("orz, root passwd is empty")
+        if xv.stop ():
+            self.loginfo (xv, "stopped")
+        else:
+            xv.destroy ()
+            self.loginfo (xv, "force destroy")
+        vps_mountpoint = xv.root_store.mount_tmp ()
+        try:
+            os_init.set_root_passwd_2 (xv, vps_mountpoint)
+        finally:
+            vps_common.umount_tmp (vps_mountpoint)
+        self._boot_and_test (xv, is_new=True)
+        self.loginfo (xv, "done vps reset passwd")
+
+
     def reinstall_os (self, vps_id, _xv=None, os_id=None, vps_image=None):
         meta_path = self._meta_path (vps_id, is_trash=False)
         xv = None

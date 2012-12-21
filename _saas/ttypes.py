@@ -28,6 +28,7 @@ class CMD:
   MIGRATE = 8
   MONITOR = 9
   PRE_SYNC = 10
+  RESET_PW = 11
 
   _VALUES_TO_NAMES = {
     0: "NONE",
@@ -41,6 +42,7 @@ class CMD:
     8: "MIGRATE",
     9: "MONITOR",
     10: "PRE_SYNC",
+    11: "RESET_PW",
   }
 
   _NAMES_TO_VALUES = {
@@ -55,6 +57,7 @@ class CMD:
     "MIGRATE": 8,
     "MONITOR": 9,
     "PRE_SYNC": 10,
+    "RESET_PW": 11,
   }
 
 

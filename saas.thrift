@@ -62,6 +62,7 @@ enum CMD {
   MIGRATE     = 8,
   MONITOR     = 9, //监控
   PRE_SYNC    = 10,
+  RESET_PW    = 11,
 }
 
 

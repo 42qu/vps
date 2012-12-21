@@ -45,6 +45,7 @@ class VPSMgr (object):
             CMD.RM: self.__class__.vps_delete,
             CMD.PRE_SYNC: self.__class__.vps_hot_sync,
             CMD.MIGRATE: self.__class__.vps_migrate,
+            CMD.RESET_PW: self.__class__.vps_reset_pw,
         }
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
@@ -335,7 +336,6 @@ class VPSMgr (object):
 
     def vps_upgrade (self, vps_info):
         self.logger.info ("to upgrade vps %s" % (vps_info.id))
-        #TODO done task
         if not self.vpsinfo_check_ip (vps_info):
             msg = "no ip with vps %s" % (vps_info.id)
             self.logger.error (msg)
@@ -364,6 +364,19 @@ class VPSMgr (object):
             self.done_task (CMD.REBOOT, vps_info.id, False, "exception %s" % (str(e)))
             return
         self.done_task (CMD.REBOOT, vps_info.id, True)
+        return True
+
+    def vps_reset_pw (self, vps_info):
+        xv = XenVPS (vps_info.id)
+        self.logger.info ("to reset passwd for vps %s" % (vps_info.id))
+        try:
+            self.setup_vps (xv, vps_info) 
+            self.vpsops.reset_pw (xv)
+        except Exception, e:
+            self.logger.exception (e)
+            self.done_task (CMD.RESET_PW, vps_info.id, False, "exception %s" % (str(e)))
+            return
+        self.done_task (CMD.RESET_PW, vps_info.id, True)
         return True
 
     def vps_set_bandwidth (self, vps_info):
@@ -559,7 +572,7 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.UPGRADE, CMD.REBOOT, CMD.RM)
+        self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.UPGRADE, CMD.REBOOT, CMD.RM, CMD.RESET_PW)
         self.start_worker (CMD.PRE_SYNC)
         self.start_worker (CMD.MIGRATE)
         self.timer.start ()
