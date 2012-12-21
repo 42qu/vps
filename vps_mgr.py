@@ -424,7 +424,7 @@ class VPSMgr (object):
             xv = self.vpsops.load_vps_meta (vps_id)
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and not force:
+                if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
                 to_host_ip = int2ip (task.to_host_ip)
                 xv.gateway = task.new_gateway and int2ip(task.new_gateway.ipv4) or None
