@@ -573,7 +573,8 @@ class VPSMgr (object):
             return
         self.running = True
         self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.REBOOT, CMD.RM, CMD.RESET_PW)
-        self.start_worker (CMD.UPGRADE, CMD.PRE_SYNC)
+        self.start_worker (CMD.UPGRADE)
+        self.start_worker (CMD.PRE_SYNC)
         self.start_worker (CMD.MIGRATE)
         self.timer.start ()
         self.logger.info ("timer started")
