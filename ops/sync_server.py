@@ -298,7 +298,7 @@ class SyncClientBase (object):
         sock = None
         filesize = None
         if os.path.islink (filepath):
-            filepath = vps_common.get_link_target (filepath)
+            filepath = os.path.realpath (filepath)
         if os.path.isfile (filepath):
             st = os.stat (filepath)
             filesize = st.st_size

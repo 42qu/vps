@@ -109,13 +109,6 @@ def mount_partition_tmp (dev_path, readonly=False, temp_dir=None):
         raise e
     return tmp_mount
 
-def get_link_target (l):
-    if os.path.islink (l):
-        t = os.readlink (l)
-        l = os.path.join (os.path.dirname (l), t)
-        return os.path.abspath (l)
-    return l
-
 def get_blk_size (dev):
     out = call_cmd ("blockdev --getsize64 %s" % (dev))
     out = out.strip ()
@@ -123,8 +116,7 @@ def get_blk_size (dev):
 
 
 def get_fs_type (dev_path):
-    if os.path.islink (dev_path):
-        dev_path = get_link_target (dev_path)
+    dev_path = os.path.realpath (dev_path)
     assert os.path.exists(dev_path)
     out = call_cmd ("file -s %s" % (dev_path))
     if re.match (r"^.*ext4.*?$", out, re.I):
