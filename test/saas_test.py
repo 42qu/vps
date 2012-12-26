@@ -48,7 +48,7 @@ class TestSAASClient (unittest.TestCase):
     def test_migrate_task (self):
         m = VPSMgr ()
         task = m.query_migrate_task (9)
-        print task.id, task.to_host_ip, task.to_host_id 
+        print task.id, task.to_host_ip, task.to_host_id , task.speed, task.bandwidth
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner ()

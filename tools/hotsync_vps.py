@@ -13,12 +13,10 @@ from vps_mgr import VPSMgr
 
 def hotsync_vps (vps_id, dest_ip, speed=None):
     client = VPSMgr ()
-    try:
-        client._vps_hot_sync (vps_id, dest_ip, speed=speed)
+    if client._vps_hot_sync (vps_id, dest_ip, speed=speed):
         print "%s ok" % (vps_id)
-    except Exception, e:
-        logger.exception (e)
-        raise e
+    else:
+        print "error, pls see log"
  
 def usage ():
     print "usage: %s [ --speed Mbit/s] vps_id1  vps_id2 ... dest_ip " % (sys.argv[0])
