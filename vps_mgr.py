@@ -415,6 +415,7 @@ class VPSMgr (object):
             self.done_task (CMD.PRE_SYNC, vps_id, False, "exception %s" % (str(e)))
             return False
         self.done_task (CMD.PRE_SYNC, vps_id, True)
+        return True
 
     def vps_migrate (self, vps_info):
         return self._vps_migrate (vps_info.id)
