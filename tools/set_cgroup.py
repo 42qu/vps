@@ -44,7 +44,7 @@ def check_all ():
     print "xen_config: %d, running: %d"  % (len(all_ids), len(domain_dict))
     for vps_id in all_ids:
         print "vps", vps_id
-        _set_cgroup (client, vps_id)
+        _set_cgroup (vps_id)
 
 if __name__ == '__main__':
     check_all ()
