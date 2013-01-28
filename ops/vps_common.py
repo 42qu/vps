@@ -326,6 +326,14 @@ def xm_network_attach (domain, vifname, mac, ip, bridge):
 def xm_network_detach (domain, mac):
     call_cmd ("xm network-detach %s %s" % (domain, mac))
 
+def get_dev_no (dev):
+    dev = os.path.realpath (dev)
+    s = os.stat (dev)
+    major = s.st_rdev >> 8
+    minor = s.st_rdev & 0xff
+    return major, minor
+
+
 #def check_loop (img_path):
 #    "return loop device name matching img_path. return None when not found"
 #    _out = subprocess.check_output (["losetup", "-a"])

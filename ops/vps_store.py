@@ -9,7 +9,7 @@ import re
 import ops._env
 import conf
 assert conf.MOUNT_POINT_DIR and os.path.isdir (conf.MOUNT_POINT_DIR)
-from lib.command import CommandException
+from lib.command import CommandException, call_cmd
 
 def _parse_date (s):
     if s is None:
@@ -300,6 +300,7 @@ class VPSStoreLV (VPSStoreBase):
             self.fs_type = fs_type
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.dev)
+        self._create_limit ()
 
        
     def exists (self):
@@ -346,6 +347,7 @@ class VPSStoreLV (VPSStoreBase):
     def dump_trash (self, expire_days):
         if not os.path.exists (self.dev):
             raise Exception ("%s not exist" % (self.dev))
+        self._destroy_limit ()
         if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
         vps_common.lv_rename (self.dev, self.trash_dev)
@@ -356,6 +358,7 @@ class VPSStoreLV (VPSStoreBase):
             raise Exception ("%s not exist" % (self.trash_dev))
         vps_common.lv_rename (self.trash_dev, self.dev)
         self._set_expire_days (None)
+        self._create_limit ()
 
     def delete_trash (self):
         if os.path.exists (self.trash_dev):
@@ -365,6 +368,7 @@ class VPSStoreLV (VPSStoreBase):
         if os.path.exists (self.dev):
             for i in xrange (5):
                 try:
+                    self._destroy_limit ()
                     vps_common.lv_delete (self.dev)
                     break
                 except CommandException, e:
@@ -385,6 +389,40 @@ class VPSStoreLV (VPSStoreBase):
         snapshot_name = "snap_%s" % self.lv_name
         snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name)
         return snapshot_dev
+
+    def _create_limit (self):
+        assert conf.CGROUP_SCRIPT_DIR
+        if os.path.isdir (conf.CGROUP_SCRIPT_DIR):
+            os.makedirs(conf.CGROUP_SCRIPT_DIR)
+        major, minor = vps_common.get_dev_no (self.dev)
+        script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
+        content = ""
+        if conf.BLK_READ_IOPS:
+            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor, conf.BLK_READ_IOPS)
+        if conf.BLK_WRITE_IOPS:
+            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor, conf.BLK_WRITE_IOPS)
+        if content:
+            content = "#!/bin/sh\n" + content 
+            f = open (script_file, "w")
+            try:
+                f.write (content)
+            finally:
+                f.close ()
+            call_cmd ("sh %s" % script_file)
+            return True
+
+    def _destroy_limit (self):
+        major, minor = vps_common.get_dev_no (self.dev)
+        script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
+        if conf.BLK_READ_IOPS:
+            r_cmd = "echo '%s:%s 0' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor)
+            call_cmd (r_cmd)
+        if conf.BLK_WRITE_IOPS:
+            w_cmd = "echo '%s:%s 0' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor)
+            call_cmd (w_cmd)
+        if os.path.isfile (script_file):
+            os.remove (script_file)
+
 
 ##############
 

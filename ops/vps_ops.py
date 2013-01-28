@@ -160,10 +160,8 @@ class VPSOps (object):
             disk.create ()
             self.loginfo (xv, "%s created" % (str(disk)))
 
-
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
-    
         try:
             if re.match (r'.*\.img$', vps_image):
                 vps_common.sync_img (vps_mountpoint, vps_image)
@@ -684,7 +682,6 @@ class VPSOps (object):
 #            if swap_result and swap_result[0] == 0 and savefile_result and savefile_result[0] == 0:
 #                migclient.vps_hot_immigrate (xv)
 #                self.loginfo (xv, "emigrated to %s" % (dest_ip))
-#                #TODO
 #                print "ok"
 #                # ok
 #                return
