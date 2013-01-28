@@ -392,7 +392,7 @@ class VPSStoreLV (VPSStoreBase):
 
     def _create_limit (self):
         assert conf.CGROUP_SCRIPT_DIR
-        if os.path.isdir (conf.CGROUP_SCRIPT_DIR):
+        if not os.path.isdir (conf.CGROUP_SCRIPT_DIR):
             os.makedirs(conf.CGROUP_SCRIPT_DIR)
         major, minor = vps_common.get_dev_no (self.dev)
         script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
