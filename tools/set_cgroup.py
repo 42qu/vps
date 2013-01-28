@@ -14,7 +14,7 @@ from ops.vps_ops import VPSOps
 from ops.xen import XenStore
 import ops.vps_common as vps_common
 
-def _set_cgroup (vps_id):
+def _set_cgroup (client, vps_id):
     meta = client.vpsops._meta_path (vps_id, is_trash=False)
     if not os.path.exists (meta):
         print >> sys.stderr, vps_id, "has no meta"
@@ -44,7 +44,7 @@ def check_all ():
     print "xen_config: %d, running: %d"  % (len(all_ids), len(domain_dict))
     for vps_id in all_ids:
         print "vps", vps_id
-        _set_cgroup (vps_id)
+        _set_cgroup (client, vps_id)
 
 if __name__ == '__main__':
     check_all ()
