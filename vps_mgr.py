@@ -404,7 +404,7 @@ class VPSMgr (object):
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
                 to_host_ip = int2ip (task.to_host_ip)
                 speed = task.speed
-            elif not force or not to_host_ip:
+            elif not force and not to_host_ip:
                 raise Exception ("no destination host ip for vps%s" % (vps_id))
             self.logger.info ("to pre sync vps%s to host %s" % (vps_id, to_host_ip))
             mgclient = MigrateClient (self.logger, to_host_ip)
@@ -440,7 +440,7 @@ class VPSMgr (object):
                     ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
                     xv.add_netinf_int (ip_inner_dict)
                 speed = task.speed
-            elif not force or not to_host_ip:
+            elif not force and not to_host_ip:
                 raise Exception ("no migrate task for vps%s" % (vps_id))
             migclient = MigrateClient (self.logger, to_host_ip)
             self.logger.info ("to migrate vps%s to host %s" % (vps_id, to_host_ip))
