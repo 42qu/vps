@@ -565,7 +565,7 @@ class VPSOps (object):
         if not os.path.exists (meta_path):
             xv = self.load_vps_meta(_xv.vps_id, is_trash=True)
             xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
-            bandwidth = _xv.vif_ext.bandwidth or 0
+            bandwidth = float(_xv.vif_ext.bandwidth or 0)
             vif_name = xv.vif_ext.ifname
             self.save_vps_meta (xv, is_trash=True)
         else:
@@ -573,14 +573,14 @@ class VPSOps (object):
             if not _xv.vif_ext or not xv.vif_ext:
                 return
             xv.vif_ext.bandwidth = _xv.vif_ext.bandwidth
-            bandwidth = _xv.vif_ext.bandwidth or 0
+            bandwidth = float(_xv.vif_ext.bandwidth or 0)
             vif_name = xv.vif_ext.ifname
             self.save_vps_meta (xv)
             if conf.USE_OVS:
                 if xv.is_running ():
                     ovsops = OVSOps ()
                     ovsops.unset_traffic_limit (vif_name)
-                    ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
+                    ovsops.set_traffic_limit (vif_name, int(bandwidth * 1024))
                     self.loginfo (xv, "updated vif=%s bandwidth to %s Mbps" % (vif_name, bandwidth))
                     if not xv.wait_until_reachable (5):
                         raise Exception ("ip unreachable!")

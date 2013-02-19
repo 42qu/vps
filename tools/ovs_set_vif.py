@@ -47,8 +47,8 @@ def main ():
         if ofport >= 0:
             ovsops.set_mac_filter (bridge, ofport, vif.ip_dict.keys ())
         ovsops.unset_traffic_limit (vif_name)
-        bandwidth = vif.bandwidth or 0
-        ovsops.set_traffic_limit (vif_name, bandwidth * 1024)
+        bandwidth = float(vif.bandwidth or 0)
+        ovsops.set_traffic_limit (vif_name, int(bandwidth * 1024))
         print "set vif %s bandwidth %sm/s" % (vif_name, vif.bandwidth)
         return 0
     except Exception, e:

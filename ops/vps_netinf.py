@@ -19,7 +19,7 @@ class VPSNet (object):
         self.bridge = bridge
         self.ip_dict = ip_dict
         self.mac = mac
-        self.bandwidth = bandwidth
+        self.bandwidth = float(bandwidth)
 
     @classmethod
     def from_meta (cls, data):

@@ -302,7 +302,7 @@ on_crash = "restart"
                 vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, rate="") )
             else:
                 vifs.append ( vif_t.substitute (ifname=vif.ifname, mac=vif.mac, ip=" ".join (ips), bridge=vif.bridge, 
-                    rate=",rate=%dMb/s" % vif.bandwidth) )
+                    rate=",rate=%fMb/s" % float(vif.bandwidth)) )
         if self.os_id != 1:  # centos 5.8
             extra_boot_param = " independent_wallclock=1 "
         else:
