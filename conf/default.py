@@ -58,6 +58,8 @@ def prepare(o):
     o.BLK_WRITE_IOPS = 1000
 
     o.OS_IMAGE_DICT = {
+            4: {'os':'CentOS', 'version':'6.3-amd64', 'image': 'centos-6.3-amd64.tar.gz'},
+            3: {'os':'CentOS', 'version': '5.9-i386', 'image': 'centos-5.9-i386.tar.gz'},
             2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},
             1: {'os':'CentOS', 'version': '5.8-i386', 'image': 'centos-5.8-i386.tar.gz'},
         10003: {'os': 'Ubuntu', 'version': '12.04-amd64', 'image': 'ubuntu-12.04-amd64.tar.gz'},
