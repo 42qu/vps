@@ -163,6 +163,7 @@ class VPSOps (object):
         vps_mountpoint = xv.root_store.mount_tmp ()
         self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
+            xv.root_store.destroy_limit ()
             if re.match (r'.*\.img$', vps_image):
                 vps_common.sync_img (vps_mountpoint, vps_image)
             else:
@@ -172,6 +173,7 @@ class VPSOps (object):
             self.loginfo (xv, "begin to init os")
             os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=is_new, to_init_passwd=is_new, to_init_fstab=True)
             self.loginfo (xv, "done init os")
+            xv.root_store.create_limit ()
         finally:
             vps_common.umount_tmp (vps_mountpoint)
         
@@ -495,6 +497,7 @@ class VPSOps (object):
             self.loginfo (xv, "mounted vps image %s" % (str(xv.root_store)))
         
             try:
+                xv.root_store.destroy_limit ()
                 if re.match (r'.*\.img$', vps_image):
                     vps_common.sync_img (vps_mountpoint, vps_image)
                 else:
@@ -516,6 +519,7 @@ class VPSOps (object):
                     os_init.os_init (xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=False, to_init_fstab=True,)
                     os_init.migrate_users (xv, vps_mountpoint, vps_mountpoint_bak)
                 self.loginfo (xv, "done init os")
+                xv.root_store.create_limit ()
             finally:
                 vps_common.umount_tmp (vps_mountpoint)
         finally:
@@ -709,6 +713,9 @@ class VPSOps (object):
         if xv.swap_store.size_g > 0 and not xv.swap_store.exists ():
             xv.swap_store.create ()
             self.loginfo (xv, "swap image %s created" % (str(xv.swap_store)))
+
+        for disk in xv.data_disks.values ():
+            disk.create_limit ()
         xv.check_storage_integrity ()
         self._clear_nonexisting_trash (xv)
         vps_mountpoint = xv.root_store.mount_tmp ()

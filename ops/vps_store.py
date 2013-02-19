@@ -99,6 +99,12 @@ class VPSStoreBase (object):
     def snapshot (self):
         raise NotImplementedError ()
 
+    def create_limit (self):
+        pass
+
+    def destroy_limit (self):
+        pass
+
     def to_meta (self):
         data = {}
         data['__class__'] = self.__class__.__name__
@@ -300,7 +306,7 @@ class VPSStoreLV (VPSStoreBase):
             self.fs_type = fs_type
         assert self.fs_type
         vps_common.format_fs (self.fs_type, self.dev)
-        self._create_limit ()
+        self.create_limit ()
 
        
     def exists (self):
@@ -347,7 +353,7 @@ class VPSStoreLV (VPSStoreBase):
     def dump_trash (self, expire_days):
         if not os.path.exists (self.dev):
             raise Exception ("%s not exist" % (self.dev))
-        self._destroy_limit ()
+        self.destroy_limit ()
         if os.path.exists (self.trash_dev):
             vps_common.lv_delete (self.trash_dev)
         vps_common.lv_rename (self.dev, self.trash_dev)
@@ -358,7 +364,7 @@ class VPSStoreLV (VPSStoreBase):
             raise Exception ("%s not exist" % (self.trash_dev))
         vps_common.lv_rename (self.trash_dev, self.dev)
         self._set_expire_days (None)
-        self._create_limit ()
+        self.create_limit ()
 
     def delete_trash (self):
         if os.path.exists (self.trash_dev):
@@ -368,7 +374,7 @@ class VPSStoreLV (VPSStoreBase):
         if os.path.exists (self.dev):
             for i in xrange (5):
                 try:
-                    self._destroy_limit ()
+                    self.destroy_limit ()
                     vps_common.lv_delete (self.dev)
                     break
                 except CommandException, e:
@@ -390,7 +396,7 @@ class VPSStoreLV (VPSStoreBase):
         snapshot_dev = vps_common.lv_snapshot (self.dev, snapshot_name, self.vg_name)
         return snapshot_dev
 
-    def _create_limit (self):
+    def create_limit (self):
         assert conf.CGROUP_SCRIPT_DIR
         if not os.path.isdir (conf.CGROUP_SCRIPT_DIR):
             os.makedirs(conf.CGROUP_SCRIPT_DIR)
@@ -411,7 +417,7 @@ class VPSStoreLV (VPSStoreBase):
             call_cmd ("sh %s" % script_file)
             return True
 
-    def _destroy_limit (self):
+    def destroy_limit (self):
         major, minor = vps_common.get_dev_no (self.dev)
         script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
         if conf.BLK_READ_IOPS:

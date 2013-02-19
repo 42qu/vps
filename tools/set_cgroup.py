@@ -21,7 +21,7 @@ def _set_cgroup (client, vps_id):
         return
     xv = client.vpsops._load_vps_meta (meta)
     for disk in xv.data_disks.values ():
-        disk._create_limit ()
+        disk.create_limit ()
  
 
 

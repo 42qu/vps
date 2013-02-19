@@ -87,6 +87,7 @@ class MigrateServer (SyncServerBase):
                 else:
                     storage.create ()
                     self.logger.info ("%s created" % (str(storage)))
+            storage.destroy_limit ()
             mount_point = storage.get_mounted_dir ()
             if not mount_point:
                 mount_point = storage.mount_tmp ()
