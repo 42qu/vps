@@ -369,8 +369,8 @@ NETMASK=$NETMASK
 def redhat_init (xv, vps_mountpoint, is_new=True):
     if is_new:
         network = """
-    NETWORKING=yes
-    HOSTNAME=%s
+NETWORKING=yes
+HOSTNAME=%s
     """ % (xv.name)
         f = open (os.path.join (vps_mountpoint, "etc/sysconfig/network"), "w+")
         try:
