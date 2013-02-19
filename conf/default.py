@@ -55,7 +55,7 @@ def prepare(o):
     o.CLOSE_EXPIRE_DAYS = 6
     o.CGROUP_SCRIPT_DIR = "/data/vps/cgroup/"
     o.BLK_READ_IOPS = 800
-    o.BLK_WRITE_IOPS = 700
+    o.BLK_WRITE_IOPS = 1000
 
     o.OS_IMAGE_DICT = {
             2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},
