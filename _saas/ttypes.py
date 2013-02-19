@@ -177,7 +177,7 @@ class Vps:
     (9, TType.I64, 'host_id', None, None, ), # 9
     (10, TType.I16, 'state', None, None, ), # 10
     (11, TType.STRUCT, 'int_ip', (Ip, Ip.thrift_spec), None, ), # 11
-    (12, TType.I64, 'bandwidth', None, None, ), # 12
+    (12, TType.DOUBLE, 'bandwidth', None, None, ), # 12
     (13, TType.I32, 'qos', None, None, ), # 13
     (14, TType.STRING, 'template_image', None, None, ), # 14
   )
@@ -277,8 +277,8 @@ class Vps:
         else:
           iprot.skip(ftype)
       elif fid == 12:
-        if ftype == TType.I64:
-          self.bandwidth = iprot.readI64();
+        if ftype == TType.DOUBLE:
+          self.bandwidth = iprot.readDouble();
         else:
           iprot.skip(ftype)
       elif fid == 13:
@@ -353,8 +353,8 @@ class Vps:
       self.int_ip.write(oprot)
       oprot.writeFieldEnd()
     if self.bandwidth is not None:
-      oprot.writeFieldBegin('bandwidth', TType.I64, 12)
-      oprot.writeI64(self.bandwidth)
+      oprot.writeFieldBegin('bandwidth', TType.DOUBLE, 12)
+      oprot.writeDouble(self.bandwidth)
       oprot.writeFieldEnd()
     if self.qos is not None:
       oprot.writeFieldBegin('qos', TType.I32, 13)

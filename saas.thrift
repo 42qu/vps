@@ -19,7 +19,7 @@ struct Vps {
    9 : i64 host_id                  ,                       //如pc1.42qu.us
   10 : i16 state                    ,
   11 : optional Ip int_ip           ,                       //内网IP
-  12 : optional i64 bandwidth       ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
+  12 : optional double bandwidth       ,                       //带宽 单位 Mbps, 0 或 None 表示不限制
   13 : optional i32 qos             ,                       //带宽优先级 0 为默认值 , 1 为高优先级
   14 : optional string template_image  ,
 }
