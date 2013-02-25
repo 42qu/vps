@@ -52,7 +52,7 @@ def prepare(o):
     o.SAAS_BAD_THRESHOLD = 60 * 3
 
     o.DEFAULT_FS_TYPE = 'ext4'
-    o.CLOSE_EXPIRE_DAYS = 6
+    o.CLOSE_EXPIRE_DAYS = 1
     o.CGROUP_SCRIPT_DIR = "/data/vps/cgroup/"
     o.BLK_READ_IOPS = 1000
     o.BLK_WRITE_IOPS = 1000
