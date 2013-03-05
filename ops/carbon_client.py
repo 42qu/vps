@@ -17,6 +17,9 @@ class CarbonPayload (object):
         payload = pickle.dumps (self.data)
         return struct.pack ("!L", len(payload))
 
+    def is_empty (self):
+        return not self.data
+
 
 def send_data (server_addr, payload):
     sock = socket.socket ()

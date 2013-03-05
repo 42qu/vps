@@ -82,7 +82,6 @@ class VPSMgr (object):
                 # direction of vps bridged network interface needs to be reversed
                 payload.append ("vps.netflow.%d.in"%(vps_id), ts, v[1])
                 payload.append ("vps.netflow.%s.out"%(vps_id), ts, v[0])
-                #netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
                 if self.last_netflow and conf.LARGE_NETFLOW:
                     last_v = self.last_netflow.get (ifname)
                     if last_v:
@@ -95,7 +94,7 @@ class VPSMgr (object):
         except Exception, e:
             self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
             return
-        if not netflow_list:
+        if payload.is_empty ():
             self.logger_misc.info ("no netflow data is to be sent")
             return
         if 'METRIC_SERVER' in dir(conf):
