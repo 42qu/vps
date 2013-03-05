@@ -70,7 +70,7 @@ class VPSMgr (object):
             self.logger_misc.exception ("cannot read netflow data from proc: %s" % (str(e)))
             return
         ts = time.time ()
-        payload = CarbonPayload
+        payload = CarbonPayload ()
         try:
             for ifname, v in result.iteritems ():
                 om = re.match ("^vps(\d+)$", ifname)
