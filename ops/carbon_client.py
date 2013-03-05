@@ -23,7 +23,7 @@ class CarbonPayload (object):
 
 def send_data (server_addr, payload):
     sock = socket.socket ()
-    sock.connect ((ip, port))
+    sock.connect (server_addr)
     try:
         sock.sendall (payload)
     finally:
