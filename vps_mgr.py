@@ -22,6 +22,8 @@ import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from ops.migrate import MigrateClient
+from ops.carbon_client import CarbonPayload, send_data
+
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -51,7 +53,7 @@ class VPSMgr (object):
         assert conf.NETFLOW_COLLECT_INV > 0
         self.last_netflow = None
         self.netflow_inv = conf.NETFLOW_COLLECT_INV
-        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.monitor_netflow)
+        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.monitor_vps)
         self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
@@ -60,7 +62,7 @@ class VPSMgr (object):
         transport, client = get_client (VPS, timeout_ms=5000)
         return transport, client
 
-    def monitor_netflow (self):
+    def monitor_vps (self):
         result = None
         try:
             result = netflow.read_proc ()
@@ -68,7 +70,7 @@ class VPSMgr (object):
             self.logger_misc.exception ("cannot read netflow data from proc: %s" % (str(e)))
             return
         ts = time.time ()
-        netflow_list = list ()
+        payload = CarbonPayload
         try:
             for ifname, v in result.iteritems ():
                 om = re.match ("^vps(\d+)$", ifname)
@@ -78,7 +80,9 @@ class VPSMgr (object):
                 if vps_id <= 0:
                     continue
                 # direction of vps bridged network interface needs to be reversed
-                netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
+                payload.append ("vps.netflow.%d.in", vps_id, ts, v[1])
+                payload.append ("vps.netflow.%s.out", vps_id, ts, v[0])
+                #netflow_list.append (NetFlow (vps_id, rx=v[1], tx=v[0]))
                 if self.last_netflow and conf.LARGE_NETFLOW:
                     last_v = self.last_netflow.get (ifname)
                     if last_v:
@@ -94,16 +98,12 @@ class VPSMgr (object):
         if not netflow_list:
             self.logger_misc.info ("no netflow data is to be sent")
             return
-        trans, client = self.get_client ()
-        try:
-            trans.open ()
+        if 'METRIC_SERVER' in dir(conf):
             try:
-                client.netflow_save (self.host_id, netflow_list, ts)
-                self.logger_misc.info ("netflow data sent")
-            finally:
-                trans.close ()
-        except Exception, e:
-            self.logger_misc.exception ("cannot send netflow data: %s" % (str(e)))
+                send_data (conf.METRIC_SERVER, payload.serialize ())
+                self.logger_misc.info ("monitor data sent")
+            except Exception, e:
+                self.logger_misc.exception ("cannot send monitor data: %s" % (str(e)))
 
 
     def run_once (self, cmd):

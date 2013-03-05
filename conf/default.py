@@ -36,6 +36,7 @@ def prepare(o):
     o.VPS_TRASH_DIR = "/data/vps/trash" # no needed when USE_LVM=True
     o.VPS_IMAGE_DIR = "/data/vps" # no needed when USE_LVM=True
     o.VPS_SWAP_DIR = "/data/swp" # no needed when USE_LVM=True
+    #o.METRIC_SERVER = "carbonserver"
     o.USE_LVM=True
     o.VPS_LVM_VGNAME="main"
     o.LVM_VG_MIN_SPACE = 100 # leave 100G in the VG for temporary needs
