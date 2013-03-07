@@ -80,14 +80,14 @@ class VPSMgr (object):
                 if vps_id <= 0:
                     continue
                 # direction of vps bridged network interface needs to be reversed
-                payload.append ("vps.netflow.%d.in"%(vps_id), ts, v[1])
-                payload.append ("vps.netflow.%s.out"%(vps_id), ts, v[0])
-                if self.last_netflow and conf.LARGE_NETFLOW:
+                if self.last_netflow:
                     last_v = self.last_netflow.get (ifname)
                     if last_v:
                         _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
                         _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
-                        if _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
+                        payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
+                        payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
+                        if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
                             self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
                                     (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
             self.last_netflow = result
