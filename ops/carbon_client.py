@@ -15,7 +15,7 @@ class CarbonPayload (object):
 
     def serialize (self):
         payload = pickle.dumps (self.data)
-        return struct.pack ("!L", len(payload))
+        return struct.pack ("!L", len(payload)) + payload
 
     def is_empty (self):
         return not self.data
