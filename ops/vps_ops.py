@@ -387,7 +387,9 @@ class VPSOps (object):
                         pass
                     elif old_size <= new_size:
                         if new_disk.can_resize ():
+                            new_disk.destroy_limit ()
                             new_disk.resize (new_disk.size_g)
+                            new_disk.create_limit ()
                             self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
                         else:
                             old_disk, new_disk = xv_new.renew_storage (xen_dev)
@@ -396,6 +398,7 @@ class VPSOps (object):
                             try:
                                 fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
                                 new_disk.create (fs_type)
+                                new_disk.destroy_limit ()
                                 self.loginfo (xv_new, "create new %s" % (str(new_disk)))
                                 vps_mountpoint = new_disk.mount_tmp ()
                                 self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
@@ -404,6 +407,7 @@ class VPSOps (object):
                                     self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
                                 finally:
                                     vps_common.umount_tmp (vps_mountpoint)
+                                new_disk.create_limit ()
                             finally:
                                 vps_common.umount_tmp (vps_mountpoint_bak)
                     else:
