@@ -38,21 +38,32 @@ class XenStat (object):
         self.server = ServerProxy(serverURI)
         self.dom_dict = dict () # name -> dominfo
         self.last_ts = None
+        self.total_cpu_avg = 0
 
 
     def run (self, dom_names): 
         """ can be either id or name """
+        total_cpu_time_diff = 0
+        total_vcpu = 0
+        total_ts_diff = 0
         for dom_name in dom_names: 
             domain = self.server.xend.domain (dom_name)
             info = xen.xm.main.parse_doms_info (domain)
             info['ts'] = time.time ()
             last_info = self.dom_dict.get (dom_name)
             if last_info:
-                info['cpu_avg'] = \
-                    float(info['cpu_time'] - last_info['cpu_time']) / float(info['ts'] - last_info['ts']) / int(info['vcpus'])
+                cpu_diff = float(info['cpu_time'] - last_info['cpu_time'])
+                ts_diff = float(info['ts'] - last_info['ts'])
+                info['cpu_avg'] = cpu_diff / ts_diff / int(info['vcpus'])
+                total_vcpu += int(info['vcpus'])
+                total_cpu_time_diff += cpu_diff
+                total_ts_diff += ts_diff
             else:
                 info['cpu_avg'] = 0
             self.dom_dict[dom_name] = info
+            if total_ts_diff:
+                ts_avg = total_ts_diff / len (dom_names)
+                self.total_cpu_avg = total_cpu_time_diff / ts_avg / total_vcpu
   
 if __name__ == '__main__':
     from ops.ixen import get_xen_inf, XenStore
@@ -65,11 +76,6 @@ if __name__ == '__main__':
         time.sleep (1)
 #        dom0 = xs.dom_dict.get ('Domain-0')
 #        print dom0['cpu_avg']
-        infos = xs.dom_dict.values ()
-        cpu_total = 0
-        for info in infos:
-            print info['name'], info['cpu_avg'], info['vcpus']
-            cpu_total += info['cpu_avg']
-        print cpu_total
+        print xs.total_cpu_avg
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
