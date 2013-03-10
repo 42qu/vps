@@ -9,7 +9,7 @@ import const as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
-from ops.xen import XenStore
+from ops.ixen import XenStore
 import ops.vps_common as vps_common
 
 def check_via_meta (client, vps_id, vps_info):

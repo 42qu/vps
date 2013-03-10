@@ -27,6 +27,7 @@ def prepare(o):
     o.log_backup_count = 3
     o.log_level = "DEBUG"
     # for log.py
+    o.XEN_PYTHON_LIB = "/usr/lib/xen-default/lib/python/"
 
     o.VPS_NUM_LIMIT = None
     o.RUN_DIR = "/var/run/vps_mgr"

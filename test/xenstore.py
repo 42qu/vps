@@ -2,7 +2,7 @@
 
 import _env
 import pprint
-from ops.xen import XenStore
+from ops.ixen import XenStore
 
 print XenStore.domain_name_id_map ()
 #pprint.pprint( XenStore._get_dict ("/local/domain/0/backend/vif/114/0"))

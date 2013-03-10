@@ -11,7 +11,7 @@ import const as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
-from ops.xen import XenStore
+from ops.ixen import XenStore
 import ops.vps_common as vps_common
 
 def _check_bandwidth (client, vps_id):

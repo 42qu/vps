@@ -13,7 +13,8 @@ from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
 import ops.vps_common as vps_common
-from ops.xen import get_xen_inf, XenStore
+from ops.ixen import get_xen_inf, XenStore
+from ops.xenstat import XenStat
 import time
 import re
 import lib.daemon as daemon
@@ -49,6 +50,7 @@ class VPSMgr (object):
             CMD.MIGRATE: self.__class__.vps_migrate,
             CMD.RESET_PW: self.__class__.vps_reset_pw,
         }
+        self.xenstat = XenStat ()
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.NETFLOW_COLLECT_INV > 0
         self.last_netflow = None
@@ -70,29 +72,40 @@ class VPSMgr (object):
             self.logger_misc.exception ("cannot read netflow data from proc: %s" % (str(e)))
             return
         ts = time.time ()
+        dom_map = XenStore.domain_name_id_map ()
+        dom_names = dom_map.keys ()
+        self.xenstat.run (dom_names)
         payload = CarbonPayload ()
         try:
-            for ifname, v in result.iteritems ():
-                om = re.match ("^vps(\d+)$", ifname)
+            for dom_name in dom_names:
+                om = re.match ("^vps(\d+)$", dom_name)
                 if not om:
-                    continue
-                vps_id = int(om.group (1))
-                if vps_id <= 0:
-                    continue
-                # direction of vps bridged network interface needs to be reversed
-                if self.last_netflow:
-                    last_v = self.last_netflow.get (ifname)
-                    if last_v:
-                        _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
-                        _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
-                        payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
-                        payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
-                        if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
-                            self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
-                                    (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
+                    # dom0
+                    dom_cpu = self.xenstat.dom_dict.get (dom_name)
+                    if dom_cpu:
+                        payload.append ("host.cpu.%s" % (self.host_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
+                else:
+                    vps_id = int(om.group (1))
+                    dom_cpu = self.xenstat.dom_dict.get (dom_name)
+                    if dom_cpu:
+                        payload.append ("vps.cpu.%s" % (vps_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
+                    ifname = dom_name
+                    v = result.get (ifname)
+                    if v:
+                        # direction of vps bridged network interface needs to be reversed
+                        if self.last_netflow:
+                            last_v = self.last_netflow.get (ifname)
+                            if last_v:
+                                _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
+                                _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
+                                payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
+                                payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
+                                if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
+                                    self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
+                                            (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
             self.last_netflow = result
         except Exception, e:
-            self.logger_misc.exception ("netflow data format error: %s" % (str(e)))
+            self.logger_misc.exception (e)
             return
         if payload.is_empty ():
             self.logger_misc.info ("no netflow data is to be sent")
@@ -231,7 +244,6 @@ class VPSMgr (object):
             for disk_id, disk_size in vps_info.harddisks.iteritems ():
                 if disk_id != 0:
                     xenvps.add_extra_storage (disk_id, disk_size)
-
 
 
     def vps_open (self, vps_info, vps_image=None, is_new=True): 

@@ -3,7 +3,7 @@
 import os
 import re
 import _env
-from ops.xen import XenStore
+from ops.ixen import XenStore
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from vps_mgr import VPSMgr

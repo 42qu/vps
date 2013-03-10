@@ -7,7 +7,7 @@ from string import Template
 from ops.vps_store import vps_store_new, vps_store_clone, VPSStoreBase
 from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
 import ops.vps_common as vps_common
-import ops.xen as xen
+import ops.ixen as ixen
 import lib.diff as diff
 import ops._env
 import conf
@@ -50,7 +50,7 @@ class XenVPS (object):
         self.save_path = os.path.join (conf.MOUNT_POINT_DIR, "%s.save" % self.name)
         self.xen_bridge = conf.XEN_BRIDGE
         self.has_all_attr = False
-        self.xen_inf = xen.get_xen_inf ()
+        self.xen_inf = ixen.get_xen_inf ()
         self.vif_ext_name = self.name
         self.vif_int_name = self.name + "int"
         self.data_disks = {}
