@@ -77,13 +77,14 @@ class VPSMgr (object):
         self.xenstat.run (dom_names)
         payload = CarbonPayload ()
         try:
+            payload.append ("host.cpu.%s.all" % (self.host_id), ts, self.xenstat.total_cpu)
             for dom_name in dom_names:
                 om = re.match ("^vps(\d+)$", dom_name)
                 if not om:
                     # dom0
                     dom_cpu = self.xenstat.dom_dict.get (dom_name)
                     if dom_cpu:
-                        payload.append ("host.cpu.%s" % (self.host_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
+                        payload.append ("host.cpu.%s.dom0" % (self.host_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
                 else:
                     vps_id = int(om.group (1))
                     dom_cpu = self.xenstat.dom_dict.get (dom_name)

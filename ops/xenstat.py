@@ -17,7 +17,6 @@ except ImportError:
 import xen.xm.main
 from xen.xm.main import SERVER_XEN_API, serverType, server, serverURI, ServerProxy
 
-import pprint
 
 class XenStat (object):
 
@@ -38,7 +37,7 @@ class XenStat (object):
         self.server = ServerProxy(serverURI)
         self.dom_dict = dict () # name -> dominfo
         self.last_ts = None
-        self.total_cpu_avg = 0
+        self.total_cpu = 0 # should be less than real cpu number
 
 
     def run (self, dom_names): 
@@ -63,7 +62,7 @@ class XenStat (object):
             self.dom_dict[dom_name] = info
             if total_ts_diff:
                 ts_avg = total_ts_diff / len (dom_names)
-                self.total_cpu_avg = total_cpu_time_diff / ts_avg / total_vcpu
+                self.total_cpu = total_cpu_time_diff / ts_avg 
   
 if __name__ == '__main__':
     from ops.ixen import get_xen_inf, XenStore
@@ -74,8 +73,8 @@ if __name__ == '__main__':
     while True:
         xs.run (dom_names)
         time.sleep (1)
-#        dom0 = xs.dom_dict.get ('Domain-0')
-#        print dom0['cpu_avg']
-        print xs.total_cpu_avg
+        dom0 = xs.dom_dict.get ('Domain-0')
+        print dom0['cpu_avg']
+        print xs.total_cpu
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
