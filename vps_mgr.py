@@ -5,10 +5,9 @@ import sys
 import os
 import conf
 import const as vps_const
-import socket
 from _saas import VPS
-from _saas.ttypes import CMD, NetFlow
-from zthrift.client import get_client
+from _saas.ttypes import CMD
+from zthrift.client import get_client, TException
 from zkit.ip import int2ip 
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
@@ -165,7 +164,7 @@ class VPSMgr (object):
                     self.run_once (cmd, vps_id, vps_info)
                 self.sleep (8) 
 
-            except TTransportException, e:
+            except TException, e:
                 self.logger_net.exception (e)
                 self.sleep (5) 
             except Exception, e:
@@ -558,7 +557,7 @@ class VPSMgr (object):
         self.refresh_host_space ()
         return True
 
-    def sleep (sec):
+    def sleep (self, sec):
         for i in xrange (sec * 2):
             if self.running:
                 time.sleep (0.5)
