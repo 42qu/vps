@@ -141,7 +141,6 @@ class VPSMgr (object):
     def run_loop (self, *cmds):
         self.logger.info ("worker for %s started" % (str(cmds)))
         while self.running:
-            time.sleep(0.5)
             try:
                 trans, client = self.get_client ()
                 pending_jobs = []
@@ -158,19 +157,17 @@ class VPSMgr (object):
                                 vps_info = None
                             else:
                                 pending_jobs.append((cmd, vps_id, vps_info))
-                    trans.close ()
-                except TTransportException, e:
-                    self.logger_net.exception (e)
+                finally:
                     trans.close ()
                 for cmd, vps_id, vps_info in pending_jobs: 
                     if not self.running:
                         break
                     self.run_once (cmd, vps_id, vps_info)
-                for i in xrange (10):
-                    if not self.running:
-                        break
-                    time.sleep (0.5)
+                self.sleep (8) 
 
+            except TTransportException, e:
+                self.logger_net.exception (e)
+                self.sleep (5) 
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
         self.logger.info ("worker for %s stop" % (str(cmds)))
@@ -561,6 +558,10 @@ class VPSMgr (object):
         self.refresh_host_space ()
         return True
 
+    def sleep (sec):
+        for i in xrange (sec * 2):
+            if self.running:
+                time.sleep (0.5)
             
     def loop (self):
         while self.running:
