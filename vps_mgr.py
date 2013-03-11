@@ -5,6 +5,7 @@ import sys
 import os
 import conf
 import const as vps_const
+import socket
 from _saas import VPS
 from _saas.ttypes import CMD, NetFlow
 from zthrift.client import get_client
@@ -119,26 +120,8 @@ class VPSMgr (object):
                 self.logger_misc.exception ("cannot send monitor data: %s" % (str(e)))
 
 
-    def run_once (self, cmd):
+    def run_once (self, cmd, vps_id, vps_info):
         vps_id = None
-        vps_info = None
-        try:
-            trans, client = self.get_client ()
-            trans.open ()
-            try:
-                vps_id = client.todo (self.host_id, cmd)
-                self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
-                if vps_id > 0:
-                    vps_info = client.vps (vps_id)
-                    if not self.vps_is_valid (vps_info):
-                        self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
-                        self.done_task(cmd, vps_id, False, "invalid vpsinfo")
-                        vps_info = None
-            finally:
-                trans.close ()
-        except Exception, e:
-            self.logger_net.exception (e) 
-            return False
         if not vps_info:
             return False
         h = self.handlers.get (cmd)
@@ -160,16 +143,34 @@ class VPSMgr (object):
         while self.running:
             time.sleep(0.5)
             try:
-                for cmd in cmds:
+                trans, client = self.get_client ()
+                pending_jobs = []
+                trans.open ()
+                try:
+                    for cmd in cmds: 
+                        vps_id = client.todo (self.host_id, cmd)
+                        self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
+                        if vps_id > 0:
+                            vps_info = client.vps (vps_id)
+                            if not self.vps_is_valid (vps_info):
+                                self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
+                                self.done_task(cmd, vps_id, False, "invalid vpsinfo")
+                                vps_info = None
+                            else:
+                                pending_jobs.append((cmd, vps_id, vps_info))
+                    trans.close ()
+                except socket.error, e:
+                    self.logger_net.exception (e)
+                    trans.close ()
+                for cmd, vps_id, vps_info in pending_jobs: 
                     if not self.running:
                         break
-                    res = self.run_once (cmd)
+                    self.run_once (cmd, vps_id, vps_info)
+                for i in xrange (10):
                     if not self.running:
                         break
-                    if not res:
-                        time.sleep (1.5)
-                    else:
-                        time.sleep (1)
+                    time.sleep (0.5)
+
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
         self.logger.info ("worker for %s stop" % (str(cmds)))
