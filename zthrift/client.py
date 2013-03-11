@@ -4,7 +4,9 @@
 from conf import SAAS_PORT, SAAS_HOST
 
 from thrift import Thrift
-from thrift.transport import TTransport, TTransportException, TException
+from thrift.Thrift import TException
+from thrift.transport import TTransport
+from thrift.transport.TTransport import TTransportException
 from thrift.protocol import TBinaryProtocol
 
 from thrift.transport.TSocket import TSocket
