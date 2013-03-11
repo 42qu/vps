@@ -23,7 +23,7 @@ import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from ops.migrate import MigrateClient
-from ops.carbon_client import CarbonPayload, send_data
+from ops.carbon_client import CarbonPayload, send_data, fix_flow
 
 
 class VPSMgr (object):
@@ -97,8 +97,8 @@ class VPSMgr (object):
                         if self.last_netflow:
                             last_v = self.last_netflow.get (ifname)
                             if last_v:
-                                _in = (v[1] - last_v[1]) * 8.0 / self.netflow_inv
-                                _out = (v[0] - last_v[0]) * 8.0 / self.netflow_inv
+                                _in = fix_flow ((v[1] - last_v[1]) * 8.0 / self.netflow_inv)
+                                _out = fix_flow ((v[0] - last_v[0]) * 8.0 / self.netflow_inv)
                                 payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
                                 payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
                                 if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
