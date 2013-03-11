@@ -166,7 +166,7 @@ class VPSMgr (object):
 
             except TException, e:
                 self.logger_net.exception (e)
-                self.sleep (5) 
+                self.sleep (15) 
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
         self.logger.info ("worker for %s stop" % (str(cmds)))
