@@ -11,6 +11,8 @@ class CarbonPayload (object):
         self.data = []
 
     def append (self, path, timestamp, value):
+        if value < 0:
+            value = 0
         self.data.append ((path, (timestamp, value)))
 
     def serialize (self):
