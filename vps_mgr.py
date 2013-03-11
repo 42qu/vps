@@ -159,7 +159,7 @@ class VPSMgr (object):
                             else:
                                 pending_jobs.append((cmd, vps_id, vps_info))
                     trans.close ()
-                except socket.error, e:
+                except TTransportException, e:
                     self.logger_net.exception (e)
                     trans.close ()
                 for cmd, vps_id, vps_info in pending_jobs: 
