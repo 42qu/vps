@@ -41,10 +41,11 @@ class XenStat (object):
 
 
     def run (self, dom_names): 
-        """ can be either id or name """
+        """ dom_names: full domain list, can be either id or name """
         total_cpu_time_diff = 0
         total_vcpu = 0
         total_ts_diff = 0
+        new_dom_dict = dict ()
         for dom_name in dom_names: 
             domain = self.server.xend.domain (dom_name)
             info = xen.xm.main.parse_doms_info (domain)
@@ -59,10 +60,11 @@ class XenStat (object):
                 total_ts_diff += ts_diff
             else:
                 info['cpu_avg'] = 0
-            self.dom_dict[dom_name] = info
+            new_dom_dict[dom_name] = info
             if total_ts_diff:
                 ts_avg = total_ts_diff / len (dom_names)
                 self.total_cpu = total_cpu_time_diff / ts_avg 
+        self.dom_dict = new_dom_dict
   
 if __name__ == '__main__':
     from ops.ixen import get_xen_inf, XenStore
