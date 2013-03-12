@@ -17,7 +17,7 @@ except ImportError:
 import ops.vps_common as vps_common
 import ops._env
 from lib.job_queue import JobQueue, Job
-from lib.socket_engine import SSLSocketEngine, Connection
+from lib.socket_engine_ssl import SSLSocketEngine, Connection
 import lib.io_poll as io_poll
 from lib.net_io import NetHead
 import conf
@@ -66,7 +66,7 @@ class SyncServerBase (object):
         self.inf_addr = (self.listen_ip, conf.INF_PORT)
         self.rsync_port = conf.RSYNC_PORT
         assert conf.SSL_CERT
-        self.engine = SSLSocketEngine (io_poll.Poll(), cert_file=conf.SSL_CERT)
+        self.engine = SSLSocketEngine (io_poll.Poll(), is_blocking=True, cert_file=conf.SSL_CERT)
         self.engine.set_logger (logger)
         self.engine.set_timeout (10, 10, 3600 * 24)
         self.inf_sock = None

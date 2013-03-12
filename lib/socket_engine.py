@@ -12,7 +12,7 @@ import socket
 import errno
 import threading
 import time
-from lib.mylist import MyList
+from mylist import MyList
 import sys
 import fcntl
 
@@ -52,7 +52,6 @@ class Connection (object):
     readable_cb_args = None
     idle_timeout_cb = None
     call_cb = None
-#    cur_poll_sign = None
     error = None
 #    sign = None # can be either 'r' or None, indicate to watch the socket readable/wriable when its idle
 
@@ -92,13 +91,12 @@ class SocketEngine (object):
     _lock = None
     _sock_dict = None
     logger = None
-    _rd_timeout = 0
-    _wr_timeout = 0
+    _rw_timeout = 0
     _idle_timeout = 0
     _last_checktimeout = None
     _checktimeout_inv = 0
     
-    def __init__ (self, poll, debug=True):
+    def __init__ (self, poll, is_blocking=True, debug=True):
         """ 
         sock:   sock to listen
             """
@@ -112,23 +110,21 @@ class SocketEngine (object):
         self._pending_fd_ops = MyList () # (handler, conn)
         self._checktimeout_inv = 0
         self.get_time = time.time
+        self.is_blocking = is_blocking
 
-
-
-    def set_timeout (self, rd_timeout, wr_timeout, idle_timeout):
-        self._rd_timeout = rd_timeout
-        self._wr_timeout = wr_timeout
+    def set_timeout (self, rw_timeout, idle_timeout):
+        self._rw_timeout = rw_timeout
         self._idle_timeout = idle_timeout
         self._last_checktimeout = time.time ()
         temp_timeout = []
-        if self._rd_timeout:
-            temp_timeout.append (self._rd_timeout)
-        if self._wr_timeout:
-            temp_timeout.append (self._wr_timeout)
+        if self._rw_timeout:
+            temp_timeout.append (self._rw_timeout)
         if self._idle_timeout:
             temp_timeout.append (self._idle_timeout)
         if len(temp_timeout):
             self._checktimeout_inv = float (min (temp_timeout)) / 2
+        else:
+            self._checktimeout_inv = 0
 
     def set_logger (self, logger):
         self.logger = logger
@@ -164,7 +160,6 @@ class SocketEngine (object):
         self._sock_dict[conn.fd] = conn
         conn.last_ts = self.get_time ()
         conn.status = ConnState.IDLE
-#       conn.cur_poll_sign = conn.sign
         if conn.sign == 'r':
             self._poll.register (conn.fd, 'r', conn.readable_cb, (conn, ) + conn.readable_cb_args)
 
@@ -212,6 +207,12 @@ class SocketEngine (object):
                     fcntl.fcntl(csock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
                 except IOError, e:
                     self.log_error ("cannot set FD_CLOEXEC on accepted socket fd, %s" % (str(e)))
+
+                if self.is_blocking:
+                    csock.settimeout (self._rw_timeout or None)
+                else:
+                    csock.setblocking (0)
+
 
                 if callable (new_conn_cb):
                     csock = new_conn_cb (csock, *readable_cb_args)
@@ -378,7 +379,6 @@ class SocketEngine (object):
         assert not err_cb or callable (err_cb)
         assert expect_len > 0
         assert isinstance (cb_args, tuple)
-#        conn.cur_poll_sign = 'r'
         conn.error = None
         conn.status = ConnState.TOREAD
         conn.rd_expect_len = expect_len
@@ -406,7 +406,6 @@ class SocketEngine (object):
         assert callable (ok_cb)
         assert not err_cb or callable (err_cb)
         assert isinstance (cb_args, tuple)
-#        conn.cur_poll_sign = 'r'
         conn.status = ConnState.TOREAD
         conn.rd_buf = ""
         conn.error = None
@@ -433,7 +432,6 @@ class SocketEngine (object):
         assert callable (ok_cb)
         assert not err_cb or callable (err_cb)
         assert isinstance (cb_args, tuple)
-#        conn.cur_poll_sign = 'w'
         conn.status = ConnState.TOWRITE
         conn.wr_offset = 0
         conn.error = None
@@ -474,13 +472,12 @@ class SocketEngine (object):
             inact_time = now - conn.last_ts
             if conn.status == ConnState.IDLE and self._idle_timeout > 0  and inact_time > self._idle_timeout:
                 return True
-            elif conn.status == ConnState.TOREAD and self._rd_timeout > 0 and inact_time > self._rd_timeout:
+            elif (conn.status == ConnState.TOREAD or conn.status == ConnState.TOWRITE) \
+                    and self._rw_timeout > 0 and inact_time > self._rw_timeout:
                 return True
-            elif conn.status == ConnState.TOWRITE and self._wr_timeout > 0 and inact_time > self._wr_timeout:
-                return True
-            return False 
+            return False
         timeout_list = filter (__is_timeout, conns)
-        for conn in timeout_list: 
+        for conn in timeout_list:
             if conn.status == ConnState.IDLE:
                 if callable (conn.idle_timeout_cb):
                     conn.error = socket.timeout ("idle timeout")
@@ -489,6 +486,7 @@ class SocketEngine (object):
                 conn.error = socket.timeout ("timeout")
                 self._exec_callback (conn.unblock_err_cb, (conn,) + conn.unblock_cb_args, conn.unblock_tb)
             self._close_conn (conn)
+
 
     def _exec_callback (self, cb, args, stack=None):
         try:
@@ -538,8 +536,8 @@ class TCPSocketEngine (SocketEngine):
 
     bind_addr = None
 
-    def __init__ (self, poll, debug=False):
-        SocketEngine.__init__(self, poll, debug=debug)
+    def __init__ (self, poll, is_blocking=True, debug=False):
+        SocketEngine.__init__(self, poll, is_blocking=is_blocking, debug=debug)
 
     def listen_addr (self, addr, readable_cb, readable_cb_args=(), idle_timeout_cb=None, 
             new_conn_cb=None, backlog=10):
@@ -617,46 +615,4 @@ class TCPSocketEngine (SocketEngine):
                 self._callback_indirect (err_cb, (ConnectNonblockError (res, err_msg), ) + cb_args, stack)
             return False
 
-try:
-    import ssl
-
-    class SSLSocketEngine (TCPSocketEngine):
-
-        def __init__ (self, poll, cert_file, debug=False, ssl_version=ssl.PROTOCOL_SSLv23):
-            TCPSocketEngine.__init__(self, poll, debug=debug)
-            self.cert_file = cert_file
-            self.ssl_version = ssl_version
-            
-
-        def _accept_conn (self, sock, readable_cb, readable_cb_args, idle_timeout_cb, new_conn_cb):
-            """ socket will set FD_CLOEXEC upon accepted """
-            _accept = sock.accept
-            _put_sock = self._put_sock
-            while True: 
-            # have to make sure the socket is non-block, so we can accept multiple connection
-                try:
-                    (csock, addr) = _accept ()
-                    try:
-                        flags = fcntl.fcntl(csock, fcntl.F_GETFD)
-                        fcntl.fcntl(csock, fcntl.F_SETFD, flags | fcntl.FD_CLOEXEC)
-                    except IOError, e:
-                        self.log_error ("cannot set FD_CLOEXEC on accepted socket fd, %s" % (str(e)))
-
-                    if callable (new_conn_cb):
-                        csock = new_conn_cb (csock, *readable_cb_args)
-                        if not csock:
-                            continue
-                    csock = ssl.wrap_socket (csock, certfile=self.cert_file, server_side=True, ssl_version=self.ssl_version)
-                    _put_sock (csock, readable_cb=readable_cb, readable_cb_args=readable_cb_args, 
-                            idle_timeout_cb=idle_timeout_cb, stack=False, lock=False)
-                except (socket.error, ssl.SSLError), e:
-                    if e[0] == errno.EAGAIN:
-                        return #no more
-                    if e[0] != errno.EINTR:
-                        msg = "accept error (unlikely): " + str(e)
-                        self.log_error (msg)
-            return
-
-except ImportError:
-    pass
 
