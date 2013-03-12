@@ -68,7 +68,7 @@ class SyncServerBase (object):
         assert conf.SSL_CERT
         self.engine = SSLSocketEngine (io_poll.Poll(), is_blocking=True, cert_file=conf.SSL_CERT)
         self.engine.set_logger (logger)
-        self.engine.set_timeout (10, 10, 3600 * 24)
+        self.engine.set_timeout (10, 3600 * 24)
         self.inf_sock = None
         self.jobqueue = JobQueue (logger)
         self._handlers = dict ()
