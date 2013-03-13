@@ -24,6 +24,7 @@ import ops.netflow as netflow
 from ops.migrate import MigrateClient
 from ops.carbon_client import CarbonPayload, send_data, fix_flow
 from ops.saas_rpc import SAAS_Client
+import socket
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -144,7 +145,7 @@ class VPSMgr (object):
                         vps_id = self.rpc.todo (self.host_id, cmd)
                         self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                         if vps_id > 0:
-                            vps_info = self.rpc (vps_id)
+                            vps_info = self.rpc.vps (vps_id)
                             if not self.vps_is_valid (vps_info):
                                 self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
                                 self.done_task(cmd, vps_id, False, "invalid vpsinfo")
@@ -158,8 +159,7 @@ class VPSMgr (object):
                         break
                     self.run_once (cmd, vps_id, vps_info)
                 self.sleep (8) 
-
-            except TException, e:
+            except (socket.error), e:
                 self.logger_net.exception (e)
                 self.sleep (15) 
             except Exception, e:

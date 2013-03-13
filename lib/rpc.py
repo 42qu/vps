@@ -8,6 +8,11 @@ import socket
 import ssl
 import time
 
+
+class RPC_Exception (Exception):
+
+    pass
+
 class RPC_Req (object):
 
     def __init__ (self, func_name, args, k_args):
@@ -31,20 +36,24 @@ class RPC_Req (object):
     
     @classmethod
     def deserialize (cls, buf):
-        data = pickle.loads (buf)
+        data = None
+        try:
+            data = pickle.loads (buf)
+        except Exception, e:
+            raise RPC_Exception ("unpickle failed %s" % (str(e)))
         if len(data) != 3:
-            raise ValueError ("invalid request format")
+            raise RPC_Exception ("invalid request format")
         args = data[1] or ()
         k_args = data[2] or dict ()
         if not isinstance (args, (tuple, list)) or not isinstance (k_args, dict):
-            raise ValueError ("invalid request format")
+            raise RPC_Exception ("invalid request format")
         for arg in args:
             if not isinstance (arg, (int, float, basestring, dict, list, tuple)):
-                raise ValueError ("insecure request")
+                raise RPC_Exception ("insecure request")
         for k, arg in k_args.iteritems ():
             if not isinstance (k, basestring) or \
                     not isinstance (arg, (int, float, basestring, dict, list, tuple)):
-                raise ValueError ("insecure request")
+                raise RPC_Exception ("insecure request")
         return cls (data[0], args, k_args)
 
 class RPC_Resp (object):
@@ -58,9 +67,13 @@ class RPC_Resp (object):
 
     @classmethod
     def deserialize (cls, buf):
-        data = pickle.loads (buf)
+        data = None
+        try:
+            data = pickle.loads (buf)
+        except Exception, e:
+            raise RPC_Exception ("unpickle failed %s" % (str(e)))
         if len (data) != 2:
-            raise ValueError ("invalid response format")
+            raise RPC_Exception ("invalid response format")
         return cls (data[0], data[1])
 
 
@@ -107,25 +120,26 @@ class SSL_RPC_Client (object):
 
     def call (self, func_name, *args, **k_args):
         if not self.connected:
-            raise Exception ("not connected")
+            raise RPC_Exception ("not connected")
         start_ts = time.time ()
         req = RPC_Req (func_name, args, k_args)
         data = req.serialize()
         head = NetHead ()
         head.write_msg (self.sock, data)
+        resp = None
         resp_head = NetHead.read_head (self.sock)
         if not resp_head.body_len:
-            raise Exception ("rpc call %s, server-side return empty head" % (str(req)))
+            raise RPC_Exception ("rpc call %s, server-side return empty head" % (str(req)))
         buf = resp_head.read_data (self.sock)
         resp = RPC_Resp.deserialize (buf)
         end_ts = time.time ()
         timespan = end_ts - start_ts
         if resp.error:
-            raise Exception ("rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
+            raise RPC_Exception ("rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
         if self.logger:
             self.logger.info ("rpc call %s returned  [%s sec]" % (str(req), timespan))
         return resp.retval
-        
+            
     def close (self):
         self.sock.close ()
         

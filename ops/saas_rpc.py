@@ -2,7 +2,7 @@
 # coding:utf-8
 
 import _env
-from lib.rpc import SSL_RPC_Client
+from lib.rpc import SSL_RPC_Client, RPC_Exception
 import conf
 from _saas.ttypes import CMD
 from lib.attr_wrapper import AttrWrapper
