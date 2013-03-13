@@ -102,7 +102,7 @@ class SSL_RPC_Client (object):
     sock = None
     timeout = None
 
-    def __init__ (self, logger=None):
+    def __init__ (self, logger=None, ssl_version=ssl.PROTOCOL_SSLv3):
         self.connected = False
         self.logger = None
     
