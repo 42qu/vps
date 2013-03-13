@@ -168,6 +168,7 @@ class VPSMgr (object):
                 self.sleep (15) 
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
+                self.sleep (3) 
         self.logger.info ("worker for %s stop" % (str(cmds)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
@@ -188,7 +189,7 @@ class VPSMgr (object):
     def vps_is_valid (vps_info):
         if vps_info is None or vps_info.id <= 0:
             return None
-        if not vps_info.harddisks or not vps_info.harddisks.unwrap().has_key(0) or vps_info.harddisks[0] <= 0:
+        if not vps_info.harddisks or not vps_info.harddisks.unwrap().has_key(0) or vps_info.harddisks.unwrap()[0] <= 0:
             return None
         if not vps_info.password:
             return None
