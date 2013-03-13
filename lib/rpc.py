@@ -23,12 +23,11 @@ class RPC_Req (object):
 
     def __str__ (self): 
         karr = map (lambda x: "%s=%s" % (x[0], x[1]),  self.k_args.items ())
-        s = "%s( %s" % (self.func_name, ", ".join (self.args))
+        s = "%s( %s" % (self.func_name, ", ".join (map (str, self.args)))
         if karr:
             s += ", " + ", ".join (karr)
         s += " )"
         return s
-
     
     @classmethod
     def deserialize (cls, buf):
