@@ -105,11 +105,12 @@ class SSL_RPC_Client (object):
     def __init__ (self, logger=None, ssl_version=ssl.PROTOCOL_SSLv3):
         self.connected = False
         self.logger = None
+        self.ssl_version = ssl_version
     
     def connect (self, addr):
-        self.sock = socket.socket ()
+        self.sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect (addr)
-        self.sock = ssl.wrap_socket (self.sock)
+        self.sock = ssl.wrap_socket (self.sock, ssl_version=self.ssl_version)
         self.connected = True
         self.sock.settimeout (self.timeout)
 
@@ -142,6 +143,7 @@ class SSL_RPC_Client (object):
             
     def close (self):
         self.sock.close ()
+        self.connected = False
         
 
 
