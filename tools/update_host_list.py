@@ -8,7 +8,6 @@ import _env
 import conf
 from lib.log import Log
 import _saas
-from lib.ip import int2ip 
 from vps_mgr import VPSMgr
 
 def update_iplist (host_list):
