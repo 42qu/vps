@@ -26,10 +26,10 @@ class SAAS_Client (object):
         return AttrWrapper.wrap (self.rpc.call ("host_list"))
 
     def done (self, host_id, cmd, vm_id, state, message):
-        return self.rpc.call ("done", host_id, cmd, vm_id, state, message)
+        return self.rpc.call ("done", host_id, cmd, vm_id, int(state), str(message))
 
     def host_refresh(self, host_id, hd_remain, ram_remain, hd_total=0, ram_total=0):
-        return self.rpc.call ("host_refresh", host_id, hd_remain, ram_remain, hd_total, ram_total)
+        return self.rpc.call ("host_refresh", int(host_id), int(hd_remain), int(ram_remain), int(hd_total), int(ram_total))
 
     def vps(self, vm_id):
         return AttrWrapper(self.rpc.call ("vps", vm_id))
