@@ -13,6 +13,10 @@ import errno
 if 'epoll' in dir(select):
 
     class EPoll (object):
+        """
+            NOTE: it runs on edge-trigger mode.
+            """
+
         _handles = None
         _poll = None
 
@@ -69,14 +73,16 @@ if 'epoll' in dir(select):
 #            self._unlock ()
 
         def poll (self, timeout):
-            """ return function and arg to exec
+            """ 
+                timeout is in milliseconds in consitent with poll.
+                return function and arg to exec
                 """
             _find_handle = self._find_handle
 #            _in = select.EPOLLIN | select.EPOLLPRI | select.EPOLLERR | select.EPOLLHUP
 #            _out = select.EPOLLOUT | select.EPOLLERR | select.EPOLLHUP
             while True:
                 try:
-                    plist = self._poll.poll (timeout) # fd, event
+                    plist = self._poll.poll (timeout/ 1000.0) # fd, event
 #                    self._lock ()
                     hlist = [_find_handle (x[0]) for x in plist]
                     hlist = filter (lambda x:x, hlist)
@@ -157,5 +163,12 @@ class Poll (object):
                     continue
                 raise e
                 
+
+def get_poll ():
+    if 'epoll' in dir(select):
+        print "e"
+        return EPoll ()
+    else:
+        return Poll ()
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

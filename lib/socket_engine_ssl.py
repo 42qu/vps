@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+# @author frostyplanet@gmail.com
+# @version $Id$
+# @ socket engine which support synchronized and asynchronized i/o , with ssl support
+#
 import ssl
 from socket_engine import *
 
@@ -14,6 +18,7 @@ class SSLSocketEngine (TCPSocketEngine):
     def _do_handshake_server (self, csock, readable_cb, readable_cb_args, idle_timeout_cb):
         try:
             csock.do_handshake ()
+            #TODO: cleanup stalked socket fds during handshake
             if self.is_blocking:
                 csock.setblocking (1)  # from non block to block
             self._put_sock (csock, readable_cb=readable_cb, readable_cb_args=readable_cb_args, 

@@ -1,6 +1,10 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+# author: frostyplanet@gmail.com
+# a class to wrap and access multiple-level structure
+
+
 class AttrWrapper (object):
 
     def __init__ (self, e):
