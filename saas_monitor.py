@@ -11,6 +11,7 @@ from lib.alarm import EmailAlarm, AlarmJob
 import time
 import signal
 from _saas.ttypes import CMD
+from ops.saas_rpc import SAAS_Client
 import socket
 
 # you need to checkout https://bitbucket.org/zsp042/private.git into conf/
@@ -44,11 +45,12 @@ class SaasMonitor (object):
     def check (self):
         vps = None
         try:
-            self.rpc.connect ()
+            rpc = SAAS_Client (self.logger)
+            rpc.connect ()
             try:
-                _id = self.rpc.todo (0, CMD.MONITOR)
+                _id = rpc.todo (0, CMD.MONITOR)
             finally:
-                self.rpc.close ()
+                rpc.close ()
             self.logger.info ("ok")
             return True
         except Exception, e:

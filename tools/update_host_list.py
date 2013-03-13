@@ -39,11 +39,11 @@ def main ():
     mgr = VPSMgr ()
     host_list = None
     try:
-        mgr.rpc.connect ()
+        rpc = mgr.rpc_connect ()
         try:
-            host_list = mgr.rpc.host_list ()
+            host_list = rpc.host_list ()
         finally:
-            mgr.rpc.close ()
+            rpc.close ()
         update_iplist (host_list)
     except Exception, e:
         print e

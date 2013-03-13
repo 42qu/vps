@@ -38,7 +38,6 @@ class VPSMgr (object):
         self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
         self.vpsops = VPSOps (self.logger)
-        self.rpc = SAAS_Client (self.logger)
         self.handlers = {
             CMD.OPEN: self.__class__.vps_open,
             CMD.REBOOT: self.__class__.vps_reboot,
@@ -60,6 +59,11 @@ class VPSMgr (object):
         self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
+
+    def rpc_connect (self):
+        rpc = SAAS_Client (self.logger)
+        rpc.connect ()
+        return rpc
 
     def monitor_vps (self):
         result = None
@@ -138,14 +142,14 @@ class VPSMgr (object):
         self.logger.info ("worker for %s started" % (str(cmds)))
         while self.running:
             try:
-                self.rpc.connect ()
+                rpc = self.rpc_connect ()
                 pending_jobs = []
                 try:
                     for cmd in cmds: 
-                        vps_id = self.rpc.todo (self.host_id, cmd)
+                        vps_id = rpc.todo (self.host_id, cmd)
                         self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                         if vps_id > 0:
-                            vps_info = self.rpc.vps (vps_id)
+                            vps_info = rpc.vps (vps_id)
                             if not self.vps_is_valid (vps_info):
                                 self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
                                 self.done_task(cmd, vps_id, False, "invalid vpsinfo")
@@ -153,7 +157,7 @@ class VPSMgr (object):
                             else:
                                 pending_jobs.append((cmd, vps_id, vps_info))
                 finally:
-                    self.rpc.close ()
+                    rpc.close ()
                 for cmd, vps_id, vps_info in pending_jobs: 
                     if not self.running:
                         break
@@ -171,12 +175,12 @@ class VPSMgr (object):
         if not is_ok:
             state = 1 
         try:
-            self.rpc.connect ()
+            rpc = self.rpc_connect()
             try:
                 self.logger.info ("send done_task cmd=%s vps_id=%s" % (str(cmd), str(vps_id)))
-                self.rpc.done (self.host_id, cmd, vps_id, state, msg)
+                rpc.done (self.host_id, cmd, vps_id, state, msg)
             finally:
-                self.rpc.close ()
+                rpc.close ()
         except Exception, e:
             self.logger_net.exception (e)
 
@@ -461,23 +465,23 @@ class VPSMgr (object):
 
 
     def query_vps (self, vps_id):
-        self.rpc.connect ()
+        rpc = self.rpc_connect()
         vps_info = None
         try:
-            vps_info = self.rpc.vps (vps_id)
+            vps_info = rpc.vps (vps_id)
         finally:
-            self.rpc.close ()
+            rpc.close ()
         if vps_info is None or vps_info.id <= 0:
             return None
         return vps_info
 
     def query_migrate_task (self, vps_id):
-        self.rpc.connect ()
+        rpc = self.rpc_connect()
         task = None
         try:
-            task = self.rpc.migrate_task (vps_id)
+            task = rpc.migrate_task (vps_id)
         finally:
-            self.rpc.close ()
+            rpc.close ()
         if task is None or task.id <= 0:
             return None
         if task.to_host_ip <= 0:
@@ -506,12 +510,12 @@ class VPSMgr (object):
             self.logger.exception (e)
             return
         try:
-            self.rpc.connect ()
+            rpc = self.rpc_connect()
             try:
-                self.rpc.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
+                rpc.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
                 self.logger.info ("send host remain disk:%dG, mem:%dM, total disk:%dG, mem:%dM" % (disk_remain, mem_remain, disk_total, mem_total))
             finally:
-                self.rpc.close ()
+                rpc.close ()
         except Exception, e:
             self.logger_net.exception (e)
 
