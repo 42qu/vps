@@ -40,15 +40,22 @@ class SAAS_Client (object):
 if __name__ == '__main__':
     client = SAAS_Client ()
     client.connect ()
-    print client.todo (conf.HOST_ID, CMD.OPEN)
-    print client.host_list()
-    vps_info = client.vps (2)
+#    vps = client.vps (1176)
+#    from vps_mgr import VPSMgr
+#    m = VPSMgr ()
+#    print vps
+#    print m.vps_is_valid (vps)
+#    print client.todo (conf.HOST_ID, CMD.OPEN)
+#    print client.host_list()
+#    vps_info = client.vps (2)
+#    client.close ()
+#    print "vps_info", vps_info, vps_info and True or False
+#    print "int_ip", vps_info.int_ip
+#    if vps_info.ext_ips:
+#        print "ext_ips", vps_info.ext_ips[0].ipv4
+#    print "state", vps_info.state, vps_info.state is None
+#    print "hd", vps_info.harddisks
+
     client.close ()
-    print "vps_info", vps_info, vps_info and True or False
-    print "int_ip", vps_info.int_ip
-    if vps_info.ext_ips:
-        print "ext_ips", vps_info.ext_ips[0].ipv4
-    print "state", vps_info.state, vps_info.state is None
-    print "hd", vps_info.harddisks
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

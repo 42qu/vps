@@ -19,9 +19,13 @@ class AttrWrapper (object):
         raise KeyError(name)
 
     def __getitem__ (self, i):
-        if isinstance (self.e, (list, tuple)):
+        if isinstance (i, int) and isinstance (self.e, (list, tuple)):
             v = self.e[i]
             return self.__class__.wrap (v)
+        elif isinstance (self.e, dict):
+            if self.e.has_key (i):
+                return self.e[i]
+            raise KeyError (i)
         raise IndexError (i)
 
 

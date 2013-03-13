@@ -187,15 +187,18 @@ class VPSMgr (object):
 
     @staticmethod
     def vps_is_valid (vps_info):
-        if vps_info is None or vps_info.id <= 0:
+        try:
+            if vps_info is None or vps_info.id <= 0:
+                return None
+            if not vps_info.harddisks or vps_info.harddisks.unwrap()[0] <= 0:
+                return None
+            if not vps_info.password:
+                return None
+            if not vps_info.cpu or not vps_info.ram:
+                return None
+            return vps_info
+        except (IndexError, ValueError, KeyError):
             return None
-        if not vps_info.harddisks or not vps_info.harddisks.unwrap().has_key(0) or vps_info.harddisks.unwrap()[0] <= 0:
-            return None
-        if not vps_info.password:
-            return None
-        if not vps_info.cpu or vps_info.ram:
-            return None
-        return vps_info
 
     @staticmethod
     def vpsinfo_check_ip (vps_info):
