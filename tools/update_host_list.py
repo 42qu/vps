@@ -8,18 +8,20 @@ import _env
 import conf
 from lib.log import Log
 import _saas
-import _saas.VPS
-from zthrift.client import get_client
-from zkit.ip import int2ip 
+from lib.ip import int2ip 
+from vps_mgr import VPSMgr
 
 def update_iplist (host_list):
-    conf_path = os.path.join (dirname (dirname (abspath (__file__))), "conf/private/migrate_svr.py")
+    dir_path = os.path.join (dirname (dirname (abspath (__file__))), "conf/private")
+    if not os.path.exists (dir_path):
+        os.makedirs (dir_path)
+    conf_path = os.path.join (dir_path, "migrate_svr.py")
     ip_list = []
     for host in host_list:
         if host.ext_ip:
-            ip_list.append (int2ip(host.ext_ip))
+            ip_list.append (host.ext_ip)
         if host.int_ip:
-            ip_list.append (int2ip(host.int_ip))
+            ip_list.append (host.int_ip)
     conf_content = """#!/usr/bin/python
 
 ALLOWED_IPS = [
@@ -35,14 +37,14 @@ ALLOWED_IPS = [
 
 def main ():
     logger = Log ("vps_mgr", config=conf)
-    trans, client = get_client (_saas.VPS)
+    mgr = VPSMgr ()
     host_list = None
     try:
-        trans.open ()
+        mgr.rpc.connect ()
         try:
-            host_list = client.host_list ()
+            host_list = mgr.rpc.host_list ()
         finally:
-            trans.close ()
+            mgr.rpc.close ()
         update_iplist (host_list)
     except Exception, e:
         print e

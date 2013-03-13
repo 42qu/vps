@@ -2,7 +2,7 @@ import _env
 
 import getpass
 import socket
-from zkit.jsdict import JsDict
+from lib.jsdict import JsDict
 
 import _load
 import re

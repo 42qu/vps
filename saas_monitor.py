@@ -10,9 +10,7 @@ from lib.job_queue import JobQueue
 from lib.alarm import EmailAlarm, AlarmJob
 import time
 import signal
-from _saas import VPS
 from _saas.ttypes import CMD
-from zthrift.client import get_client
 import socket
 
 # you need to checkout https://bitbucket.org/zsp042/private.git into conf/
@@ -44,14 +42,13 @@ class SaasMonitor (object):
         self.logger.info ("stopped")
 
     def check (self):
-        trans, client = get_client (VPS)
         vps = None
         try:
-            trans.open ()
+            self.rpc.connect ()
             try:
-                _id = client.todo (0, CMD.MONITOR)
+                _id = self.rpc.todo (0, CMD.MONITOR)
             finally:
-                trans.close ()
+                self.rpc.close ()
             self.logger.info ("ok")
             return True
         except Exception, e:

@@ -8,38 +8,28 @@ import _saas
 from _saas.ttypes import CMD
 from vps_mgr import VPSMgr
 import time
-from zthrift.client import get_client
+from ops.saas_rpc import SAAS_Client
 import unittest
+import conf
 
 class TestSAASClient (unittest.TestCase):
 
+    def setUp (self):
+        self.m = VPSMgr ()
+        self.rpc = self.m.rpc
+
     def test_invalid (self):
-        trans, client = get_client (_saas.VPS)
-        trans.open ()
+        self.rpc.connect ()
         print "connected"
         try:
-            vps = client.vps (0)
+            vps = self.rpc.vps (0)
             print VPSMgr.dump_vps_info (vps)
             self.assert_ (not VPSMgr.vps_is_valid (vps))
-            vps = client.vps (100000000)
+            vps = self.rpc.vps (100000000)
             print VPSMgr.dump_vps_info (vps)
             self.assert_ (not VPSMgr.vps_is_valid (vps))
         finally:
-            trans.close ()
-
-    def test_state (self):
-        trans, client = get_client (_saas.VPS)
-        print "test state"
-        trans.open ()
-        try:
-            vps = client.vps (3)
-            print VPSMgr.dump_vps_info (vps)
-        finally:
-            trans.close ()
-
-    def test_netflow (self):
-        m = VPSMgr ()
-        m.send_netflow ()
+            self.rpc.close ()
 
     def test_done (self):
         m = VPSMgr ()
@@ -47,11 +37,13 @@ class TestSAASClient (unittest.TestCase):
 
     def test_migrate_task (self):
         m = VPSMgr ()
-        task = m.query_migrate_task (9)
-        print task.id, task.to_host_ip, task.to_host_id , task.speed, task.bandwidth
+        task = m.query_migrate_task (1030)
+        print task
+#        print task.id, task.to_host_ip, task.to_host_id , task.speed, task.bandwidth
 
 if __name__ == '__main__':
     runner = unittest.TextTestRunner ()
+#    runner.run (TestSAASClient ("test_invalid"))
     #runner.run (TestSAASClient ("test_state"))
     runner.run (TestSAASClient ("test_migrate_task"))
     #runner.run (TestSAASClient ("test_done"))

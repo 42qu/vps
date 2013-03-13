@@ -5,10 +5,9 @@ import sys
 import os
 import conf
 import const as vps_const
-from _saas import VPS
+#from _saas import VPS
 from _saas.ttypes import CMD
-from zthrift.client import get_client, TException
-from zkit.ip import int2ip 
+from lib.ip import is_host_ip
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
 from lib.log import Log
@@ -24,7 +23,7 @@ from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from ops.migrate import MigrateClient
 from ops.carbon_client import CarbonPayload, send_data, fix_flow
-
+from ops.saas_rpc import SAAS_Client
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -38,6 +37,7 @@ class VPSMgr (object):
         self.logger_debug = Log ("debug", config=conf)
         self.host_id = conf.HOST_ID
         self.vpsops = VPSOps (self.logger)
+        self.rpc = SAAS_Client (self.logger)
         self.handlers = {
             CMD.OPEN: self.__class__.vps_open,
             CMD.REBOOT: self.__class__.vps_reboot,
@@ -59,10 +59,6 @@ class VPSMgr (object):
         self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
-
-    def get_client (self):
-        transport, client = get_client (VPS, timeout_ms=5000)
-        return transport, client
 
     def monitor_vps (self):
         result = None
@@ -141,15 +137,14 @@ class VPSMgr (object):
         self.logger.info ("worker for %s started" % (str(cmds)))
         while self.running:
             try:
-                trans, client = self.get_client ()
+                self.rpc.connect ()
                 pending_jobs = []
-                trans.open ()
                 try:
                     for cmd in cmds: 
-                        vps_id = client.todo (self.host_id, cmd)
+                        vps_id = self.rpc.todo (self.host_id, cmd)
                         self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
                         if vps_id > 0:
-                            vps_info = client.vps (vps_id)
+                            vps_info = self.rpc (vps_id)
                             if not self.vps_is_valid (vps_info):
                                 self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
                                 self.done_task(cmd, vps_id, False, "invalid vpsinfo")
@@ -157,7 +152,7 @@ class VPSMgr (object):
                             else:
                                 pending_jobs.append((cmd, vps_id, vps_info))
                 finally:
-                    trans.close ()
+                    self.rpc.close ()
                 for cmd, vps_id, vps_info in pending_jobs: 
                     if not self.running:
                         break
@@ -176,13 +171,12 @@ class VPSMgr (object):
         if not is_ok:
             state = 1 
         try:
-            trans, client = self.get_client ()
-            trans.open ()
+            self.rpc.connect ()
             try:
                 self.logger.info ("send done_task cmd=%s vps_id=%s" % (str(cmd), str(vps_id)))
-                client.done (self.host_id, cmd, vps_id, state, msg)
+                self.rpc.done (self.host_id, cmd, vps_id, state, msg)
             finally:
-                trans.close ()
+                self.rpc.close ()
         except Exception, e:
             self.logger_net.exception (e)
 
@@ -190,33 +184,35 @@ class VPSMgr (object):
     def vps_is_valid (vps_info):
         if vps_info is None or vps_info.id <= 0:
             return None
-        if not vps_info.harddisks.has_key(0) or vps_info.harddisks[0] <= 0:
+        if not vps_info.harddisks or not vps_info.harddisks.unwrap().has_key(0) or vps_info.harddisks[0] <= 0:
             return None
         if not vps_info.password:
+            return None
+        if not vps_info.cpu or vps_info.ram:
             return None
         return vps_info
 
     @staticmethod
     def vpsinfo_check_ip (vps_info):
-        if not vps_info.ext_ips or not vps_info.gateway or not vps_info.gateway.ipv4 or vps_info.cpu <= 0 or vps_info.ram <= 0:
-            return None
-        return vps_info
+        if vps_info.ext_ips and vps_info.gateway and is_host_ip(vps_info.gateway.ipv4):
+            return vps_info
+        return None
 
 
     @staticmethod
     def dump_vps_info (vps_info):
-        ip = vps_info.ext_ips and "(%s)" % ",".join (map (lambda ip:"%s/%s(%s)" % (int2ip(ip.ipv4), int2ip(ip.ipv4_netmask), ip.mac), vps_info.ext_ips)) or None
+        ip = vps_info.ext_ips and "(%s)" % ",".join (map (lambda ip:"%s/%s(%s)" % (ip.ipv4, ip.ipv4_netmask, ip.mac), vps_info.ext_ips)) or None
         if vps_info.int_ip and vps_info.int_ip.ipv4:
-            ip_inter = "%s/%s" % (int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
+            ip_inter = "%s/%s" % (vps_info.int_ip.ipv4, vps_info.int_ip.ipv4_netmask)
         else:
             ip_inter = None
         if vps_info.gateway and vps_info.gateway.ipv4:
-            gateway = "%s/%s" % (int2ip(vps_info.gateway.ipv4), int2ip(vps_info.gateway.ipv4_netmask))
+            gateway = "%s/%s" % (vps_info.gateway.ipv4, vps_info.gateway.ipv4_netmask)
         else:
             gateway = None
-        hd = vps_info.harddisks and "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.items ())) or None
+        hd = vps_info.harddisks and "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.unwrap().items ())) or None
         if vps_info.state is not None:
-            state = "%s(%s)" % (vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
+            state = "%s(%s)" % (vps_info.state, vps_const.VM_STATE_CN.get (vps_info.state))
         else:
             state = None
         return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
@@ -228,18 +224,18 @@ class VPSMgr (object):
     def setup_vps (self, xenvps, vps_info):
         root_size = vps_info.harddisks and vps_info.harddisks[0] or 0
         xenvps.setup (os_id=vps_info.os, vcpu=vps_info.cpu, mem_m=vps_info.ram,
-                disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway and int2ip (vps_info.gateway.ipv4) or 0)
+                disk_g=root_size, root_pw=vps_info.password, gateway=vps_info.gateway and vps_info.gateway.ipv4 or 0)
         if vps_info.ext_ips:
             ip_dict = dict ()
             for ip in vps_info.ext_ips:
-                ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+                ip_dict[ip.ipv4] = ip.ipv4_netmask
             xenvps.add_netinf_ext (ip_dict, mac=vps_info.ext_ips[0].mac, bandwidth=vps_info.bandwidth)
         ip_inner_dict = dict ()
         if vps_info.int_ip and vps_info.int_ip.ipv4:
-            ip_inner_dict[int2ip (vps_info.int_ip.ipv4)] = int2ip (vps_info.int_ip.ipv4_netmask)
+            ip_inner_dict[vps_info.int_ip.ipv4] = vps_info.int_ip.ipv4_netmask
             xenvps.add_netinf_int (ip_inner_dict)
         if vps_info.harddisks:
-            for disk_id, disk_size in vps_info.harddisks.iteritems ():
+            for disk_id, disk_size in vps_info.harddisks.unwrap ().iteritems ():
                 if disk_id != 0:
                     xenvps.add_extra_storage (disk_id, disk_size)
 
@@ -411,7 +407,7 @@ class VPSMgr (object):
             if task:
                 if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
-                to_host_ip = int2ip (task.to_host_ip)
+                to_host_ip = task.to_host_ip
                 speed = task.speed
             elif not force and not to_host_ip:
                 raise Exception ("no destination host ip for vps%s" % (vps_id))
@@ -436,17 +432,17 @@ class VPSMgr (object):
             if task:
                 if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
-                to_host_ip = int2ip (task.to_host_ip)
-                xv.gateway = task.new_gateway and int2ip(task.new_gateway.ipv4) or None
+                to_host_ip = task.to_host_ip
+                xv.gateway = task.new_gateway and task.new_gateway.ipv4 or None
                 xv.vifs = dict ()
                 if task.new_ext_ips:
                     ip_dict = dict ()
                     for ip in task.new_ext_ips:
-                        ip_dict[int2ip (ip.ipv4)] = int2ip (ip.ipv4_netmask)
+                        ip_dict[ip.ipv4] = ip.ipv4_netmask
                     xv.add_netinf_ext (ip_dict, mac=task.new_ext_ips[0].mac, bandwidth=task.bandwidth)
                 ip_inner_dict = dict ()
                 if task.new_int_ip and task.new_int_ip.ipv4:
-                    ip_inner_dict[int2ip (task.new_int_ip.ipv4)] = int2ip (task.new_int_ip.ipv4_netmask)
+                    ip_inner_dict[task.new_int_ip.ipv4] = task.new_int_ip.ipv4_netmask
                     xv.add_netinf_int (ip_inner_dict)
                 speed = task.speed
             elif not force and not to_host_ip:
@@ -465,25 +461,23 @@ class VPSMgr (object):
 
 
     def query_vps (self, vps_id):
-        trans, client = self.get_client ()
-        trans.open ()
+        self.rpc.connect ()
         vps_info = None
         try:
-            vps_info = client.vps (vps_id)
+            vps_info = self.rpc.vps (vps_id)
         finally:
-            trans.close ()
+            self.rpc.close ()
         if vps_info is None or vps_info.id <= 0:
             return None
         return vps_info
 
     def query_migrate_task (self, vps_id):
-        trans, client = self.get_client ()
-        trans.open ()
+        self.rpc.connect ()
         task = None
         try:
-            task = client.migrate_task (vps_id)
+            task = self.rpc.migrate_task (vps_id)
         finally:
-            trans.close ()
+            self.rpc.close ()
         if task is None or task.id <= 0:
             return None
         if task.to_host_ip <= 0:
@@ -512,13 +506,12 @@ class VPSMgr (object):
             self.logger.exception (e)
             return
         try:
-            trans, client = self.get_client ()
-            trans.open ()
+            self.rpc.connect ()
             try:
-                client.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
+                self.rpc.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
+                self.logger.info ("send host remain disk:%dG, mem:%dM, total disk:%dG, mem:%dM" % (disk_remain, mem_remain, disk_total, mem_total))
             finally:
-                trans.close ()
-            self.logger.info ("send host remain disk:%dG, mem:%dM, total disk:%dG, mem:%dM" % (disk_remain, mem_remain, disk_total, mem_total))
+                self.rpc.close ()
         except Exception, e:
             self.logger_net.exception (e)
 

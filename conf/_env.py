@@ -7,6 +7,7 @@ reload(sys)
 sys.setdefaultencoding('utf-8')
 sys.path.append(PREFIX)
 
-from zkit.algorithm.unique import unique
-sys.path = unique(sys.path)
-
+path_dict = dict ()
+for path in sys.path:
+    path_dict[path] = None
+sys.path = path_dict.keys ()

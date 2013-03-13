@@ -13,13 +13,12 @@ def main ():
         return
     vps_id = int(sys.argv[1])
     mgr = VPSMgr ()
-    trans, client = mgr.get_client ()
-    trans.open ()
+    mgr.rpc.connect ()
     try:
-        vps = client.vps (vps_id)
+        vps = mgr.rpc.vps (vps_id)
         print mgr.dump_vps_info (vps)
     finally:
-        trans.close ()
+        mgr.rpc.close ()
 
 
 
