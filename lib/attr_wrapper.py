@@ -19,7 +19,7 @@ class AttrWrapper (object):
                 v = self.e[name]
                 return self.__class__.wrap (v)
             else:
-                return self.__class__.wrap ({})
+                return None
         raise KeyError(name)
 
     def __getitem__ (self, i):
@@ -54,22 +54,26 @@ class AttrWrapper (object):
 if __name__ == '__main__':
     d = {'a': 1, 'b':2}
     e = AttrWrapper (d)
-    print "e.name.name:", e.name.name
-    print "e.a:", e.a, "e.b:", e.b
-    print "e:", e
+    assert e.name is None
+    print "e.name:", e.name             # None
+    #print "e.name.name:", e.name.name   # fail
+    print "e.a:", e.a, "e.b:", e.b      # 1 2
+    print "e:", e                       # {'a':1, 'b':2}  #但e是封装过后的对象
+    print "e:", e.unwrap ().items ()    # [('a', 1), ('b', 2)]  #unwrap之后获得原本的dict
     l = [1, 2, d]
     e2 = AttrWrapper (l)
-    print "e2:", e2
-    print "e2[0]:", e2[0]
-    #print e2[3] # IndexError
-    print "b:", e2[2].b
+    print "e2:", e2                     # [1, 2, {'a': 1, 'b': 2}]
+    print "e2[0]:", e2[0]               # 1
+    #print e2[3]                        # IndexError
+    print "e2[2]:", e2[2]               # 获得上面 和d一样的封装过后的对象
+    print "b:", e2[2].b                 # 2
     e_empty = AttrWrapper ({})
-    print "e_empty:", e_empty
+    print "e_empty:", e_empty           # empty string
     assert not e_empty
     assert not e_empty.a
-    #print e2.a   # KeyError
-    #print e[0]   # IndexError
-    #print e.a.b  # KeyError
+    #print e2.a                         # KeyError
+    #print e[0]                         # IndexError
+    #print e.a.b                        # KeyError
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
