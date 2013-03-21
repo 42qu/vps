@@ -162,13 +162,13 @@ class VPSMgr (object):
                     if not self.running:
                         break
                     self.run_once (cmd, vps_id, vps_info)
-                self.sleep (8) 
+                self.sleep (15) 
             except (socket.error), e:
                 self.logger_net.exception (e)
                 self.sleep (15) 
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
-                self.sleep (3) 
+                self.sleep (5) 
         self.logger.info ("worker for %s stop" % (str(cmds)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
@@ -566,7 +566,7 @@ class VPSMgr (object):
     def loop (self):
         while self.running:
             self.run_loop(CMD.BANDWIDTH) # because ovs db searching uses signal and can only work in main thread ...
-            time.sleep (1)
+            self.sleep (15)
         self.timer.stop () 
         self.logger.info ("timer stopped")
         while self.workers:
