@@ -60,7 +60,7 @@ class RPC_Resp (object):
     
     def __init__ (self, retval, error):
         self.retval = retval
-        self.error = error
+        self.error = str(error)
     
     def serialize (self):
         return pickle.dumps ((self.retval, self.error))
