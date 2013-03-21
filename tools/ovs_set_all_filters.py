@@ -28,9 +28,11 @@ def _set_filter (client, ovsops, vps_id):
         return
     xv = client.vpsops._load_vps_meta (meta)
     ext_vif = xv.vifs.get (xv.vif_ext_name)
-    _set_vif_filter (ovsops, ext_vif)
+    if ext_vif:
+        _set_vif_filter (ovsops, ext_vif)
     int_vif = xv.vifs.get (xv.vif_int_name)
-    _set_vif_filter (ovsops, int_vif)
+    if int_vif:
+        _set_vif_filter (ovsops, int_vif)
 
 
 def check_all ():
