@@ -23,7 +23,7 @@ from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from ops.migrate import MigrateClient
 from ops.carbon_client import CarbonPayload, send_data, fix_flow
-from ops.saas_rpc import SAAS_Client
+from ops.saas_rpc import SAAS_Client, RPC_Exception
 import socket
 
 class VPSMgr (object):
@@ -163,7 +163,7 @@ class VPSMgr (object):
                         break
                     self.run_once (cmd, vps_id, vps_info)
                 self.sleep (15) 
-            except (socket.error), e:
+            except (socket.error, RPC_Exception), e:
                 self.logger_net.exception (e)
                 self.sleep (15) 
             except Exception, e:
@@ -480,12 +480,15 @@ class VPSMgr (object):
         return vps_info
 
     def query_migrate_task (self, vps_id):
-        rpc = self.rpc_connect()
         task = None
         try:
-            task = rpc.migrate_task (vps_id)
-        finally:
-            rpc.close ()
+            rpc = self.rpc_connect()
+            try:
+                task = rpc.migrate_task (vps_id)
+            finally:
+                rpc.close ()
+        except Exception, e:
+            self.logger.exception (e)
         if task is None or task.id <= 0:
             return None
         if task.to_host_ip <= 0:
