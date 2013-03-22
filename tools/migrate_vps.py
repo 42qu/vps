@@ -43,10 +43,10 @@ def main ():
         os._exit (1)
     vps_ids = map (lambda x: int(x), args[0:-1])
     dest_ip = None
-    if re.match (r'^\d+\.\d+\.\d+\.\d+$', args[-1]):
-        dest_ip = args[-1]
-    else:
+    if re.match (r'^\d+$', args[-1]):
         vps_ids.append (int(args[-1]))
+    else:
+        dest_ip = args[-1]
     for vps_id in vps_ids:
         migrate_vps (vps_id, dest_ip, speed=speed, force=force)
 
