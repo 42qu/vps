@@ -9,7 +9,7 @@ from ops.vps_ops import VPSOps
 from zkit.ip import int2ip 
 
 def usage ():
-    print "usage: %s vps_id int_ip netmask" % (sys.argv[0])
+    print "usage: %s vps_id" % (sys.argv[0])
     return
 
 def add_vif_int (vps_id):
@@ -24,7 +24,7 @@ def add_vif_int (vps_id):
         print "not internal ip for %s" % (vps_id)
     vpsops = VPSOps (client.logger)
     try:
-        vpsops.set_vif_int (vps_id, int2ip(vps_info.int_ip.ipv4), int2ip(vps_info.int_ip.ipv4_netmask))
+        vpsops.set_vif_int (vps_id, vps_info.int_ip.ipv4, vps_info.int_ip.ipv4_netmask)
     except Exception, e:
         client.logger.exception (e)
         raise e
