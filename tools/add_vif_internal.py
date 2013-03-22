@@ -37,12 +37,11 @@ if __name__ == '__main__':
     optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
                  "help", 
                  ])
-    vps_id = int(args[-1])
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
             os._exit (0)
-
+    vps_id = int(args[-1])
     add_vif_int (vps_id)
 
 
