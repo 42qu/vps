@@ -53,7 +53,7 @@ if __name__ == '__main__':
         usage ()
         os._exit (0)
     forced = False
-    optlist, args = getopt.gnu_getopt (sys.argv[2:], "f", [
+    optlist, args = getopt.gnu_getopt (sys.argv[1:], "f", [
                  "help", "force",
                  ])
     vps_id = int (args[-1])
