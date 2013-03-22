@@ -52,11 +52,11 @@ if __name__ == '__main__':
     if len (sys.argv) <= 1:
         usage ()
         os._exit (0)
-    vps_id = int (sys.argv[1])
     forced = False
     optlist, args = getopt.gnu_getopt (sys.argv[2:], "f", [
                  "help", "force",
                  ])
+    vps_id = int (args)
     for opt, v in optlist:
         if opt == '--help': 
             usage ()
