@@ -5,7 +5,6 @@ import _env
 from lib.rpc import SSL_RPC_Client, RPC_Exception
 import conf
 from lib.attr_wrapper import AttrWrapper
-import types
 
 class CMD:
     NONE = 0
@@ -39,7 +38,7 @@ class MIGRATE_STATE:
     DONE = 7
     CANCELED = 8
 
-VM_STATE_CN = _dictcls()
+VM_STATE_CN = dict()
 VM_STATE_CN[VM_STATE.OPEN] = '运行中'
 VM_STATE_CN[VM_STATE.PAY] = '待开通'
 VM_STATE_CN[VM_STATE.CLOSE] = '被关闭'
