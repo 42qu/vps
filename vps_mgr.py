@@ -159,13 +159,11 @@ class VPSMgr (object):
                     if not self.running:
                         break
                     self.run_once (cmd, vps_id, vps_info)
-                self.sleep (15) 
             except (socket.error, RPC_Exception), e:
                 self.logger_net.exception (e)
-                self.sleep (15) 
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
-                self.sleep (5) 
+            self.sleep (15) 
         self.logger.info ("worker for %s stop" % (str(cmds)))
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
