@@ -6,7 +6,7 @@ import _env
 from vps_mgr import VPSMgr
 import conf
 import getopt
-import const as vps_const
+from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
 def usage ():
     print "%s vps_id" % (sys.argv[0])
@@ -24,8 +24,8 @@ def close_vps (vps_id):
     if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state != vps_const.VM_STATE.CLOSE and vps.host_id == client.host_id:
-        print "vps %s state=%s, is not to be close" % (vps_id, vps_const.VM_STATE_CN[vps.state])
+    if vps.state != VM_STATE.CLOSE and vps.host_id == client.host_id:
+        print "vps %s state=%s, is not to be close" % (vps_id, VM_STATE_CN[vps.state])
         return
     try:
         client.vps_close (vps)

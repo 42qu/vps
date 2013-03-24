@@ -7,12 +7,8 @@ import re
 import os
 import _env
 import conf
-import const as vps_const
 from vps_mgr import VPSMgr
-from ops.vps import XenVPS
-from ops.vps_ops import VPSOps
 from ops.ixen import XenStore
-import ops.vps_common as vps_common
 from ops.openvswitch import OVSOps
 
 

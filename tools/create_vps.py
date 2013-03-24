@@ -5,7 +5,7 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import conf
-import const as vps_const
+from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
 import getopt
 
@@ -21,8 +21,8 @@ def create_vps (vps_id, vps_image=None, is_new=True):
     if not vps:
         print "not backend data for vps %s" % (vps_id)
         return
-    if vps.state not in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN]:
-        print "vps %s state=%s, is not to be created" % (vps_id, vps_const.VM_STATE_CN[vps.state])
+    if vps.state not in [VM_STATE.PAY, VM_STATE.OPEN]:
+        print "vps %s state=%s, is not to be created" % (vps_id, VM_STATE_CN[vps.state])
         return
     if vps_image and not os.path.exists (vps_image):
         print "%s not exist" % (vps_image)

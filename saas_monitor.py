@@ -10,8 +10,7 @@ from lib.job_queue import JobQueue
 from lib.alarm import EmailAlarm, AlarmJob
 import time
 import signal
-from _saas.ttypes import CMD
-from ops.saas_rpc import SAAS_Client
+from ops.saas_rpc import SAAS_Client, CMD
 import socket
 
 # you need to checkout https://bitbucket.org/zsp042/private.git into conf/

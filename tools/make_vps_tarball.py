@@ -4,7 +4,6 @@ import sys
 import os
 import _env
 import ops.vps_common as vps_common
-from lib.command import call_cmd
 import conf
 assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
 

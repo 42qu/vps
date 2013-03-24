@@ -5,7 +5,6 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import conf
-import const as vps_const
 
 import getopt
 

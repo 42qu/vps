@@ -5,8 +5,6 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import getopt
-from ops.vps_ops import VPSOps
-from zkit.ip import int2ip 
 
 def usage ():
     print "usage: %s vps_id" % (sys.argv[0])
@@ -22,7 +20,7 @@ def add_vif_int (vps_id):
         os._exit (1)
     if not vps_info.int_ip or not vps_info.int_ip.ipv4:
         print "not internal ip for %s" % (vps_id)
-    vpsops = VPSOps (client.logger)
+    vpsops = client.vpsops
     try:
         vpsops.set_vif_int (vps_id, vps_info.int_ip.ipv4, vps_info.int_ip.ipv4_netmask)
     except Exception, e:

@@ -4,9 +4,49 @@
 import _env
 from lib.rpc import SSL_RPC_Client, RPC_Exception
 import conf
-from _saas.ttypes import CMD
 from lib.attr_wrapper import AttrWrapper
 import types
+
+class CMD:
+    NONE = 0
+    OPEN = 1
+    CLOSE = 2
+    REBOOT = 3
+    RM = 4
+    BANDWIDTH = 5
+    OS = 6
+    UPGRADE = 7
+    MIGRATE = 8
+    MONITOR = 9
+    PRE_SYNC = 10
+    RESET_PW = 11
+
+
+class VM_STATE:
+    RM = 0
+    RESERVE = 5
+    PAY = 10
+    OPEN = 15
+    CLOSE = 20
+
+class MIGRATE_STATE:
+    NEW = 1
+    TO_PRE_SYNC = 2
+    PRE_SYNCING = 3
+    PRE_SYNCED = 4
+    TO_MIGRATE = 5
+    MIGRATING = 6
+    DONE = 7
+    CANCELED = 8
+
+VM_STATE_CN = _dictcls()
+VM_STATE_CN[VM_STATE.OPEN] = '运行中'
+VM_STATE_CN[VM_STATE.PAY] = '待开通'
+VM_STATE_CN[VM_STATE.CLOSE] = '被关闭'
+VM_STATE_CN[VM_STATE.RESERVE]  = '未付款'
+VM_STATE_CN[VM_STATE.RM]  = '已删除'
+
+
 
 class SAAS_Client (object):
 
@@ -36,6 +76,9 @@ class SAAS_Client (object):
 
     def migrate_task (self, vm_id):
         return AttrWrapper(self.rpc.call ("migrate_task", vm_id))
+
+
+
 
 if __name__ == '__main__':
     client = SAAS_Client ()

@@ -56,7 +56,7 @@ def main ():
     if len (args) < 2:
         usage ()
         os._exit (1)
-    vps_ids = map (lambda x: int(x), args[0:-1])
+    vps_ids = map (int, args[0:-1])
     dest_ip = args[-1]
     for vps_id in vps_ids:
         move_closed_vps (vps_id, dest_ip, speed=speed, force=force)

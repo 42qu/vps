@@ -5,12 +5,11 @@ import re
 import os
 import _env
 import conf
-import const as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
-from ops.vps_ops import VPSOps
 from ops.ixen import XenStore
 import ops.vps_common as vps_common
+from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
 def check_via_meta (client, vps_id, vps_info):
     meta = client.vpsops._meta_path (vps_id, is_trash=False)
@@ -46,9 +45,9 @@ def check_via_backend (client, vps_id):
         is_running = xv.is_running () and "(running)" or "(not running)"
         print "vps %s %s host_id=%s not on this host" % (vps_id, is_running, vps_info.host_id)
         return True, None
-    elif vps_info.state != vps_const.VM_STATE.OPEN:
+    elif vps_info.state != VM_STATE.OPEN:
         is_running = xv.is_running () and "(running)" or "(not running)"
-        print "vps %s %s backend state=%s " % (vps_id, is_running, vps_const.VM_STATE_CN[vps_info.state])
+        print "vps %s %s backend state=%s " % (vps_id, is_running, VM_STATE_CN[vps_info.state])
         return True, None
     return False, vps_info
 

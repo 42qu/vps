@@ -3,11 +3,9 @@ import sys
 import os
 import getopt
 import _env
-from lib.log import Log
 import conf
 import re
 from vps_mgr import VPSMgr
-from ops.vps import XenVPS
 
 
 def migrate_vps (vps_id, dest_ip=None, speed=None, force=False):
@@ -41,7 +39,7 @@ def main ():
     if len (args) < 1:
         usage ()
         os._exit (1)
-    vps_ids = map (lambda x: int(x), args[0:-1])
+    vps_ids = map (int, args[0:-1])
     dest_ip = None
     if re.match (r'^\d+$', args[-1]):
         vps_ids.append (int(args[-1]))

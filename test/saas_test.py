@@ -4,11 +4,9 @@ import os
 import sys
 import _env
 import conf
-import _saas
-from _saas.ttypes import CMD
 from vps_mgr import VPSMgr
 import time
-from ops.saas_rpc import SAAS_Client
+from ops.saas_rpc import SAAS_Client, CMD
 import unittest
 import conf
 

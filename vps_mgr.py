@@ -4,9 +4,6 @@
 import sys
 import os
 import conf
-import const as vps_const
-#from _saas import VPS
-from _saas.ttypes import CMD
 from lib.ip import is_host_ip
 from ops.vps import XenVPS
 from ops.vps_ops import VPSOps
@@ -23,7 +20,7 @@ from lib.timer_events import TimerEvents
 import ops.netflow as netflow
 from ops.migrate import MigrateClient
 from ops.carbon_client import CarbonPayload, send_data, fix_flow
-from ops.saas_rpc import SAAS_Client, RPC_Exception
+from ops.saas_rpc import SAAS_Client, RPC_Exception, CMD, VM_STATE, MIGRATE_STATE, VM_STATE_CN
 import socket
 
 class VPSMgr (object):
@@ -220,7 +217,7 @@ class VPSMgr (object):
             gateway = None
         hd = vps_info.harddisks and "(%s)" % ",".join (map (lambda x: "%s:%s" % (x[0], x[1]), vps_info.harddisks.unwrap().items ())) or None
         if vps_info.state is not None:
-            state = "%s(%s)" % (vps_info.state, vps_const.VM_STATE_CN.get (vps_info.state))
+            state = "%s(%s)" % (vps_info.state, VM_STATE_CN.get (vps_info.state))
         else:
             state = None
         return "host_id %s, id %s, state %s, os %s, cpu %s, ram %sM, hd %sG, ip %s, gateway %s, inter_ip:%s, bandwidth:%s" % (
@@ -278,7 +275,7 @@ class VPSMgr (object):
                 self.logger.error (msg)
                 self.done_task (CMD.OPEN, vps_id, True, msg)
                 return
-            if vps_info.state in [vps_const.VM_STATE.PAY, vps_const.VM_STATE.OPEN, vps_const.VM_STATE.CLOSE]:
+            if vps_info.state in [VM_STATE.PAY, VM_STATE.OPEN, VM_STATE.CLOSE]:
                 if self.vpsops.is_normal_exists (vps_id):
                     xv.check_storage_integrity ()
                     xv.check_xen_config ()
@@ -290,7 +287,7 @@ class VPSMgr (object):
                 else:
                     self.vpsops.create_vps (xv, vps_image, is_new)
             else:
-                msg = "vps%s state is %s(%s)" % (str(vps_id), vps_info.state, vps_const.VM_STATE_CN[vps_info.state])
+                msg = "vps%s state is %s(%s)" % (str(vps_id), vps_info.state, VM_STATE_CN[vps_info.state])
                 self.logger.error (msg)
                 self.done_task (CMD.OPEN, vps_id, False, msg)
                 return
@@ -413,7 +410,7 @@ class VPSMgr (object):
         try:
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != vps_const.MIGRATE_STATE.TO_PRE_SYNC and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
+                if task.state != MIGRATE_STATE.TO_PRE_SYNC and task.state != MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
                 to_host_ip = task.to_host_ip
                 speed = task.speed
@@ -438,7 +435,7 @@ class VPSMgr (object):
             xv = self.vpsops.load_vps_meta (vps_id)
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != vps_const.MIGRATE_STATE.TO_MIGRATE and task.state != vps_const.MIGRATE_STATE.PRE_SYNCED and not force:
+                if task.state != MIGRATE_STATE.TO_MIGRATE and task.state != MIGRATE_STATE.PRE_SYNCED and not force:
                     raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
                 to_host_ip = task.to_host_ip
                 xv.gateway = task.new_gateway and task.new_gateway.ipv4 or None
@@ -547,7 +544,7 @@ class VPSMgr (object):
 
     def vps_close (self, vps_info):
         try:
-            if vps_info.state == vps_const.VM_STATE.CLOSE or vps_info.host_id != self.host_id:
+            if vps_info.state == VM_STATE.CLOSE or vps_info.host_id != self.host_id:
                 xv = XenVPS (vps_info.id)
                 self.setup_vps (xv, vps_info)
                 self.vpsops.close_vps (vps_info.id, xv)

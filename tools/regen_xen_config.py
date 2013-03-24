@@ -6,7 +6,6 @@ import os
 import _env
 from vps_mgr import VPSMgr
 import getopt
-from ops.vps_ops import VPSOps
 
 def usage ():
     print "usage: %s vps_id" % (sys.argv[0])

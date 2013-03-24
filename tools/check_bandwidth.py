@@ -7,12 +7,10 @@ import re
 import os
 import _env
 import conf
-import const as vps_const
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
-from ops.vps_ops import VPSOps
 from ops.ixen import XenStore
-import ops.vps_common as vps_common
+from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
 def _check_bandwidth (client, vps_id):
     meta = client.vpsops._meta_path (vps_id, is_trash=False)
@@ -32,9 +30,9 @@ def _check_bandwidth (client, vps_id):
         is_running = xv.is_running () and "(running)" or "(not running)"
         print "vps %s %s host_id=%s not on this host" % (vps_id, is_running, vps_info.host_id)
         return
-    elif vps_info.state != vps_const.VM_STATE.OPEN:
+    elif vps_info.state != VM_STATE.OPEN:
         is_running = xv.is_running () and "(running)" or "(not running)"
-        print "vps %s %s backend state=%s " % (vps_id, is_running, vps_const.VM_STATE_CN[vps_info.state])
+        print "vps %s %s backend state=%s " % (vps_id, is_running, VM_STATE_CN[vps_info.state])
         return
     if not _xv.vif_ext or not xv.vif_ext:
         return
