@@ -6,7 +6,7 @@ import struct
 import pickle
 
 def fix_flow (d):
-    if d >= 1024 * 1024 * 1024 or d < 0:
+    if d >= 1000 * 1000 * 1000 or d < 0:
         return 0
     else:
         return d

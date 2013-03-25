@@ -126,8 +126,8 @@ class OVSOps (object):
         if bandwidth > 0:
             call_cmd ("ovs-vsctl set interface %s ingress_policing_burst=%d" % (if_name, 100))
             call_cmd (["ovs-vsctl", "--", "set", "Port", if_name, "qos=@newqos", "--", 
-                "--id=@newqos", "create", "qos", "type=linux-htb", "other-config:max-rate=%d" % (bandwidth * 1024), "queues=0=@q0", 
-                "--", "--id=@q0", "create", "queue", "other-config:max-rate=%d" % (bandwidth * 1024)
+                "--id=@newqos", "create", "qos", "type=linux-htb", "other-config:max-rate=%d" % (bandwidth * 1000), "queues=0=@q0", 
+                "--", "--id=@q0", "create", "queue", "other-config:max-rate=%d" % (bandwidth * 1000)
                 ])
 
     def unset_traffic_limit (self, if_name):
