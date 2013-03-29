@@ -134,7 +134,7 @@ class SocketEngine (object):
             self.logger.warning (msg, bt_level=1)
 
     def put_sock (self, sock, readable_cb, readable_cb_args=(), idle_timeout_cb=None, stack=True):
-        self._put_sock (sock, readable_cb, readable_cb_args, idle_timeout_cb, lock=True)
+        return self._put_sock (sock, readable_cb, readable_cb_args, idle_timeout_cb, lock=True)
 
     def _put_sock (self, sock, readable_cb, readable_cb_args=(), idle_timeout_cb=None, stack=True, lock=False):
         conn = Connection (sock,
