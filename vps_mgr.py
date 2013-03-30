@@ -120,8 +120,8 @@ class VPSMgr (object):
                         # direction of vps bridged network interface needs to be reversed
                         _in = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
                         _out = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
-                        _in = (vif.bandwidth and vif.bandwidth < _in) and vif.bandwidth or _in
-                        _out = (vif.bandwidth and vif.bandwidth < _out) and vif.bandwidth or _out
+                        _in = (vif.bandwidth and vif.bandwidth * 1024 * 1024 < _in) and vif.bandwidth * 1024 * 1024 or _in
+                        _out = (vif.bandwidth and vif.bandwidth * 1024 * 1024 < _out) and vif.bandwidth * 1024 * 1024 or _out
                         payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
                         payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
                         if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
