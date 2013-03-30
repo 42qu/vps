@@ -313,6 +313,19 @@ def pack_vps_fs_tarball (img_path, tarball_dir_or_path):
         umount_tmp (mount_point)
     return tarball_path
 
+def get_sector_size (dev):
+    dev = os.path.realpath(dev)
+    arr = dev.split ("/")
+    p = "/sys/block/%s/queue/hw_sector_size"  % (arr[-1])
+    f= open (p, "r")
+    result = None
+    try:
+        l = f.readline(20)
+        result = int(l.strip ("\n"))
+    finally:
+        f.close ()
+    return result
+
 def get_fs_from_tarball_name (tarball_path):
     om = re.match (r"^.*?fs[_\-](\w+).*?$", os.path.basename (tarball_path))
     if not om:
@@ -365,6 +378,8 @@ def get_dev_no (dev):
 
 if __name__ == '__main__':
     import unittest
+    print get_sector_size ("/dev/sda")
+    #print get_sector_size ("/dev/main/vps1024_root")
 
     class TestVPSCommon (unittest.TestCase):
 
