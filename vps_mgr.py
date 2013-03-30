@@ -18,10 +18,12 @@ import signal
 import threading
 from lib.timer_events import TimerEvents
 import ops.netflow as netflow
+import ops.diskstat as diskstat
 from ops.migrate import MigrateClient
 from ops.carbon_client import CarbonPayload, send_data, fix_flow
 from ops.saas_rpc import SAAS_Client, RPC_Exception, CMD, VM_STATE, MIGRATE_STATE, VM_STATE_CN
 import socket
+import glob
 
 class VPSMgr (object):
     """ all exception should catch and log in this class """
@@ -49,10 +51,12 @@ class VPSMgr (object):
         }
         self.xenstat = XenStat ()
         self.timer = TimerEvents (time.time, self.logger_misc)
-        assert conf.NETFLOW_COLLECT_INV > 0
+        assert conf.MONITOR_COLLECT_INV > 0
         self.last_netflow = None
-        self.netflow_inv = conf.NETFLOW_COLLECT_INV
-        self.timer.add_timer (conf.NETFLOW_COLLECT_INV, self.monitor_vps)
+        self.last_diskstat = None
+        self.monitor_inv = conf.MONITOR_COLLECT_INV
+        self.last_monitor_ts = None
+        self.timer.add_timer (conf.MONITOR_COLLECT_INV, self.monitor_vps)
         self.timer.add_timer (12 * 3600, self.refresh_host_space)
         self.workers = []
         self.running = False
@@ -63,9 +67,14 @@ class VPSMgr (object):
         return rpc
 
     def monitor_vps (self):
-        result = None
+        net_result = None
+        disk_result = None
         try:
-            result = netflow.read_proc ()
+            net_result = netflow.read_proc ()
+            disk_devs = glob.glob ("/dev/main/vps*")
+            if 'MAIN_DISK' in dir (conf):
+                disk_devs.append (conf.MAIN_DISK)
+            disk_result = diskstat.read_stat (disk_devs)
         except Exception, e:
             self.logger_misc.exception ("cannot read netflow data from proc: %s" % (str(e)))
             return
@@ -83,26 +92,57 @@ class VPSMgr (object):
                     dom_cpu = self.xenstat.dom_dict.get (dom_name)
                     if dom_cpu:
                         payload.append ("host.cpu.%s.dom0" % (self.host_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
+                    if 'MAIN_DISK' in dir(conf) and self.last_diskstat:
+                        t_elapse = ts - self.last_monitor_ts
+                        v = disk_result.get (conf.MAIN_DISK)
+                        last_v = self.last_diskstat.get (conf.MAIN_DISK)
+                        read_ops, read_byte, write_ops, write_byte = diskstat.cal_stat (v, last_v, t_elapse)
+                        payload.append ("host.io.%d.ops.read" % (self.host_id), ts, read_ops)
+                        payload.append ("host.io.%d.ops.write" % (self.host_id), ts, write_ops)
+                        payload.append ("host.io.%s.traffic.read" % (self.host_id), ts, read_byte)
+                        payload.append ("host.io.%s.traffic.write" % (self.host_id), ts, write_byte)
+                        print conf.MAIN_DISK, read_ops, write_ops, read_byte, write_byte
                 else:
                     vps_id = int(om.group (1))
+                    xv = self.vpsops.load_vps_meta (vps_id)
                     dom_cpu = self.xenstat.dom_dict.get (dom_name)
                     if dom_cpu:
                         payload.append ("vps.cpu.%s" % (vps_id), dom_cpu['ts'], dom_cpu['cpu_avg'])
+                    if not self.last_netflow or not self.last_diskstat:
+                        break
+                    #net
                     ifname = dom_name
-                    v = result.get (ifname)
-                    if v:
+                    vif = xv.vifs.get (ifname)
+                    v = net_result.get (ifname)
+                    last_v = self.last_netflow.get (ifname)
+                    t_elapse = ts - self.last_monitor_ts
+                    if v and last_v:
                         # direction of vps bridged network interface needs to be reversed
-                        if self.last_netflow:
-                            last_v = self.last_netflow.get (ifname)
-                            if last_v:
-                                _in = fix_flow ((v[1] - last_v[1]) * 8.0 / self.netflow_inv)
-                                _out = fix_flow ((v[0] - last_v[0]) * 8.0 / self.netflow_inv)
-                                payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
-                                payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
-                                if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
-                                    self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
-                                            (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
-            self.last_netflow = result
+                        _in = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
+                        _out = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
+                        _in = (vif.bandwidth and vif.bandwidth < _in) and vif.bandwidth or _in
+                        _out = (vif.bandwidth and vif.bandwidth < _out) and vif.bandwidth or _out
+                        payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
+                        payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
+                        if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
+                            self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
+                                    (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
+                    #disk
+                    if conf.USE_LVM and self.last_diskstat:
+                        for disk in xv.data_disks.values ():
+                            v = disk_result.get (disk.dev)
+                            last_v = self.last_diskstat.get (disk.dev)
+                            if not last_v:
+                                continue
+                            read_ops, read_byte, write_ops, write_byte = diskstat.cal_stat (v, last_v, t_elapse)
+                            print disk.xen_dev
+                            payload.append ("vps.io.%d.%s.ops.read" % (vps_id, disk.xen_dev), ts, read_ops)
+                            payload.append ("vps.io.%d.%s.ops.write" % (vps_id, disk.xen_dev), ts, write_ops)
+                            payload.append ("vps.io.%d.%s.traffic.read" % (vps_id, disk.xen_dev), ts, read_byte)
+                            payload.append ("vps.io.%d.%s.traffic.write" % (vps_id, disk.xen_dev), ts, write_byte)
+            self.last_netflow = net_result
+            self.last_diskstat = disk_result
+            self.last_monitor_ts = ts
         except Exception, e:
             self.logger_misc.exception (e)
             return

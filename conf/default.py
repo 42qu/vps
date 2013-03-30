@@ -43,7 +43,7 @@ def prepare(o):
     o.LVM_VG_MIN_SPACE = 100 # leave 100G in the VG for temporary needs
     o.XEN_CONFIG_DIR = "/etc/xen"
     o.XEN_AUTO_DIR = "/etc/xen/auto"
-    o.NETFLOW_COLLECT_INV = 30  # in sec
+    o.MONITOR_COLLECT_INV = 30  # in sec
     o.LARGE_NETFLOW = 6.0 * 1024 * 1024 # in bit
     o.XEN_BRIDGE = "xenbr0"
     o.XEN_INTERNAL_BRIDGE = "xenbr1"
@@ -52,6 +52,7 @@ def prepare(o):
     o.INF_PORT = 26550
     o.SAAS_RECOVER_THRESHOLD = 5
     o.SAAS_BAD_THRESHOLD = 60 * 3
+    o.MAIN_DISK = "/dev/sda"
 
     o.DEFAULT_FS_TYPE = 'ext4'
     o.CLOSE_EXPIRE_DAYS = 0.8
