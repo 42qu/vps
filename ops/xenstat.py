@@ -54,7 +54,9 @@ class XenStat (object):
             if last_info:
                 cpu_diff = float(info['cpu_time'] - last_info['cpu_time'])
                 ts_diff = float(info['ts'] - last_info['ts'])
-                info['cpu_avg'] = cpu_diff / ts_diff / int(info['vcpus'])
+                info['cpu_avg'] = cpu_diff / ts_diff / int(info['vcpus']) * 100.0
+                if info['cpu_avg'] > 100:
+                    info['cpu_avg'] = 100
                 total_vcpu += int(info['vcpus'])
                 total_cpu_time_diff += cpu_diff
                 total_ts_diff += ts_diff

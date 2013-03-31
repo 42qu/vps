@@ -52,8 +52,9 @@ def cal_stat (s, last_s, t_elapse):
     read_byte = (s.read_byte_count - last_s.read_byte_count) / t_elapse
     write_ops = (s.write_ops_count - last_s.write_ops_count) / t_elapse
     write_byte = (s.write_byte_count - last_s.write_byte_count) / t_elapse
-    io_util = (s.io_time - last_s.io_time) / t_elapse / 1000.0
-    io_util = io_util > 1 and 1 or io_util
+    io_util = (s.io_time - last_s.io_time) / t_elapse / 1000.0 * 100
+    if io_util > 100:
+        io_util = 100
     return read_ops, read_byte, write_ops, write_byte, io_util
 
 
