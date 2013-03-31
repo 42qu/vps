@@ -10,6 +10,7 @@ class DiskStat (object):
     write_ops_count = None
     write_byte_count = None
     io_time_weighted = None
+    io_time = None
 
     def __init__ (self, dev):
         self.dev = dev
@@ -41,7 +42,7 @@ def read_stat (dev_list):
         stat.write_ops_count = int(arr[7])
         stat.write_byte_count = int(arr[9]) * sector_size
 #        write_time = int(arr[10])
-        io_time = int(arr[12])
+        stat.io_time = int(arr[12])
         stat.io_time_weighted = int(arr[13])
         result_dict[stat.dev] = stat
     return result_dict
@@ -51,18 +52,20 @@ def cal_stat (s, last_s, t_elapse):
     read_byte = (s.read_byte_count - last_s.read_byte_count) / t_elapse
     write_ops = (s.write_ops_count - last_s.write_ops_count) / t_elapse
     write_byte = (s.write_byte_count - last_s.write_byte_count) / t_elapse
-    io_util = (s.io_time_weighted - last_s.io_time_weighted) / t_elapse
+    io_util = (s.io_time - last_s.io_time) / t_elapse / 1000.0
+    io_util = io_util > 1 and 1 or io_util
     return read_ops, read_byte, write_ops, write_byte, io_util
 
 
 if __name__ == '__main__':
     import pprint 
     import time
-    result1 = read_stat (["sda"])
-    time.sleep (1)
-    result2 = read_stat (["sda"])
-    s2 = result2["sda"]
-    s1 = result1["sda"]
-    print cal_stat (s2, s1, 1)
+    last_result = None
+    while True:
+        result = read_stat (["sda"])
+        time.sleep (1)
+        if last_result:
+            cal_stat (result['sda'], last_result['sda'], 1)
+        last_result = result
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

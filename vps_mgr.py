@@ -102,7 +102,7 @@ class VPSMgr (object):
                         payload.append ("host.io.%s.traffic.read" % (self.host_id), ts, read_byte)
                         payload.append ("host.io.%s.traffic.write" % (self.host_id), ts, write_byte)
                         payload.append ("host.io.%s.util" % (self.host_id), ts, util)
-                        print conf.MAIN_DISK, read_ops, write_ops, read_byte, write_byte
+                        print conf.MAIN_DISK, read_ops, write_ops, read_byte, write_byte, util
                     if self.last_netflow:
                         t_elapse = ts - self.last_monitor_ts
                         v = net_result.get (conf.XEN_BRIDGE)
