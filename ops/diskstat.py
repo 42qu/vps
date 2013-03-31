@@ -9,6 +9,7 @@ class DiskStat (object):
     read_byte_count = None
     write_ops_count = None
     write_byte_count = None
+    io_time_weighted = None
 
     def __init__ (self, dev):
         self.dev = dev
@@ -41,7 +42,7 @@ def read_stat (dev_list):
         stat.write_byte_count = int(arr[9]) * sector_size
 #        write_time = int(arr[10])
         io_time = int(arr[12])
-        io_time_weighted = int(arr[13])
+        stat.io_time_weighted = int(arr[13])
         result_dict[stat.dev] = stat
     return result_dict
 
@@ -50,7 +51,8 @@ def cal_stat (s, last_s, t_elapse):
     read_byte = (s.read_byte_count - last_s.read_byte_count) / t_elapse
     write_ops = (s.write_ops_count - last_s.write_ops_count) / t_elapse
     write_byte = (s.write_byte_count - last_s.write_byte_count) / t_elapse
-    return read_ops, read_byte, write_ops, write_byte
+    io_util = (s.io_time_weighted - last_s.io_time_weighted) / t_elapse
+    return read_ops, read_byte, write_ops, write_byte, io_util
 
 
 if __name__ == '__main__':

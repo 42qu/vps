@@ -96,12 +96,35 @@ class VPSMgr (object):
                         t_elapse = ts - self.last_monitor_ts
                         v = disk_result.get (conf.MAIN_DISK)
                         last_v = self.last_diskstat.get (conf.MAIN_DISK)
-                        read_ops, read_byte, write_ops, write_byte = diskstat.cal_stat (v, last_v, t_elapse)
+                        read_ops, read_byte, write_ops, write_byte, util = diskstat.cal_stat (v, last_v, t_elapse)
                         payload.append ("host.io.%d.ops.read" % (self.host_id), ts, read_ops)
                         payload.append ("host.io.%d.ops.write" % (self.host_id), ts, write_ops)
                         payload.append ("host.io.%s.traffic.read" % (self.host_id), ts, read_byte)
                         payload.append ("host.io.%s.traffic.write" % (self.host_id), ts, write_byte)
+                        payload.append ("host.io.%s.util" % (self.host_id), ts, util)
                         print conf.MAIN_DISK, read_ops, write_ops, read_byte, write_byte
+                    if self.last_netflow:
+                        t_elapse = ts - self.last_monitor_ts
+                        v = net_result.get (conf.XEN_BRIDGE)
+                        last_v = self.last_netflow.get (conf.XEN_BRIDGE)
+                        _in = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
+                        _out = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
+                        _in_pp = (v[2] - last_v[2]) / t_elapse
+                        _out_pp = (v[3] - last_v[3]) / t_elapse
+                        payload.append ("host.netflow.%d.ext.in"%(self.host_id), ts, _in)
+                        payload.append ("host.netflow.%d.ext.out"%(self.host_id), ts, _out)
+                        payload.append ("host.netflow.%d.ext_pp.in"%(self.host_id), ts, _in_pp > 0 and _in_pp or 0)
+                        payload.append ("host.netflow.%d.ext_pp.out"%(self.host_id), ts, _out_pp > 0 and _out_pp or 0)
+                        v = net_result.get (conf.XEN_INTERNAL_BRIDGE)
+                        last_v = self.last_netflow.get (conf.XEN_INTERNAL_BRIDGE)
+                        _in = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
+                        _out = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
+                        _in_pp = (v[2] - last_v[2]) / t_elapse
+                        _out_pp = (v[3] - last_v[3]) / t_elapse
+                        payload.append ("host.netflow.%d.int.in"%(self.host_id), ts, _in)
+                        payload.append ("host.netflow.%d.int.out"%(self.host_id), ts, _out)
+                        payload.append ("host.netflow.%d.int_pp.in"%(self.host_id), ts, _in_pp > 0 and _in_pp or 0)
+                        payload.append ("host.netflow.%d.int_pp.out"%(self.host_id), ts, _out_pp > 0 and _out_pp or 0)
                 else:
                     vps_id = int(om.group (1))
                     xv = self.vpsops.load_vps_meta (vps_id)
@@ -123,7 +146,7 @@ class VPSMgr (object):
                         _in = (vif.bandwidth and vif.bandwidth * 1024 * 1024 < _in) and vif.bandwidth * 1024 * 1024 or _in
                         _out = (vif.bandwidth and vif.bandwidth * 1024 * 1024 < _out) and vif.bandwidth * 1024 * 1024 or _out
                         payload.append ("vps.netflow.%d.in"%(vps_id), ts, _in)
-                        payload.append ("vps.netflow.%s.out"%(vps_id), ts, _out)
+                        payload.append ("vps.netflow.%d.out"%(vps_id), ts, _out)
                         if conf.LARGE_NETFLOW and _in >= conf.LARGE_NETFLOW or _out >= conf.LARGE_NETFLOW:
                             self.logger_misc.warn ("%s in: %.3f mbps, out: %.3f mbps" % 
                                     (ifname, _in / 1024.0 / 1024.0, _out / 1024.0 /1024.0))
@@ -134,12 +157,13 @@ class VPSMgr (object):
                             last_v = self.last_diskstat.get (disk.dev)
                             if not last_v:
                                 continue
-                            read_ops, read_byte, write_ops, write_byte = diskstat.cal_stat (v, last_v, t_elapse)
+                            read_ops, read_byte, write_ops, write_byte, util = diskstat.cal_stat (v, last_v, t_elapse)
                             print disk.xen_dev
                             payload.append ("vps.io.%d.%s.ops.read" % (vps_id, disk.xen_dev), ts, read_ops)
                             payload.append ("vps.io.%d.%s.ops.write" % (vps_id, disk.xen_dev), ts, write_ops)
                             payload.append ("vps.io.%d.%s.traffic.read" % (vps_id, disk.xen_dev), ts, read_byte)
                             payload.append ("vps.io.%d.%s.traffic.write" % (vps_id, disk.xen_dev), ts, write_byte)
+                            payload.append ("vps.io.%d.%s.util" % (vps_id, disk.xen_dev), ts, util)
             self.last_netflow = net_result
             self.last_diskstat = disk_result
             self.last_monitor_ts = ts
