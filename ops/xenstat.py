@@ -54,7 +54,7 @@ class XenStat (object):
             if last_info:
                 cpu_diff = float(info['cpu_time'] - last_info['cpu_time'])
                 ts_diff = float(info['ts'] - last_info['ts'])
-                info['cpu_avg'] = cpu_diff / ts_diff / int(info['vcpus']) * 100.0
+                info['cpu_avg'] = cpu_diff / ts_diff / int(info['vcpus']) * 100
                 if info['cpu_avg'] > 100:
                     info['cpu_avg'] = 100
                 total_vcpu += int(info['vcpus'])
@@ -65,7 +65,7 @@ class XenStat (object):
             new_dom_dict[dom_name] = info
             if total_ts_diff:
                 ts_avg = total_ts_diff / len (dom_names)
-                self.total_cpu = total_cpu_time_diff / ts_avg 
+                self.total_cpu = total_cpu_time_diff / ts_avg * 100
         self.dom_dict = new_dom_dict
   
 if __name__ == '__main__':
