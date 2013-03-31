@@ -65,7 +65,7 @@ if __name__ == '__main__':
         result = read_stat (["sda"])
         time.sleep (1)
         if last_result:
-            cal_stat (result['sda'], last_result['sda'], 1)
+            print cal_stat (result['sda'], last_result['sda'], 1)
         last_result = result
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
