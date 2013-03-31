@@ -46,7 +46,9 @@ def prepare(o):
     o.MONITOR_COLLECT_INV = 30  # in sec
     o.LARGE_NETFLOW = 6.0 * 1024 * 1024 # in bit
     o.XEN_BRIDGE = "xenbr0"
+    o.EXT_INF = "eth0"
     o.XEN_INTERNAL_BRIDGE = "xenbr1"
+    o.INT_INF = "eth1"
     o.RSYNC_CONF_PATH = "/data/vps/rsync.conf"
     o.RSYNC_PORT = 26554
     o.INF_PORT = 26550

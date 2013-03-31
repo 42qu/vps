@@ -105,8 +105,8 @@ class VPSMgr (object):
                         print conf.MAIN_DISK, read_ops, write_ops, read_byte, write_byte, util
                     if self.last_netflow:
                         t_elapse = ts - self.last_monitor_ts
-                        v = net_result.get (conf.XEN_BRIDGE)
-                        last_v = self.last_netflow.get (conf.XEN_BRIDGE)
+                        v = net_result.get (conf.EXT_INF)
+                        last_v = self.last_netflow.get (conf.EXT_INF)
                         _in = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
                         _out = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
                         _in_pp = (v[2] - last_v[2]) / t_elapse
@@ -115,8 +115,8 @@ class VPSMgr (object):
                         payload.append ("host.netflow.%d.ext.out"%(self.host_id), ts, _out)
                         payload.append ("host.netflow.%d.ext_pp.in"%(self.host_id), ts, _in_pp > 0 and _in_pp or 0)
                         payload.append ("host.netflow.%d.ext_pp.out"%(self.host_id), ts, _out_pp > 0 and _out_pp or 0)
-                        v = net_result.get (conf.XEN_INTERNAL_BRIDGE)
-                        last_v = self.last_netflow.get (conf.XEN_INTERNAL_BRIDGE)
+                        v = net_result.get (conf.INT_INF)
+                        last_v = self.last_netflow.get (conf.INT_INF)
                         _in = fix_flow ((v[0] - last_v[0]) * 8.0 / t_elapse)
                         _out = fix_flow ((v[1] - last_v[1]) * 8.0 / t_elapse)
                         _in_pp = (v[2] - last_v[2]) / t_elapse
