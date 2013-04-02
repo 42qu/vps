@@ -240,9 +240,12 @@ class XenStore (object):
         domain_list = cls._list ("/local/domain") 
         result_dict = {}
         for domain_id in domain_list:
-            name = cls._read ("/local/domain/%s/name" % (domain_id))
-            name = name.strip ("\r\n")
-            result_dict[name] = int(domain_id)
+            try:
+                name = cls._read ("/local/domain/%s/name" % (domain_id))
+                name = name.strip ("\r\n")
+                result_dict[name] = int(domain_id)
+            except CommandException:
+                pass
         return result_dict
 
     @classmethod
