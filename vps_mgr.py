@@ -88,7 +88,7 @@ class VPSMgr (object):
         self._locker.release ()
 
     def rpc_connect (self):
-        rpc = SAAS_Client (self, self.host_id, self.logger)
+        rpc = SAAS_Client (self.host_id, self.logger)
         rpc.connect ()
         return rpc
 
