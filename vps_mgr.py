@@ -192,7 +192,7 @@ class VPSMgr (object):
                 return True
             except Exception, e:
                 self.logger.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
-                #TODO notify maintainments
+                self.done_task (cmd, vps_id, False, "uncaught exception %s" % (str(e)))
                 return False
         else:
             self.logger.warn ("no handler for cmd %s, vps: %s" % (str(cmd), self.dump_vps_info(vps_info)))

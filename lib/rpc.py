@@ -106,6 +106,7 @@ class SSL_RPC_Client (object):
         self.connected = False
         self.logger = None
         self.ssl_version = ssl_version
+        self.timeout = 10
     
     def connect (self, addr):
         self.sock = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
@@ -116,7 +117,7 @@ class SSL_RPC_Client (object):
 
     def set_timeout (self, timeout):
         if self.sock:
-            self.sock.set_timeout (timeout)
+            self.sock.settimeout (timeout)
         self.timeout = timeout
 
     def call (self, func_name, *args, **k_args):

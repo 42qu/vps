@@ -4,10 +4,10 @@ import re
 import struct
 
 def ip2int(ip):
-    return struct.unpack("!I",socket.inet_aton(ip))[0]
+    return struct.unpack("!I", socket.inet_aton(ip))[0]
 
 def int2ip(num):
-    return socket.inet_ntoa(struct.pack("!I",num))
+    return socket.inet_ntoa(struct.pack("!I", num))
 
 def address_to_in6 (address):
     try:

@@ -134,14 +134,14 @@ class OVSOps (object):
         qos_rows = self.ovsdb.find (['qos'], 'Port', {'name': if_name})
         qos = None
         if qos_rows and qos_rows[0].has_key ('qos'):
-                qos = qos_rows[0]['qos']
-                if qos:
-                    #qos_uuid = qos.uuid
-                    call_cmd ("ovs-vsctl -- destroy qos %s -- clear port %s qos" % (if_name, if_name))
-                    queues = qos.queues.values ()
-                    if queues:
-                        for q in queues:
-                            call_cmd ("ovs-vsctl destroy queue %s" % (q.uuid))
+            qos = qos_rows[0]['qos']
+            if qos:
+                #qos_uuid = qos.uuid
+                call_cmd ("ovs-vsctl -- destroy qos %s -- clear port %s qos" % (if_name, if_name))
+                queues = qos.queues.values ()
+                if queues:
+                    for q in queues:
+                        call_cmd ("ovs-vsctl destroy queue %s" % (q.uuid))
 #        call_cmd ("ovs-vsctl set interface %s ingress_policing_rate=0" % (if_name))
 #        call_cmd ("ovs-vsctl set interface %s ingress_policing_burst=0" % (if_name))
 

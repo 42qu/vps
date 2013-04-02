@@ -157,7 +157,7 @@ class SSLSocketEngine (TCPSocketEngine):
                     conn.error = ReadNonBlockError (0, "line maxlength exceed")
                     break
             except (socket.error, ssl.SSLError), e:
-                if e[0] == errno.EAGAIN or e[0] == SSL.SSL_ERROR_WANT_READ: 
+                if e[0] == errno.EAGAIN or e[0] == ssl.SSL_ERROR_WANT_READ: 
                     conn.rd_buf = buf
                     conn.last_ts = self.get_time ()
                     return False#return and wait for next trigger
@@ -194,7 +194,7 @@ class SSLSocketEngine (TCPSocketEngine):
                     break
                 offset += res
             except (socket.error, ssl.SSLError), e:
-                if e[0] == errno.EAGAIN or e[0] == SSL.SSL_ERROR_WANT_WRITE:
+                if e[0] == errno.EAGAIN or e[0] == ssl.SSL_ERROR_WANT_WRITE:
                     conn.wr_offset = offset
                     conn.last_ts = self.get_time ()
                     return False#return and wait for next trigger

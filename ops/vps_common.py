@@ -317,7 +317,7 @@ def get_sector_size (dev):
     dev = os.path.realpath(dev)
     arr = dev.split ("/")
     p = "/sys/block/%s/queue/hw_sector_size"  % (arr[-1])
-    f= open (p, "r")
+    f = open (p, "r")
     result = None
     try:
         l = f.readline(20)
