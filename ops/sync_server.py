@@ -155,7 +155,7 @@ class SyncServerBase (object):
         self.logger.info ("server stopped")
         self.jobqueue.stop ()
         self.logger.info ("job_queue stopped")
-        #self.stop_rsync ()
+        self.stop_rsync ()
 
     def start_rsync (self):
         rsync_conf = """
