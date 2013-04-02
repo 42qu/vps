@@ -230,7 +230,7 @@ class VPSMgr (object):
             return False
 
     def run_loop (self, *cmds):
-        self.logger.info ("worker for %s started" % (str(cmds)))
+        self.logger.info ("worker for %s started" % (",".join (map (CMD._get_name, cmds))))
         while self.running:
             try:
                 rpc = self.rpc_connect ()
