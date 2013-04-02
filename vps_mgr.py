@@ -49,6 +49,8 @@ class VPSMgr (object):
             CMD.MIGRATE: self.__class__.vps_migrate,
             CMD.RESET_PW: self.__class__.vps_reset_pw,
         }
+        self._locker = threading.Lock ()
+        self._vps_locker = dict ()
         self.xenstat = XenStat ()
         self.timer = TimerEvents (time.time, self.logger_misc)
         assert conf.MONITOR_COLLECT_INV > 0
@@ -61,8 +63,32 @@ class VPSMgr (object):
         self.workers = []
         self.running = False
 
+    def _try_lock_vps (self, cmd, vps_id):
+        self._locker.acquire ()
+        if self._vps_locker.has_key (vps_id):
+            _cmd = self._vps_locker.get (vps_id)
+            self.logger_debug.info ("CMD %s try to lock vps%s failed: locked by CMD %s" % (
+                CMD._get_name(cmd), vps_id, CMD._get_name(_cmd)
+                ))
+            res = False
+        else:
+            self._vps_locker[vps_id] = cmd
+            res = True
+        self._locker.release ()
+        return res
+
+    def _unlock_vps (self, cmd, vps_id):
+        self._locker.acquire ()
+        try:
+            _cmd = self._vps_locker.get (vps_id)
+            if _cmd == cmd:
+                del self._vps_locker[vps_id]
+        except KeyError:
+            pass
+        self._locker.release ()
+
     def rpc_connect (self):
-        rpc = SAAS_Client (self.logger)
+        rpc = SAAS_Client (self, self.host_id, self.logger)
         rpc.connect ()
         return rpc
 
@@ -188,8 +214,12 @@ class VPSMgr (object):
         h = self.handlers.get (cmd)
         if callable (h):
             try:
-                h (self, vps_info)
-                return True
+                if self._try_lock_vps (cmd, vps_id):
+                    h (self, vps_info)
+                    self._unlock_vps (cmd, vps_id)
+                    return True
+                else:
+                    return False
             except Exception, e:
                 self.logger.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
                 self.done_task (cmd, vps_id, False, "uncaught exception %s" % (str(e)))
@@ -207,12 +237,12 @@ class VPSMgr (object):
                 pending_jobs = []
                 try:
                     for cmd in cmds: 
-                        vps_id = rpc.todo (self.host_id, cmd)
-                        self.logger_debug.info ("cmd:%s, vps_id:%s" % (cmd, vps_id))
+                        vps_id = rpc.todo (cmd)
+                        self.logger_debug.info ("cmd:%s, vps_id:%s" % (CMD._get_name(cmd), vps_id))
                         if vps_id > 0:
                             vps_info = rpc.vps (vps_id)
                             if not self.vps_is_valid (vps_info):
-                                self.logger.error ("invalid vps data received, cmd=%s, %s" % (cmd, self.dump_vps_info (vps_info)))
+                                self.logger.error ("invalid vps data received, cmd=%s, %s" % (CMD._get_name(cmd), self.dump_vps_info (vps_info)))
                                 self.done_task(cmd, vps_id, False, "invalid vpsinfo")
                                 vps_info = None
                             else:
@@ -228,7 +258,18 @@ class VPSMgr (object):
             except Exception, e:
                 self.logger.exception ("uncaught exception: " + str(e))
             self.sleep (15) 
-        self.logger.info ("worker for %s stop" % (str(cmds)))
+        self.logger.info ("worker for %s stop" % (",".join (map (CMD._get_name, cmds))))
+
+    def doing (self, cmd, vps_id):
+        try:
+            rpc = self.rpc_connect()
+            try:
+                rpc.doing (cmd, vps_id)
+                self.logger.info ("send doing cmd=%s vps_id=%s" % (CMD._get_name(cmd), vps_id))
+            finally:
+                rpc.close ()
+        except Exception, e:
+            self.logger_net.exception (e)
 
     def done_task (self, cmd, vps_id, is_ok, msg=''):
         state = 0
@@ -237,8 +278,8 @@ class VPSMgr (object):
         try:
             rpc = self.rpc_connect()
             try:
-                self.logger.info ("send done_task cmd=%s vps_id=%s" % (str(cmd), str(vps_id)))
-                rpc.done (self.host_id, cmd, vps_id, state, msg)
+                self.logger.info ("send done_task cmd=%s vps_id=%s" % (CMD._get_name (cmd), str(vps_id)))
+                rpc.done (cmd, vps_id, state, msg)
             finally:
                 rpc.close ()
         except Exception, e:
@@ -465,6 +506,7 @@ class VPSMgr (object):
         return True
 
     def vps_hot_sync (self, vps_info):
+        self.doing (CMD.PRE_SYNC, vps_info.id)
         return self._vps_hot_sync (vps_info.id)
 
     def _vps_hot_sync (self, vps_id, force=False, to_host_ip=None, speed=None):
@@ -490,6 +532,7 @@ class VPSMgr (object):
         return True
 
     def vps_migrate (self, vps_info):
+        self.doing (CMD.MIGRATE, vps_info.id)
         return self._vps_migrate (vps_info.id)
 
     def _vps_migrate (self, vps_id, force=False, to_host_ip=None, speed=None):
@@ -578,7 +621,7 @@ class VPSMgr (object):
         try:
             rpc = self.rpc_connect()
             try:
-                rpc.host_refresh (self.host_id, disk_remain, mem_remain, disk_total, mem_total)
+                rpc.host_refresh (disk_remain, mem_remain, disk_total, mem_total)
                 self.logger.info ("send host remain disk:%dG, mem:%dM, total disk:%dG, mem:%dM" % (disk_remain, mem_remain, disk_total, mem_total))
             finally:
                 rpc.close ()
@@ -643,7 +686,7 @@ class VPSMgr (object):
             th.start ()
             self.workers.append (th)
         except Exception, e:
-            self.logger.info ("failed to start worker for cmd %s, %s" % (str(cmds), str(e)))
+            self.logger.info ("failed to start worker for cmd %s, %s" % (",".join (map (CMD._get_name, cmds)), str(e)))
 
     def start (self):
         if self.running:

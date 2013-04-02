@@ -5,21 +5,22 @@ import _env
 from lib.rpc import SSL_RPC_Client, RPC_Exception
 import conf
 from lib.attr_wrapper import AttrWrapper
+from lib.enum import Enum
 
-class CMD:
-    NONE = 0
-    OPEN = 1
-    CLOSE = 2
-    REBOOT = 3
-    RM = 4
-    BANDWIDTH = 5
-    OS = 6
-    UPGRADE = 7
-    MIGRATE = 8
-    MONITOR = 9
-    PRE_SYNC = 10
-    RESET_PW = 11
-
+CMD = Enum (
+    NONE = 0,
+    OPEN = 1,
+    CLOSE = 2,
+    REBOOT = 3,
+    RM = 4,
+    BANDWIDTH = 5,
+    OS = 6,
+    UPGRADE = 7,
+    MIGRATE = 8,
+    MONITOR = 9,
+    PRE_SYNC = 10,
+    RESET_PW = 11,
+    )
 
 class VM_STATE:
     RM = 0
@@ -49,8 +50,9 @@ VM_STATE_CN[VM_STATE.RM]  = '已删除'
 
 class SAAS_Client (object):
 
-    def __init__ (self, logger=None):
+    def __init__ (self, host_id, logger=None):
         self.rpc = SSL_RPC_Client (logger)
+        self.host_id = int(host_id)
 
     def connect (self):
         return self.rpc.connect ((conf.SAAS_HOST, conf.SAAS_PORT + 1))
@@ -58,17 +60,20 @@ class SAAS_Client (object):
     def close (self):
         self.rpc.close ()
 
-    def todo (self, host_id, cmd):
-        return self.rpc.call ("todo", host_id, cmd)
+    def doing (self, cmd, vm_id):
+        return self.rpc.call ("doing", self.host_id, cmd, vm_id)
+
+    def todo (self, cmd):
+        return self.rpc.call ("todo", self.host_id, cmd)
 
     def host_list (self):
         return AttrWrapper.wrap (self.rpc.call ("host_list"))
 
-    def done (self, host_id, cmd, vm_id, state, message):
-        return self.rpc.call ("done", host_id, cmd, vm_id, int(state), str(message))
+    def done (self, cmd, vm_id, state, message):
+        return self.rpc.call ("done", self.host_id, cmd, vm_id, int(state), str(message))
 
-    def host_refresh(self, host_id, hd_remain, ram_remain, hd_total=0, ram_total=0):
-        return self.rpc.call ("host_refresh", int(host_id), int(hd_remain), int(ram_remain), int(hd_total), int(ram_total))
+    def host_refresh(self, hd_remain, ram_remain, hd_total=0, ram_total=0):
+        return self.rpc.call ("host_refresh", self.host_id, int(hd_remain), int(ram_remain), int(hd_total), int(ram_total))
 
     def vps(self, vm_id):
         return AttrWrapper(self.rpc.call ("vps", vm_id))
@@ -80,7 +85,7 @@ class SAAS_Client (object):
 
 
 if __name__ == '__main__':
-    client = SAAS_Client ()
+    client = SAAS_Client (1)
     client.connect ()
 #    vps = client.vps (1176)
 #    from vps_mgr import VPSMgr

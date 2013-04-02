@@ -14,7 +14,7 @@ class TestSAASClient (unittest.TestCase):
 
     def setUp (self):
         self.m = VPSMgr ()
-        self.rpc = SAAS_Client (self.m.logger)
+        self.rpc = SAAS_Client (0, self.m.logger)
 
     def test_invalid (self):
         self.rpc.connect ()

@@ -44,10 +44,10 @@ class SaasMonitor (object):
     def check (self):
         vps = None
         try:
-            rpc = SAAS_Client (self.logger)
+            rpc = SAAS_Client (conf.HOST_ID, self.logger)
             rpc.connect ()
             try:
-                _id = rpc.todo (0, CMD.MONITOR)
+                _id = rpc.todo (CMD.MONITOR)
             finally:
                 rpc.close ()
             self.logger.info ("ok")
