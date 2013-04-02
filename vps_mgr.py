@@ -692,7 +692,8 @@ class VPSMgr (object):
         if self.running:
             return
         self.running = True
-        self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.OS, CMD.REBOOT, CMD.RM, CMD.RESET_PW)
+        self.start_worker (CMD.OPEN, CMD.CLOSE, CMD.REBOOT, CMD.RM, CMD.RESET_PW)
+        self.start_worker (CMD.OS)
         self.start_worker (CMD.UPGRADE)
         self.start_worker (CMD.PRE_SYNC)
         self.start_worker (CMD.MIGRATE)
