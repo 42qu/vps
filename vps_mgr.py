@@ -208,7 +208,6 @@ class VPSMgr (object):
 
 
     def run_once (self, cmd, vps_id, vps_info):
-        vps_id = None
         if not vps_info:
             return False
         h = self.handlers.get (cmd)
