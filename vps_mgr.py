@@ -220,6 +220,7 @@ class VPSMgr (object):
                 else:
                     return False
             except Exception, e:
+                self._unlock_vps (cmd, vps_id)
                 self.logger.exception ("vps %s, uncaught exception: %s" % (vps_info.id, str(e)))
                 self.done_task (cmd, vps_id, False, "uncaught exception %s" % (str(e)))
                 return False
