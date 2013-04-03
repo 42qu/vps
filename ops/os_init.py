@@ -462,9 +462,9 @@ def pack_vps_fs_tarball (img_path, tarball_dir_or_path, is_image=False):
             raise Exception ("file %s already exists" % (tarball_path))
  
     if img_path.find ("/dev") == 0:
-        mount_point = vps_common.mount_partition_tmp (img_path, readonly=True)
+        mount_point = vps_common.mount_partition_tmp (img_path, readonly=not is_image)
     else:
-        mount_point = vps_common.mount_loop_tmp (img_path, readonly=True)
+        mount_point = vps_common.mount_loop_tmp (img_path, readonly=not is_image)
     
     if is_image:
         clean_up_img (mount_point)
