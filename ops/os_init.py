@@ -72,7 +72,10 @@ def clean_up_img (vps_mountpoint):
         for f in files:
             if os.path.exists (f):
                 print "remove %s" % (f)
-                shutil.rmtree(f)
+                if os.path.isdir (f):
+                    shutil.rmtree(f)
+                else:
+                    os.remove (f)
 
 
 
