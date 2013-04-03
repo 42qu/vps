@@ -48,6 +48,7 @@ def clean_up (vps_mountpoint):
             "var/log/syslog",
             "var/log/messages",
             "var/log/audit.log",
+            "var/log/emerge.log",
             ]
     for file_path in files:
         a_path = os.path.join (vps_mountpoint, file_path)
