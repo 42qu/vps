@@ -279,40 +279,6 @@ def lv_snapshot (dev, snapshot_name, vg_name):
     call_cmd ("lvcreate --name %s --size %dG -s %s" % (snapshot_name, size, dev))
     return snapshot_dev
 
-def pack_vps_fs_tarball (img_path, tarball_dir_or_path):
-    """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
-    tarball_dir = None
-    tarball_path = None
-    if os.path.isdir (tarball_dir_or_path):
-        tarball_dir = tarball_dir_or_path
-    else:
-        if os.path.exists (tarball_dir_or_path):
-            raise Exception ("file %s exists" % (tarball_dir_or_path))
-        tarball_path = tarball_dir_or_path
-        tarball_dir = os.path.dirname (tarball_path)
-        if not os.path.isdir (tarball_dir):
-            raise Exception ("directory %s not exists" % (tarball_dir))
-
-    if img_path.find ("/dev") == 0:
-        mount_point = mount_partition_tmp (img_path, readonly=True)
-    else:
-        mount_point = mount_loop_tmp (img_path, readonly=True)
-    if not tarball_path and tarball_dir:
-        fs_type = get_fs_type (img_path)
-        tarball_name = "%s_fs_%s.tar.gz" % (os.path.basename (img_path), fs_type)
-        tarball_path = os.path.join (tarball_dir, tarball_name)
-        if os.path.exists (tarball_path):
-            raise Exception ("file %s already exists" % (tarball_path))
-        
-    cwd = os.getcwd ()
-    os.chdir (mount_point)
-    try:
-        call_cmd ("tar zcf %s ." % (tarball_path))
-    finally:
-        os.chdir (cwd)
-        umount_tmp (mount_point)
-    return tarball_path
-
 def get_sector_size (dev):
     dev = os.path.realpath(dev)
     arr = dev.split ("/")

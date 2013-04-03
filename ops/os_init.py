@@ -10,6 +10,8 @@ import time
 import crypt
 import shutil
 import conf
+import glob
+import ops.vps_common as vps_common
 TIMEZONE = None
 
 DNS_SERVERS = None
@@ -45,16 +47,34 @@ def clean_up (vps_mountpoint):
     files = [
             "root/.bash_history",
             "root/.ssh/known_hosts",
-            "var/log/syslog",
-            "var/log/messages",
-            "var/log/audit.log",
-            "var/log/emerge.log",
+            "var/log/*.log",
+            "tmp/*",
             ]
     for file_path in files:
         a_path = os.path.join (vps_mountpoint, file_path)
-        if os.path.isfile (a_path):
-            print "remove %s" % (a_path)
-            os.remove (a_path)
+        files = glob.glob (a_path)
+        for f in files:
+            if os.path.isfile (f):
+                print "remove %s" % (f)
+                os.remove (f)
+
+def clean_up_img (vps_mountpoint):
+    files = [
+            "root/.*",
+            "var/log/*",
+            "tmp/*",
+            "tmp/.*",
+            "usr/portage/distfiles/*",
+            ]
+    for file_path in files:
+        a_path = os.path.join (vps_mountpoint, file_path)
+        files = glob.glob (a_path)
+        for f in files:
+            if os.path.exists (f):
+                print "remove %s" % (f)
+                shutil.rmtree(f)
+
+
 
 def migrate_users (xv, vps_mountpoint, vps_mountpoint_old):
     passwd_path_old = os.path.join (vps_mountpoint_old, "etc", "passwd")
@@ -420,6 +440,44 @@ DAEMONS=(syslog-ng network crond sshd)
     finally:
         f.close ()
 
+def pack_vps_fs_tarball (img_path, tarball_dir_or_path, is_image=False):
+    """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
+    tarball_dir = None
+    tarball_path = None
+    if os.path.isdir (tarball_dir_or_path):
+        tarball_dir = tarball_dir_or_path
+    else:
+        if os.path.exists (tarball_dir_or_path):
+            raise Exception ("file %s exists" % (tarball_dir_or_path))
+        tarball_path = tarball_dir_or_path
+        tarball_dir = os.path.dirname (tarball_path)
+        if not os.path.isdir (tarball_dir):
+            raise Exception ("directory %s not exists" % (tarball_dir))
+
+    if not tarball_path and tarball_dir:
+        fs_type = vps_common.get_fs_type (img_path)
+        tarball_name = "%s_fs_%s.tar.gz" % (os.path.basename (img_path), fs_type)
+        tarball_path = os.path.join (tarball_dir, tarball_name)
+        if os.path.exists (tarball_path):
+            raise Exception ("file %s already exists" % (tarball_path))
+ 
+    if img_path.find ("/dev") == 0:
+        mount_point = vps_common.mount_partition_tmp (img_path, readonly=True)
+    else:
+        mount_point = vps_common.mount_loop_tmp (img_path, readonly=True)
     
+    if is_image:
+        clean_up_img (mount_point)
+
+    cwd = os.getcwd ()
+    os.chdir (mount_point)
+    try:
+        call_cmd ("tar zcf %s ." % (tarball_path))
+    finally:
+        os.chdir (cwd)
+        vps_common.umount_tmp (mount_point)
+    return tarball_path
+
+   
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

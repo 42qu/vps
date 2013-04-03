@@ -6,6 +6,7 @@ import _env
 import ops.vps_common as vps_common
 import conf
 assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
+import ops.os_init as os_init
 
 
 def usage ():
@@ -32,7 +33,7 @@ def main():
             print "aborted"
             os._exit (0)
         os.unlink (tarball_path)
-    vps_common.pack_vps_fs_tarball (img_path, tarball_path)
+    os_init.pack_vps_fs_tarball (img_path, tarball_path, is_image=True)
     print "done"
 
     

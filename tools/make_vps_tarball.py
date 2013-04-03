@@ -3,7 +3,7 @@
 import sys
 import os
 import _env
-import ops.vps_common as vps_common
+import ops.os_init as os_init
 import conf
 assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
 
@@ -26,7 +26,7 @@ def main():
     if not os.path.isdir (tarball_dir):
         print '%s is not a directory' % (tarball_dir)
         os._exit (1)
-    tarball_path = vps_common.pack_vps_fs_tarball (img_path, tarball_dir)
+    tarball_path = os_init.pack_vps_fs_tarball (img_path, tarball_dir)
     print "%s packed in %s" % (img_path, tarball_path)
     
 if "__main__" == __name__:
