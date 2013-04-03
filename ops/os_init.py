@@ -64,6 +64,7 @@ def clean_up_img (vps_mountpoint):
             "var/log/*",
             "tmp/*",
             "tmp/.*",
+            "var/tmp/*",
             "usr/portage/distfiles/*",
             ]
     for file_path in files:
