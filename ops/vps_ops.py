@@ -547,7 +547,7 @@ class VPSOps (object):
         if xv.has_netinf (vifname):
             self.loginfo (xv, "removing existing vif %s" % (vifname))
             mac = xv.vifs[vifname].mac
-            if ip in xv.vifs[vifname].ip_dict.keys () and not is_ip_available:
+            if ip in xv.vifs[vifname].ip_dict.keys ():
                 self.loginfo (xv, "no need to change vif %s, ip is the same" % (vifname))
                 return False
             if not is_ip_available:
