@@ -17,7 +17,7 @@ def add_vif_int (vps_id):
         vps_info = client.query_vps (vps_id)
     except Exception, e:
         print "failed to query vps state: [%s] %s" % (type(e), str(e))
-        os._exit (1)
+        return
     if not vps_info.int_ip or not vps_info.int_ip.ipv4:
         print "not internal ip for %s" % (vps_id)
     vpsops = client.vpsops
