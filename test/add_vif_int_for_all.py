@@ -34,6 +34,8 @@ def check_all_vps ():
     for vps_id in all_ids:
         add_vif_int (vps_id)
 
+if __name__ == '__main__':
+    check_all_vps ()
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
