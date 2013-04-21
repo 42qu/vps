@@ -20,10 +20,10 @@ def add_vif_int (vps_id):
         return
     if not vps_info.int_ip or not vps_info.int_ip.ipv4:
         print "not internal ip for %s" % (vps_id)
+        return
     vpsops = client.vpsops
     try:
-        if vps_info.int_ip:
-            vpsops.set_vif_int (vps_id, vps_info.int_ip.ipv4, vps_info.int_ip.ipv4_netmask)
+        vpsops.set_vif_int (vps_id, vps_info.int_ip.ipv4, vps_info.int_ip.ipv4_netmask)
     except Exception, e:
         client.logger.exception (e)
         raise e
