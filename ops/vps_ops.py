@@ -545,13 +545,13 @@ class VPSOps (object):
         mac = None
         is_ip_available = not vps_common.ping (ip)
         if xv.has_netinf (vifname):
-            self.loginfo (xv, "removing existing vif %s" % (vifname))
             mac = xv.vifs[vifname].mac
             if ip in xv.vifs[vifname].ip_dict.keys ():
                 self.loginfo (xv, "no need to change vif %s, ip is the same" % (vifname))
                 return False
             if not is_ip_available:
                 raise Exception ("ip %s is in use" % (ip))
+            self.loginfo (xv, "removing existing vif %s" % (vifname))
             vps_common.xm_network_detach (xv.name, mac)
             xv.del_netinf (vifname)
         elif not is_ip_available:
