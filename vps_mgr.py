@@ -514,7 +514,7 @@ class VPSMgr (object):
         try:
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != MIGRATE_STATE.TO_PRE_SYNC and task.state != MIGRATE_STATE.PRE_SYNCED and not force:
+                if task.state not in [MIGRATE_STATE.TO_PRE_SYNC, MIGRATE_STATE.PRE_SYNCING, MIGRATE_STATE.PRE_SYNCED] and not force:
                     raise Exception ("task%s state is not TO_PRE_SYNC" % (task.id))
                 to_host_ip = task.to_host_ip
                 speed = task.speed
@@ -540,7 +540,7 @@ class VPSMgr (object):
             xv = self.vpsops.load_vps_meta (vps_id)
             task = self.query_migrate_task (vps_id)
             if task:
-                if task.state != MIGRATE_STATE.TO_MIGRATE and task.state != MIGRATE_STATE.PRE_SYNCED and not force:
+                if task.state not in [MIGRATE_STATE.TO_MIGRATE, MIGRATE_STATE.MIGRATING, MIGRATE_STATE.PRE_SYNCED] and not force:
                     raise Exception ("task%s state is not TO_MIGRATE" % (task.id))
                 to_host_ip = task.to_host_ip
                 xv.gateway = task.new_gateway and task.new_gateway.ipv4 or None
