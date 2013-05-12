@@ -407,6 +407,10 @@ class VPSStoreLV (VPSStoreBase):
             content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor, conf.BLK_READ_IOPS)
         if conf.BLK_WRITE_IOPS:
             content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor, conf.BLK_WRITE_IOPS)
+        if conf.BLK_READ_BPS:
+            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_bps_device\n" % (major, minor, conf.BLK_READ_BPS)
+        if conf.BLK_WRITE_BPS:
+            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device\n" % (major, minor, conf.BLK_WRITE_BPS)
         if content:
             content = "#!/bin/sh\n" + content 
             f = open (script_file, "w")
