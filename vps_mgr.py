@@ -190,6 +190,17 @@ class VPSMgr (object):
                             payload.append ("vps.io.%d.%s.traffic.read" % (vps_id, disk.xen_dev), ts, read_byte)
                             payload.append ("vps.io.%d.%s.traffic.write" % (vps_id, disk.xen_dev), ts, write_byte)
                             payload.append ("vps.io.%d.%s.util" % (vps_id, disk.xen_dev), ts, util)
+
+                        v = disk_result.get (xv.swap_store.dev)
+                        last_v = self.last_diskstat.get (xv.swap_store.dev)
+                        if v and last_v:
+                            read_ops, read_byte, write_ops, write_byte, util = diskstat.cal_stat (v, last_v, t_elapse)
+                            payload.append ("vps.io.%d.swap.ops.read" % (vps_id), ts, read_ops)
+                            payload.append ("vps.io.%d.swap.ops.write" % (vps_id), ts, write_ops)
+                            payload.append ("vps.io.%d.swap.traffic.read" % (vps_id), ts, read_byte)
+                            payload.append ("vps.io.%d.swap.traffic.write" % (vps_id), ts, write_byte)
+                            payload.append ("vps.io.%d.swap.util" % (vps_id), ts, util)
+
             self.last_netflow = net_result
             self.last_diskstat = disk_result
             self.last_monitor_ts = ts

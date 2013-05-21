@@ -206,7 +206,7 @@ def cmd_wrapper (action, main, usage, logger, log_dir, run_dir, pid_file, mon_pi
 
     def _log_err (msg):
         print msg
-        logger.error (msg, bt_level=1)
+        logger.exception (msg)
         return
 
     def _start ():
