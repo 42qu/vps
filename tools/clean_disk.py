@@ -11,37 +11,55 @@ from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.ixen import XenStore
 from ops.saas_rpc import VM_STATE, VM_STATE_CN
+import getopt
 
-def _delete_all (xv, status, days=0):
+def _delete_disk (logger, disk, dry=True):
+    if dry:
+        return
+    disk.delete ()
+    logger.info ("deleted %s" % (str(disk)))
+
+def _delete_disk_trash (logger, disk, dry=True):
+    if dry:
+        return
+    disk.delete_trash ()
+    logger.info ("deleted %s" % (disk.trash_str ()))
+     
+
+def _delete_all (logger, xv, status, days=0, dry=True):
     for disk in xv.data_disks ():
         if disk.exists ():
-            if days and not disk.test_expire ():
+            if days and not disk.test_expire (days):
                 print status, str(disk), "not expired"
                 continue
             print status, str(disk)
+            _delete_disk (logger, disk, dry=dry)
         if disk.trash_exists ():
-            if days and not disk.test_expire ():
+            if days and not disk.test_expire (days):
                 print status, disk.trash_str (), "not expired"
                 continue
             print status, disk.trash_str ()
+            _delete_disk_trash (logger, disk, dry=dry)
     for disk in xv.trash_disks.values ():
         if disk.trash_exists ():
-            if days and not disk.test_expire ():
+            if days and not disk.test_expire (days):
                 print status, disk.trash_str (), "not expired"
                 continue
             print status, disk.trash_str ()
+            _delete_disk_trash (logger, disk, dry=dry)
 
 
-def _delete_trash (xv, status, days=0):
+def _delete_trash (logger, xv, status, days=0, dry=True):
     for disk in xv.trash_disks.values ():
         if disk.trash_exists ():
-            if days and not disk.test_expire ():
+            if days and not disk.test_expire (days):
                 print status, disk.trash_str (), "not expired"
                 continue
             print status, disk.trash_str ()
+            _delete_disk_trash (logger, disk, dry=dry)
 
 
-def _check_disk (client, vps_id):
+def _check_disk (client, vps_id, dry=True):
     is_trash = False
     is_delete = False
     meta = client.vpsops._meta_path (vps_id, is_trash=False)
@@ -57,8 +75,9 @@ def _check_disk (client, vps_id):
         else:
             is_trash = True
     xv = client.vpsops._load_vps_meta (meta)
+    logger = client.logger
     if is_delete:
-        _delete_all (xv, "deleted")
+        _delete_all (logger, xv, "deleted", dry=dry)
     else:
         vps_info = None
         try:
@@ -67,23 +86,23 @@ def _check_disk (client, vps_id):
             raise e
         if is_trash:
             if not vps_info:
-                _delete_all (xv, "closed but no meta")
+                _delete_all (logger, xv, "closed but no meta", dry=dry)
             elif str(vps_info.host_id) != str(conf.HOST_ID):
-                _delete_all (xv, "closed but not on this host")
+                _delete_all (logger, xv, "closed but not on this host", dry=dry)
             else:
                 print "ignore closed vps", vps_id
                 return
         else:
             if not vps_info:
-                _delete_trash (xv, "running but no meta")
+                _delete_trash (logger, xv, "running but no meta", dry=dry)
             elif str(vps_info.host_id) != str(conf.HOST_ID):
-                _delete_all (xv, "running but not on this host", days=7)
+                _delete_all (logger, xv, "running but not on this host", days=7, dry=dry)
             else:
-                _delete_trash (xv, "running", days=7)
+                _delete_trash (logger, xv, "running", days=7, dry=dry)
 
 
 
-def check_all ():
+def check_all (dry=True):
     assert conf.XEN_CONFIG_DIR and os.path.isdir (conf.XEN_CONFIG_DIR)
     assert conf.VPS_METADATA_DIR and os.path.isdir (conf.VPS_METADATA_DIR)
     all_ids = set ()
@@ -97,10 +116,26 @@ def check_all ():
         all_ids.add (vps_id)
     print "meta %d"  % (len(all_ids))
     for vps_id in all_ids:
-        _check_disk (client, vps_id)
+        _check_disk (client, vps_id, dry=dry)
+
+def usage ():
+    print "%s [-p] vps_id" % (sys.argv[0])
+    print "-p for pretending run"
+    return
+
 
 if __name__ == '__main__':
-    check_all ()
+    dry = False
+    optlist, args = getopt.gnu_getopt (sys.argv[1:], "p", [
+                 "help", "pretend",
+                 ])
+    for opt, v in optlist:
+        if opt == '--help': 
+            usage ()
+            os._exit (0)
+        if opt in [ '-p', '--pretend' ]:
+            dry = True
+    check_all (dry=dry)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

@@ -59,7 +59,7 @@ class VPSStoreBase (object):
     def get_size (self):
         raise NotImplementedError ()
 
-    def test_expire (self):
+    def test_expire (self, days):
         if self.trash_date and self.trash_date + datetime.timedelta (days=days) < datetime.date.today ():
             return True
         return False
