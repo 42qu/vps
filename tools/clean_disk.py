@@ -27,7 +27,7 @@ def _delete_disk_trash (logger, disk, dry=True):
      
 
 def _delete_all (logger, xv, status, days=0, dry=True):
-    for disk in xv.data_disks ():
+    for disk in xv.data_disks.values ():
         if disk.exists ():
             if days and not disk.test_expire (days):
                 print status, str(disk), "not expired"
@@ -40,6 +40,7 @@ def _delete_all (logger, xv, status, days=0, dry=True):
                 continue
             print status, disk.trash_str ()
             _delete_disk_trash (logger, disk, dry=dry)
+            
     for disk in xv.trash_disks.values ():
         if disk.trash_exists ():
             if days and not disk.test_expire (days):
@@ -66,9 +67,9 @@ def _check_disk (client, vps_id, dry=True):
     if not os.path.exists (meta):
         meta = client.vpsops._meta_path (vps_id, is_trash=True)
         if not os.path.exists (meta):
-            meta = client.vpsops._meta_path (vps_id, is_trash=True, is_delete=True)
+            meta = client.vpsops._meta_path (vps_id, is_trash=True, is_deleted=True)
             if not os.path.exists (meta):
-                meta = client.vpsops._meta_path (vps_id, is_trash=False, is_delete=True)
+                meta = client.vpsops._meta_path (vps_id, is_trash=False, is_deleted=True)
                 if not os.path.exists (meta):
                     return
             is_delete = True
@@ -109,7 +110,7 @@ def check_all (dry=True):
     client = VPSMgr ()
     configs = glob.glob (os.path.join (conf.VPS_METADATA_DIR, "*.json*"))
     for config in configs:
-        om = re.match (r'^vps(\d+)\.\w+$', os.path.basename (config))
+        om = re.match (r'^vps(\d+)[\.\w]+$', os.path.basename (config))
         if not om:
             continue
         vps_id = int(om.group (1))
