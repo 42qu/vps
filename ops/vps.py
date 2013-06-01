@@ -21,6 +21,7 @@ default_read_iops = 'BLK_READ_IOPS' in dir(conf) and conf.BLK_READ_IOPS or 0
 default_write_iops = 'BLK_WRITE_IOPS' in dir(conf) and conf.BLK_WRITE_IOPS or 0
 default_read_bps = 'BLK_READ_BPS' in dir(conf) and conf.BLK_READ_BPS or 0
 default_write_bps = 'BLK_WRITE_BPS' in dir(conf) and conf.BLK_WRITE_BPS or 0
+default_swap_iops = 'BLK_SWAP_IOPS' in dir(conf) and conf.BLK_SWAP_IOPS or 0
 default_swap_bps = 'BLK_SWAP_BPS' in dir(conf) and conf.BLK_SWAP_BPS or 0
     
 
@@ -161,7 +162,7 @@ class XenVPS (object):
         self.data_disks[self.root_store.xen_dev] = self.root_store
         if swp_g:
             self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
-            self.swap_store.set_cgroup_limit (default_read_iops, default_write_iops, default_swap_bps or default_read_bps, default_swap_bps or default_write_bps)
+            self.swap_store.set_cgroup_limit (default_swap_iops, default_swap_iops, default_swap_bps, default_swap_bps)
         self.root_pw = root_pw
         
     def get_xendev_by_id (self, disk_id):
