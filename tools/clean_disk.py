@@ -120,6 +120,7 @@ def check_all (dry=True):
         vps_id = int(om.group (1))
         all_ids.add (vps_id)
     print "meta %d"  % (len(all_ids))
+    client.logger.info ("----check expired images---")
     for vps_id in all_ids:
         _check_disk (client, vps_id, dry=dry)
 
