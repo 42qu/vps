@@ -61,7 +61,7 @@ def prepare(o):
     o.CGROUP_SCRIPT_DIR = "/data/vps/cgroup/"
     o.BLK_READ_IOPS = 1000
     o.BLK_WRITE_IOPS = 800
-    o.BLK_READ_BPS = 13 * 1000 * 1000
+    o.BLK_READ_BPS = 8 * 1000 * 1000
     o.BLK_WRITE_BPS = 7 * 1000 * 1000
     o.BLK_SWAP_BPS = 2 * 1000 * 1000
 

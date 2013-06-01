@@ -46,7 +46,7 @@ class VPSStoreBase (object):
         self.mount_point = mount_point
 
     def set_cgroup_limit (self, read_iops, write_iops, read_bps, write_bps):
-        self.cgroup_limit = (read_iops, write_bps, read_bps, write_bps)
+        self.cgroup_limit = (read_iops, write_iops, read_bps, write_bps)
 
     def can_resize (self):
         raise NotImplementedError ()
