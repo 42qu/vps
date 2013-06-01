@@ -11,6 +11,7 @@ from vps_mgr import VPSMgr
 from ops.vps import XenVPS
 from ops.ixen import XenStore
 from ops.saas_rpc import VM_STATE, VM_STATE_CN
+import time
 import getopt
 
 def _delete_disk (logger, disk, dry=True):
@@ -26,12 +27,14 @@ def _delete_disk_trash (logger, disk, dry=True):
     logger.info ("deleted %s" % (disk.trash_str ()))
      
 
-def _delete_all (logger, xv, status, days=0, dry=True):
+def _delete_all (logger, xv, status, days=0, dry=True, metapath=None):
     for disk in xv.data_disks.values ():
         if disk.exists ():
-            if days and not disk.test_expire (days):
-                print status, str(disk), "not expired"
-                continue
+            if metapath and days:
+                st = os.stat (metapath)
+                if time.time () - st.st_ctime < 3600 * 24 * days:
+                    print status, str(disk), "not expired"
+                    continue
             print status, str(disk)
             _delete_disk (logger, disk, dry=dry)
         if disk.trash_exists ():
@@ -87,20 +90,20 @@ def _check_disk (client, vps_id, dry=True):
             raise e
         if not vps_info:
             if is_trash:
-                _delete_all (logger, xv, "closed but no meta", dry=dry)
+                _delete_all (logger, xv, "closed but no info", dry=dry, days=7, metapath=meta)
             else:
-                _delete_trash (logger, xv, "running but no meta", dry=dry)
+                _delete_trash (logger, xv, "running but no info", dry=dry, days=7)
         elif vps_info.state == VM_STATE.CLOSE:
             if str(vps_info.host_id) != str(conf.HOST_ID):
-                _delete_all (logger, xv, "closed but not on this host", dry=dry)
+                _delete_all (logger, xv, "closed but not on this host", dry=dry, days=7, metapath=meta)
             else:
                 print "ignore closed vps", vps_id
                 return
         elif vps_info.state == VM_STATE.OPEN:
-            elif str(vps_info.host_id) != str(conf.HOST_ID):
-                _delete_all (logger, xv, "running but not on this host", days=7, dry=dry)
+            if str(vps_info.host_id) != str(conf.HOST_ID):
+                _delete_all (logger, xv, "running but not on this host", dry=dry, days=7, metapath=meta)
             else:
-                _delete_trash (logger, xv, "running", days=7, dry=dry)
+                _delete_trash (logger, xv, "running", dry=dry, days=7)
         elif vps_info.state == VM_STATE.RM:
             _delete_all (logger, xv, "deleted", dry=dry)
 
