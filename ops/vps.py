@@ -196,7 +196,7 @@ class XenVPS (object):
     def renew_storage (self, xen_dev, expire_days=5, new_size=None):
         # move old disk to trash, return the (old_disk, new_disk)
         old_disk = self.root_store
-        old_disk.dump_trash (expire_days)
+        old_disk.dump_trash ()
         self.trash_disks[old_disk.xen_dev] = old_disk
         if not new_size:
             new_size = old_disk.size_g

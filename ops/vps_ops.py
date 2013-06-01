@@ -202,7 +202,7 @@ class VPSOps (object):
     def _close_vps (self, xv):
         for disk in xv.data_disks.values ():
             if disk.exists ():
-                disk.dump_trash (conf.CLOSE_EXPIRE_DAYS)
+                disk.dump_trash ()
                 self.loginfo (xv, "%s moved to trash" % (str(disk)))
         if xv.swap_store.exists ():
             xv.swap_store.delete ()

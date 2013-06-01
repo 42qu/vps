@@ -11,6 +11,7 @@ import ops.vps_common as vps_common
 import unittest
 from lib.log import Log
 import time
+import datetime
 
 class TestVPSOPS (unittest.TestCase):
 
@@ -23,9 +24,9 @@ class TestVPSOPS (unittest.TestCase):
         vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
         vps.add_netinf_ext ({"10.10.1.2": "255.255.255.0"})
         vps.add_netinf_int ({"10.10.3.2": '255.255.255.0'})
-        vps.data_disks['xvdc1']._set_expire_days (1)
-        print "trash_date", vps.data_disks['xvdc1'].trash_date
-        print "expire_date", vps.data_disks['xvdc1'].expire_date
+#        vps.data_disks['xvdc1']._set_expire_days (1)
+#        print "trash_date", vps.data_disks['xvdc1'].trash_date
+#        print "expire_date", vps.data_disks['xvdc1'].expire_date
         vpsops.save_vps_meta (vps)
         _vps = vpsops.load_vps_meta (0)
         self.assertEqual (_vps.vps_id, vps.vps_id)
@@ -41,22 +42,22 @@ class TestVPSOPS (unittest.TestCase):
         self.assertEqual (_vps.data_disks['xvdc1'].fs_type, 'ext3')
         self.assertEqual (_vps.data_disks['xvdc1'].mount_point, '/mnt/data1')
         self.assertEqual (_vps.data_disks['xvdc1'].xen_dev, 'xvdc1')
-        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, vps.data_disks['xvdc1'].trash_date)
-        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, vps.data_disks['xvdc1'].expire_date)
+#        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, vps.data_disks['xvdc1'].trash_date)
+#        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, vps.data_disks['xvdc1'].expire_date)
         print _vps.data_disks['xvdc1'].__class__.__name__
         self.assertEqual (len (_vps.vifs.values ()), 2)
         self.assertEqual (_vps.vifs['vps00int'].ip_dict, {'10.10.3.2': '255.255.255.0'})
         self.assertEqual (_vps.vifs['vps00int'].mac, vps.vifs['vps00int'].mac)
         self.assertEqual (_vps.vifs['vps00int'].mac, vps.vif_int.mac)
         self.assertEqual (_vps.vifs['vps00'].mac, vps.vif_ext.mac)
-        print "test trash expire date None"
-        vps.data_disks['xvdc1']._set_expire_days (None)
-        self.assertEqual (vps.data_disks['xvdc1'].trash_date, None)
-        self.assertEqual (vps.data_disks['xvdc1'].expire_date, None)
-        vpsops.save_vps_meta (vps)
-        _vps = vpsops.load_vps_meta (0)
-        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, None)
-        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, None)
+#        print "test trash expire date None"
+#        vps.data_disks['xvdc1']._set_expire_days (None)
+#        self.assertEqual (vps.data_disks['xvdc1'].trash_date, None)
+#        self.assertEqual (vps.data_disks['xvdc1'].expire_date, None)
+#        vpsops.save_vps_meta (vps)
+#        _vps = vpsops.load_vps_meta (0)
+#        self.assertEqual (_vps.data_disks['xvdc1'].trash_date, None)
+#        self.assertEqual (_vps.data_disks['xvdc1'].expire_date, None)
 
 
     def test_mem_too_big (self):
@@ -88,6 +89,7 @@ class TestVPSOPS (unittest.TestCase):
             logger.exception (e)
             raise e
         self.assert_ (xv.is_running ())
+        self.assert_ (xv.root_store.trash_date is None)
         try:
             logger.debug ("test check resources again, expect ip not available")
             xv.check_resource_avail ()

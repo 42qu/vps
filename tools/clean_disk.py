@@ -99,4 +99,8 @@ def check_all ():
     for vps_id in all_ids:
         _check_disk (client, vps_id)
 
+if __name__ == '__main__':
+    check_all ()
+
+
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
