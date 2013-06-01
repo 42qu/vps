@@ -17,7 +17,12 @@ assert conf.DEFAULT_FS_TYPE
 assert conf.VPS_METADATA_DIR
 assert conf.MOUNT_POINT_DIR
 
-
+default_read_iops = 'BLK_READ_IOPS' in dir(conf) and conf.BLK_READ_IOPS or 0
+default_write_iops = 'BLK_WRITE_IOPS' in dir(conf) and conf.BLK_WRITE_IOPS or 0
+default_read_bps = 'BLK_READ_BPS' in dir(conf) and conf.BLK_READ_BPS or 0
+default_write_bps = 'BLK_WRITE_BPS' in dir(conf) and conf.BLK_WRITE_BPS or 0
+default_swap_bps = 'BLK_SWAP_BPS' in dir(conf) and conf.BLK_SWAP_BPS or 0
+    
 
 class XenVPS (object):
     """ needs root to run xen command """
@@ -83,6 +88,7 @@ class XenVPS (object):
         data['vcpu'] = self.vcpu
         data['mem_m'] = self.mem_m
         data['root_size_g'] = self.root_store.size_g
+        data['root_cgroup'] = self.root_store.cgroup_limit
         data['swap_size_g'] = self.swap_store.size_g
         data['root_xen_dev'] = self.root_store.xen_dev
         data['gateway'] = self.gateway
@@ -114,6 +120,8 @@ class XenVPS (object):
             self.gateway = data['gateway']
             self.ip = data['ip']
             self.netmask = data['netmask']
+            if data.has_key ('root_cgroup'):
+                self.root_store.cgroup_limit = data['root_cgroup']
             if data.has_key ('data_disks'):
                 for _disk in data['data_disks']:
                     disk = VPSStoreBase.from_meta (_disk)
@@ -147,8 +155,11 @@ class XenVPS (object):
                 swp_g = 1
         self.gateway = gateway
         self.root_store = vps_store_new ("%s_root" % self.name, "xvda1", None, '/', disk_g)
-        self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
+        self.root_store.set_cgroup_limit (default_read_iops, default_write_iops, default_read_bps, default_write_bps)
         self.data_disks[self.root_store.xen_dev] = self.root_store
+        if swp_g:
+            self.swap_store = vps_store_new ("%s_swap" % self.name, "xvda2", 'swap', 'none', swp_g)
+            self.swap_store.set_cgroup_limit (default_read_iops, default_write_iops, default_swap_bps or default_read_bps, default_swap_bps or default_write_bps)
         self.root_pw = root_pw
         
     def get_xendev_by_id (self, disk_id):
@@ -160,7 +171,9 @@ class XenVPS (object):
         xen_dev = self.get_xendev_by_id (disk_id)
         mount_point = '/mnt/data%d' % (disk_id)
         partition_name = "%s_data%s" % (self.name, disk_id)
-        self.data_disks[xen_dev] = vps_store_new (partition_name, xen_dev, fs_type, mount_point, size_g)
+        storage = vps_store_new (partition_name, xen_dev, fs_type, mount_point, size_g)
+        storage.set_cgroup_limit (default_read_iops, default_write_iops, default_read_bps, default_write_bps)
+        self.data_disks[xen_dev] = storage
 
     def delete_trash (self, disk):
         del self.trash_disks[disk.xen_dev]

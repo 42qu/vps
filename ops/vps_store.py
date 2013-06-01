@@ -35,6 +35,7 @@ class VPSStoreBase (object):
     expire_date = None
     file_path = None
     trash_path = None
+    cgroup_limit = None
     
     def __init__ (self, partition_name, xen_dev, xen_path, fs_type, mount_point, size_g):
         self.partition_name = partition_name
@@ -43,6 +44,9 @@ class VPSStoreBase (object):
         self.xen_dev = xen_dev
         self.xen_path = xen_path
         self.mount_point = mount_point
+
+    def set_cgroup_limit (self, read_iops, write_iops, read_bps, write_bps):
+        self.cgroup_limit = (read_iops, write_bps, read_bps, write_bps)
 
     def can_resize (self):
         raise NotImplementedError ()
@@ -119,6 +123,8 @@ class VPSStoreBase (object):
             data['trash_date'] = self.trash_date.strftime (t_format)
         else:
             data['trash_date'] = None
+        if self.cgroup_limit:
+            data['cgroup_limit'] = self.cgroup_limit
         if self.expire_date:
             data['expire_date']  = self.expire_date.strftime (t_format)
         else:
@@ -143,6 +149,8 @@ class VPSStoreBase (object):
             self.expire_date = _parse_date (data['expire_date'])
         else:
             self.expire_date = None
+        if data.has_key ('cgroup_limit'):
+            self.cgroup_limit = data['cgroup_limit']
         return self
 
 
@@ -397,20 +405,18 @@ class VPSStoreLV (VPSStoreBase):
         return snapshot_dev
 
     def create_limit (self):
+        if not self.cgroup_limit or len(self.cgroup_limit) != 4:
+            return
         assert conf.CGROUP_SCRIPT_DIR
         if not os.path.isdir (conf.CGROUP_SCRIPT_DIR):
             os.makedirs(conf.CGROUP_SCRIPT_DIR)
         major, minor = vps_common.get_dev_no (self.dev)
         script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
         content = ""
-        if conf.BLK_READ_IOPS:
-            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor, conf.BLK_READ_IOPS)
-        if conf.BLK_WRITE_IOPS:
-            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor, conf.BLK_WRITE_IOPS)
-        if conf.BLK_READ_BPS:
-            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_bps_device\n" % (major, minor, conf.BLK_READ_BPS)
-        if conf.BLK_WRITE_BPS:
-            content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device\n" % (major, minor, conf.BLK_WRITE_BPS)
+        content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor, self.cgroup_limit[0])
+        content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor, self.cgroup_limit[1])
+        content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_bps_device\n" % (major, minor, self.cgroup_limit[2])
+        content += "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device\n" % (major, minor, self.cgroup_limit[3])
         if content:
             content = "#!/bin/sh\n" + content 
             f = open (script_file, "w")
@@ -424,12 +430,14 @@ class VPSStoreLV (VPSStoreBase):
     def destroy_limit (self):
         major, minor = vps_common.get_dev_no (self.dev)
         script_file = os.path.join (conf.CGROUP_SCRIPT_DIR, os.path.basename (self.dev))
-        if conf.BLK_READ_IOPS:
-            r_cmd = "echo '%s:%s 0' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor)
-            call_cmd (r_cmd)
-        if conf.BLK_WRITE_IOPS:
-            w_cmd = "echo '%s:%s 0' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor)
-            call_cmd (w_cmd)
+        _cmd = "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_iops_device\n" % (major, minor, 0)
+        call_cmd (_cmd)
+        _cmd = "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_iops_device\n" % (major, minor, 0)
+        call_cmd (_cmd)
+        _cmd = "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.read_bps_device\n" % (major, minor, 0)
+        call_cmd (_cmd)
+        _cmd = "echo '%s:%s %s' > /sys/fs/cgroup/blkio/blkio.throttle.write_bps_device\n" % (major, minor, 0)
+        call_cmd (_cmd)
         if os.path.isfile (script_file):
             os.remove (script_file)
 
