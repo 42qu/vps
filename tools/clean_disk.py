@@ -29,20 +29,18 @@ def _delete_disk_trash (logger, disk, dry=True):
 
 def _delete_all (logger, xv, status, days=0, dry=True, metapath=None):
     for disk in xv.data_disks.values ():
-        if disk.exists ():
+        if disk.exists () or disk.trash_exists ():
             if metapath and days:
                 st = os.stat (metapath)
                 if time.time () - st.st_ctime < 3600 * 24 * days:
                     print status, str(disk), "not expired"
                     continue
-            print status, str(disk)
-            _delete_disk (logger, disk, dry=dry)
-        if disk.trash_exists ():
-            if days and not disk.test_expire (days):
-                print status, disk.trash_str (), "not expired"
-                continue
-            print status, disk.trash_str ()
-            _delete_disk_trash (logger, disk, dry=dry)
+            if disk.exists ():
+                print status, str(disk)
+                _delete_disk (logger, disk, dry=dry)
+            else:
+                print status, disk.trash_str ()
+                _delete_disk_trash (logger, disk, dry=dry)
             
     for disk in xv.trash_disks.values ():
         if disk.trash_exists ():
