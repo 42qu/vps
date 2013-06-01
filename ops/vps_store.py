@@ -67,6 +67,11 @@ class VPSStoreBase (object):
         else:
             self.trash_date = None
             self.expire_date = None
+
+    def test_expire (self, days):
+        if self.expire_date and self.expire_date < datetime.date.today ():
+            return True
+        return False
         
     def trash_str (self):
         raise NotImplementedError ()
