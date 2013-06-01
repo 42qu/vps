@@ -125,6 +125,8 @@ class XenVPS (object):
             if data.has_key ('data_disks'):
                 for _disk in data['data_disks']:
                     disk = VPSStoreBase.from_meta (_disk)
+                    if not disk.cgroup_limit:
+                        disk.set_cgroup_limit (default_read_iops, default_write_iops, default_read_bps, default_write_bps)
                     assert disk
                     self.data_disks[disk.xen_dev] = disk
             if data.has_key ('trash_disks'):
