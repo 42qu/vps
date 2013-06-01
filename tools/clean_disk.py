@@ -123,6 +123,7 @@ def check_all (dry=True):
     client.logger.info ("----check expired images---")
     for vps_id in all_ids:
         _check_disk (client, vps_id, dry=dry)
+    client.refresh_host_space ()
 
 def usage ():
     print "%s [-p] vps_id" % (sys.argv[0])
