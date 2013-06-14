@@ -248,7 +248,7 @@ def set_root_passwd_2 (xv, vps_mountpoint):
         arr = line.split (":")
         if arr[0] == 'root':
             arr[1] = root_shadow
-            arr[2] = str(int(time.time ()))
+            arr[2] = str(int(time.time ()) / 86400)
             shadow_arr.append (":".join (arr))
         else:
             shadow_arr.append (line)
