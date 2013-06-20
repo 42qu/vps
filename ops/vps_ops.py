@@ -277,9 +277,12 @@ class VPSOps (object):
         self._clear_nonexisting_trash (xv)
 
         if os.path.exists (trash_meta_path):
+            xv_old = self._load_vps_meta (trash_meta_path)
+            self._upgrade (xv, xv_old)
             os.remove (trash_meta_path)
             self.loginfo (xv, "removed %s" % (trash_meta_path))
-        self.create_xen_config (xv)
+        else:
+            self.create_xen_config (xv)
 
         self._boot_and_test (xv, is_new=False)
         self.loginfo (xv, "done vps creation")
@@ -361,18 +364,24 @@ class VPSOps (object):
         assert xv_new.has_all_attr
         meta_path = self._meta_path (xv_new.vps_id, is_trash=False)
         xv_old = self._load_vps_meta (meta_path)
+        if xv_old.is_running:
+            if xv_old.stop ():
+                self.loginfo (xv_old, "stopped")
+            else:
+                xv_old.destroy ()
+            self.loginfo (xv_old, "force destroy")
+        time.sleep (3)
+        self._upgrade (xv_new, xv_old)
+        self._boot_and_test (xv_new, is_new=False)
+        self.loginfo (xv_new, "done vps upgrade")
 
+
+    def _upgrade (self, xv_new, xv_old):
         _vps_image, os_type, os_version = os_image.find_os_image (xv_new.os_id)
         fs_type = vps_common.get_fs_from_tarball_name (_vps_image)
         if not fs_type:
             fs_type = conf.DEFAULT_FS_TYPE
 
-        if xv_old.stop ():
-            self.loginfo (xv_old, "stopped")
-        else:
-            xv_old.destroy ()
-            self.loginfo (xv_old, "force destroy")
-        time.sleep (3)
         for xen_dev, new_disk in xv_new.data_disks.iteritems ():
             old_disk = xv_old.data_disks.get (xen_dev)
             if not new_disk.exists ():
@@ -385,7 +394,7 @@ class VPSOps (object):
                     new_size = new_disk.size_g
                     if old_size == new_size:
                         pass
-                    elif old_size <= new_size:
+                    elif old_size < new_size:
                         if new_disk.can_resize ():
                             new_disk.destroy_limit ()
                             new_disk.resize (new_disk.size_g)
@@ -426,8 +435,7 @@ class VPSOps (object):
             self.loginfo (xv_new, "done init os")
         finally:
             vps_common.umount_tmp (vps_mountpoint)
-        self._boot_and_test (xv_new, is_new=False)
-        self.loginfo (xv_new, "done vps upgrade")
+
 
     def reset_pw (self, xv):
         if not xv.root_pw:
