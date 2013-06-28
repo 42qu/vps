@@ -400,7 +400,7 @@ class VPSOps (object):
                             new_disk.create_limit ()
                             self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
                     else:
-                        old_disk, new_disk = xv_new.renew_storage (xen_dev)
+                        old_disk, new_disk = xv_new.renew_storage (xen_dev, new_size=new_disk.size_g)
                         vps_mountpoint_bak = old_disk.mount_trash_temp ()
                         self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
                         try:
