@@ -404,14 +404,14 @@ class VPSOps (object):
                     else:
                         old_disk, new_disk = xv_new.renew_storage (xen_dev, new_size=new_disk.size_g)
                         vps_mountpoint_bak = old_disk.mount_trash_temp ()
-                        self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
+                        self.loginfo (xv_new, "mounted %s" % (old_disk.trash_str ()))
                         try:
                             fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
                             new_disk.create (fs_type)
                             new_disk.destroy_limit ()
                             self.loginfo (xv_new, "create new %s" % (str(new_disk)))
                             vps_mountpoint = new_disk.mount_tmp ()
-                            self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
+                            self.loginfo (xv_new, "mounted %s" % (str(new_disk)))
                             try:
                                 call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
                                 self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
