@@ -394,6 +394,8 @@ class VPSOps (object):
                     new_size = new_disk.size_g
                     if old_size == new_size:
                         pass
+                    elif old_size == new_size:
+                        pass
                     elif old_size < new_size and new_disk.can_resize ():
                             new_disk.destroy_limit ()
                             new_disk.resize (new_disk.size_g)
