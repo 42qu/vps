@@ -394,33 +394,30 @@ class VPSOps (object):
                     new_size = new_disk.size_g
                     if old_size == new_size:
                         pass
-                    elif old_size < new_size:
-                        if new_disk.can_resize ():
+                    elif old_size < new_size and new_disk.can_resize ():
                             new_disk.destroy_limit ()
                             new_disk.resize (new_disk.size_g)
                             new_disk.create_limit ()
                             self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
-                        else:
-                            old_disk, new_disk = xv_new.renew_storage (xen_dev)
-                            vps_mountpoint_bak = old_disk.mount_trash_temp ()
-                            self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
-                            try:
-                                fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
-                                new_disk.create (fs_type)
-                                new_disk.destroy_limit ()
-                                self.loginfo (xv_new, "create new %s" % (str(new_disk)))
-                                vps_mountpoint = new_disk.mount_tmp ()
-                                self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
-                                try:
-                                    call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
-                                    self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
-                                finally:
-                                    vps_common.umount_tmp (vps_mountpoint)
-                                new_disk.create_limit ()
-                            finally:
-                                vps_common.umount_tmp (vps_mountpoint_bak)
                     else:
-                        raise Exception ("cannot shrink %s to %s" % (str(new_disk), new_size))
+                        old_disk, new_disk = xv_new.renew_storage (xen_dev)
+                        vps_mountpoint_bak = old_disk.mount_trash_temp ()
+                        self.loginfo (xv_new, "mounted vps old root %s" % (old_disk.trash_str ()))
+                        try:
+                            fs_type = vps_common.get_mounted_fs_type (mount_point=vps_mountpoint_bak)
+                            new_disk.create (fs_type)
+                            new_disk.destroy_limit ()
+                            self.loginfo (xv_new, "create new %s" % (str(new_disk)))
+                            vps_mountpoint = new_disk.mount_tmp ()
+                            self.loginfo (xv_new, "mounted vps new %s" % (str(new_disk)))
+                            try:
+                                call_cmd ("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
+                                self.loginfo (xv_new, "synced old %s to new one" % (str(new_disk)))
+                            finally:
+                                vps_common.umount_tmp (vps_mountpoint)
+                            new_disk.create_limit ()
+                        finally:
+                            vps_common.umount_tmp (vps_mountpoint_bak)
 
         for xen_dev, old_disk in xv_old.data_disks.iteritems ():
             if not xv_new.data_disks.has_key (xen_dev):

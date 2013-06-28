@@ -39,7 +39,6 @@ class SaasMonitor (object):
             return
         self.is_running = False
         self.alarm_q.stop ()
-        self.logger.info ("stopped")
 
     def check (self):
         vps = None
@@ -90,6 +89,7 @@ class SaasMonitor (object):
             elif bad_count > 0 and bad_count == self.bad_thres:
                 self.last_state = False
                 self._alarm_enqueue (False, bad_count)
+        self.logger.info ("stopped")
         
             
 
