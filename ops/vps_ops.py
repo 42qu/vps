@@ -380,6 +380,7 @@ class VPSOps (object):
 
 
     def _upgrade (self, xv_new, xv_old):
+        # TODO: check hard disk downgrade size
         _vps_image, os_type, os_version = os_image.find_os_image (xv_new.os_id)
         fs_type = vps_common.get_fs_from_tarball_name (_vps_image)
         if not fs_type:
