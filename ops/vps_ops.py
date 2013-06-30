@@ -254,7 +254,7 @@ class VPSOps (object):
         xv_old = None
         if os.path.exists (trash_meta_path):
             xv_old = self._load_vps_meta (trash_meta_path)
-            self.loginfo (xv, "loaded %s" % (trash_meta_path))
+            self.loginfo (xv_old, "loaded %s" % (trash_meta_path))
             if _xv:
                 xv = _xv
             else:
