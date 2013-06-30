@@ -252,7 +252,9 @@ class XenVPS (object):
         vif = self.vifs[vifname]
 
     def check_resource_avail (self, ignore_trash=False):
-        """ on error or space not available raise Exception """
+        """ on error or space not available raise Exception.
+            If ignore_trash == True, then don't check whether config and root and swap exists.
+        """
         assert self.has_all_attr
         if self.is_running ():
             raise Exception ("check resource: %s is running, no need to create" % (self.name))

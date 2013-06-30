@@ -251,11 +251,14 @@ class VPSOps (object):
     def reopen_vps (self, vps_id, _xv=None):
         meta_path = self._meta_path (vps_id)
         trash_meta_path = self._meta_path (vps_id, is_trash=True)
+        xv_old = None
         if os.path.exists (trash_meta_path):
-            xv = self._load_vps_meta (trash_meta_path)
+            xv_old = self._load_vps_meta (trash_meta_path)
             self.loginfo (xv, "loaded %s" % (trash_meta_path))
             if _xv:
-                self._update_vif_setting (xv, _xv)
+                xv = _xv
+            else:
+                xv = xv_old
         elif _xv:
             xv = _xv
         else:
@@ -274,11 +277,11 @@ class VPSOps (object):
             self.loginfo (xv, "swap image %s created" % (str(xv.swap_store)))
 
         xv.check_storage_integrity ()
-        self._clear_nonexisting_trash (xv)
 
-        if os.path.exists (trash_meta_path):
-            xv_old = self._load_vps_meta (trash_meta_path)
+        if xv_old:
+            # renew storage size
             self._upgrade (xv, xv_old)
+            self._clear_nonexisting_trash (xv_old)
             os.remove (trash_meta_path)
             self.loginfo (xv, "removed %s" % (trash_meta_path))
         else:
@@ -397,10 +400,10 @@ class VPSOps (object):
                     elif old_size == new_size:
                         pass
                     elif old_size < new_size and new_disk.can_resize ():
-                            new_disk.destroy_limit ()
-                            new_disk.resize (new_disk.size_g)
-                            new_disk.create_limit ()
-                            self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
+                        new_disk.destroy_limit ()
+                        new_disk.resize (new_disk.size_g)
+                        new_disk.create_limit ()
+                        self.loginfo (xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
                     else:
                         old_disk, new_disk = xv_new.renew_storage (xen_dev, new_size=new_disk.size_g)
                         vps_mountpoint_bak = old_disk.mount_trash_temp ()
