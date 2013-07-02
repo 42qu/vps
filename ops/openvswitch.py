@@ -31,12 +31,7 @@ class OVSDB (object):
                 val = None
         return val
 
-    def find (self, columns, table, cond=None):
-        """ which only works in main thread, depends on signal """
-        schema_file = "%s/vswitch.ovsschema" % ovs.dirs.PKGDATADIR
-        schema = ovs.db.schema.DbSchema.from_json(ovs.json.from_file(schema_file))
-
-        #check schema
+    def _check_column (self, schema, columns, table, cond):
         try:
             table_schema = schema.tables[table]
             verify_columns = []
@@ -52,7 +47,21 @@ class OVSDB (object):
         except KeyError:
             raise Exception ("no table %s in schema" % (table))
 
-        idl = ovs.db.idl.Idl(self.sock, schema)
+
+    def find (self, columns, table, cond=None):
+        """ which only works in main thread, depends on signal """
+        schema_file = "%s/vswitch.ovsschema" % ovs.dirs.PKGDATADIR
+        try:
+            from ovs.db.idl import SchemaHelper
+            schema_helper = SchemaHelper (schema_file)
+            self._check_column (schema_helper.get_idl_schema (), cond)
+            idl = ovs.db.idl.Idl(self.sock, schema_helper)
+        except ImportError:
+            schema = ovs.db.schema.DbSchema.from_json(ovs.json.from_file(schema_file))
+            #check schema
+            self._check_column (schema, cond)
+            idl = ovs.db.idl.Idl(self.sock, schema)
+
         seqno = idl.change_seqno
         while True:
             idl.run()
