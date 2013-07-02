@@ -54,6 +54,7 @@ class OVSDB (object):
         try:
             from ovs.db.idl import SchemaHelper
             schema_helper = SchemaHelper (schema_file)
+            schema_helper.register_all ()
             schema = schema_helper.get_idl_schema ()
             self._check_column (schema, columns, table, cond)
             idl = ovs.db.idl.Idl(self.sock, schema_helper)
