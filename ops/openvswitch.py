@@ -54,12 +54,13 @@ class OVSDB (object):
         try:
             from ovs.db.idl import SchemaHelper
             schema_helper = SchemaHelper (schema_file)
-            self._check_column (schema_helper.get_idl_schema (), cond)
+            schema = schema_helper.get_idl_schema ()
+            self._check_column (schema, columns, table, cond)
             idl = ovs.db.idl.Idl(self.sock, schema_helper)
         except ImportError:
             schema = ovs.db.schema.DbSchema.from_json(ovs.json.from_file(schema_file))
             #check schema
-            self._check_column (schema, cond)
+            self._check_column (schema, columns, table, cond)
             idl = ovs.db.idl.Idl(self.sock, schema)
 
         seqno = idl.change_seqno
