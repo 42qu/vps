@@ -17,8 +17,7 @@ def add_rule (net):
     ovsops = OVSOps ()
     ofport = ovsops.find_ofport_by_name (conf.EXT_INF)
     assert ofport > 0
-    call_cmd ("ovs-ofctl add-flow %s 'ip,nw_src=%s,priority=2000,action=normal'" % (conf.XEN_BRIDGE, net))
-    call_cmd ("ovs-ofctl add-flow %s 'ip,nw_dst=%s,priority=2000,action=normal'" % (conf.XEN_BRIDGE, net))
+    call_cmd ("ovs-ofctl add-flow %s 'ip,in_port=%s,nw_dst=%s,priority=2000,action=normal'" % (conf.XEN_BRIDGE, ofport, net))
     call_cmd ("ovs-ofctl add-flow %s 'ip,in_port=%s,priority=10,action=drop'" % (conf.XEN_BRIDGE, ofport))
 
 def usage ():
