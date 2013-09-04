@@ -429,7 +429,7 @@ class VPSOps (object):
             if not xv_new.data_disks.has_key (xen_dev):
                 xv_new.data_disks[xen_dev] = old_disk
                 xv_new.dump_storage_to_trash (old_disk)
-                self.logger.info (xv_new, "%s dump to trash" % (str(old_disk)))
+                self.loginfo (xv_new, "%s dump to trash" % (str(old_disk)))
         self.create_xen_config (xv_new)
         self.loginfo (xv_new, "begin to init os")
         vps_mountpoint = xv_new.root_store.mount_tmp ()
