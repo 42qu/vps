@@ -8,7 +8,7 @@ def prepare(o):
 
     o.USE_OVS = False
     o.OVS_DB_SOCK = "unix:/var/run/openvswitch/db.sock"
-#    o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
+    o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
     from private.saas import KEY
     o.KEY = KEY
     o.SAAS_PORT = 50042
