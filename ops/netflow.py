@@ -1,22 +1,22 @@
 #!/usr/bin/env python
 
-def read_proc ():
+def read_proc():
     """ return a dict
     { if: (rx_bytes, tx_bytes) }
     """
-    result = dict ()
+    result = dict()
     lines = None 
-    f = open ("/proc/net/dev", "r")
+    f = open("/proc/net/dev", "r")
     try:
-        lines = f.readlines ()
+        lines = f.readlines()
     finally:
-        f.close ()
+        f.close()
     lines = lines[2:]
     for line in lines:
-        arr = line.split (":") 
+        arr = line.split(":") 
         assert len(arr) == 2
-        if_name = arr[0].strip ()
-        arr = arr[1].split ()
+        if_name = arr[0].strip()
+        arr = arr[1].split()
         assert len(arr) == 16
         rx = int(arr[0])
         rx_pp = int(arr[1])
@@ -25,10 +25,10 @@ def read_proc ():
         result[if_name] = (rx, tx, rx_pp, tx_pp)
     return result
 
-    netflow_dict =  read_proc ()
+    netflow_dict =  read_proc()
 
 if __name__ == '__main__':
-    netflow_dict =  read_proc ()
+    netflow_dict =  read_proc()
     print netflow_dict['wlan0']
 
 

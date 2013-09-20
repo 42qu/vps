@@ -17,26 +17,26 @@ from lib.job_queue import Job
 
 import socket
 
-class AlarmJob (Job):
+class AlarmJob(Job):
     
-    def __init__ (self, email_alarm, subject, body=""):
-        Job.__init__ (self)
+    def __init__(self, email_alarm, subject, body=""):
+        Job.__init__(self)
         self.email_alarm = email_alarm
         self.subject = subject
         self.body = body
 
-    def do (self):
-        self.email_alarm.send (self.subject, self.body)
+    def do(self):
+        self.email_alarm.send(self.subject, self.body)
 
 
-class EmailAlarm (object):
+class EmailAlarm(object):
 
-    def __init__ (self, logger):
+    def __init__(self, logger):
         self.address_list = config_email.ALARM_ADDRESS
-        assert isinstance (self.address_list, (tuple, list, set))
+        assert isinstance(self.address_list, (tuple, list, set))
         self.logger = logger
 
-    def send (self, subject, body):
+    def send(self, subject, body):
         try:
             server = smtplib.SMTP(config_email.SMTP, config_email.SMTP_PORT)
             server.ehlo()
@@ -55,14 +55,14 @@ class EmailAlarm (object):
 
             #recipient_name = str(Header(recipient_name, enc))
             #msg['To'] = formataddr((recipient_name, recipient))
-            recipient = ",".join (self.address_list)
+            recipient = ",".join(self.address_list)
             msg['To'] = recipient
 
             server.sendmail(config_email.SENDER_MAIL, recipient, msg.as_string())
-            self.logger.info ("sent %s " %  (subject))
+            self.logger.info("sent %s " %  (subject))
         except Exception, e:
-            self.logger.exception (e)
-            self.logger.error ("cannot send %s " %  (subject))
+            self.logger.exception(e)
+            self.logger.error("cannot send %s " %  (subject))
 
         
 

@@ -19,7 +19,7 @@ class AttrWrapper (object):
                 v = self.e[name]
                 return self.__class__.wrap (v)
             else:
-                return None
+                return self.__class__.wrap ({})
         raise KeyError(name)
 
     def __getitem__ (self, i):
@@ -54,9 +54,7 @@ class AttrWrapper (object):
 if __name__ == '__main__':
     d = {'a': 1, 'b':2}
     e = AttrWrapper (d)
-    assert e.name is None
-    print "e.name:", e.name             # None
-    #print "e.name.name:", e.name.name   # fail
+    print "e.name.name:", e.name.name   # empty string
     print "e.a:", e.a, "e.b:", e.b      # 1 2
     print "e:", e                       # {'a':1, 'b':2}  #但e是封装过后的对象
     print "e:", e.unwrap ().items ()    # [('a', 1), ('b', 2)]  #unwrap之后获得原本的dict

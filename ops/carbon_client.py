@@ -5,38 +5,38 @@ import socket
 import struct
 import pickle
 
-def fix_flow (d):
+def fix_flow(d):
     if d >= 1000 * 1000 * 1000 or d < 0:
         return 0
     else:
         return d
 
-class CarbonPayload (object):
+class CarbonPayload(object):
 
-    def __init__ (self):
+    def __init__(self):
         self.data = []
 
-    def append (self, path, timestamp, value):
+    def append(self, path, timestamp, value):
         if value < 0:
             value = 0
-        self.data.append ((path, (timestamp, value)))
+        self.data.append((path, (timestamp, value)))
 
-    def serialize (self):
-        payload = pickle.dumps (self.data)
-        return struct.pack ("!L", len(payload)) + payload
+    def serialize(self):
+        payload = pickle.dumps(self.data)
+        return struct.pack("!L", len(payload)) + payload
 
-    def is_empty (self):
+    def is_empty(self):
         return not self.data
 
 
-def send_data (server_addr, payload):
-    sock = socket.socket ()
+def send_data(server_addr, payload):
+    sock = socket.socket()
     sock.settimeout(10)
-    sock.connect (server_addr)
+    sock.connect(server_addr)
     try:
-        sock.sendall (payload)
+        sock.sendall(payload)
     finally:
-        sock.close ()
+        sock.close()
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
