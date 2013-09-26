@@ -237,7 +237,7 @@ try:
             peer = sock.getpeername()
             if self.get_key(peer):
                 return sock
-            self.logger_err.error("block %s" % (str(peer)))
+            self.logger_err.warn("block %s" % (str(peer)))
 
         def _server_handle(self, conn):
             sock = conn.sock
