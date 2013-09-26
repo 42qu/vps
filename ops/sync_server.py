@@ -96,8 +96,13 @@ og file=/dev/null
     def stop_rsync(self):
         assert self._rsync_popen is not None
         self.logger.info("stopping rsync")
-        os.kill(self._rsync_popen.pid, signal.SIGTERM)
-        self._rsync_popen.wait()
+        try:
+            os.kill(self._rsync_popen.pid, signal.SIGTERM)
+            self._rsync_popen.wait()
+        except OSError, e:
+            if e[0] == errno.ESRCH:
+                pass
+            raise
         self.logger.info("rsync stopped")
 
 from lib.rpc import AES_RPC_Client, RPC_Exception
