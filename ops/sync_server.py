@@ -113,7 +113,7 @@ class SyncClientBase(object):
         addr = (self.server_ip, conf.INF_PORT)
         if timeout:
             self.rpc.set_timeout(timeout)
-        self.rpc.connect(addr)
+        return self.rpc.connect(addr)
 
     def close(self):
         self.rpc.close()

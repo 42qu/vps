@@ -185,7 +185,7 @@ class MigrateClient(SyncClientBase):
             partition_name = _partition_name
         try:
             fs_type = vps_common.get_fs_type(dev)
-            self.connect(timeout=size_g / 2 + 5)
+            mig = self.connect(timeout=size_g / 2 + 5)
             remote_mount_point = self.rpc.call("alloc_partition", partition_name, size_g, fs_type)
             self.logger.info("remote(%s) mounted" % (remote_mount_point))
             ret, err = self.rsync(mount_point, remote_mount_point, speed=speed)
