@@ -45,7 +45,7 @@ class SyncServerBase(object):
                 self.inf_addr,
                 client_keys=client_keys,
                 logger=logger,
-                logger_debug=logger,
+                err_logger=logger,
                 )
 
     def loop(self):
