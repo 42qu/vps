@@ -25,6 +25,8 @@ def update_iplist (host_list):
 ALLOWED_IPS = [
 %s
 ]
+from .saas import KEY
+CLIENT_KEYS = dict(map(lambda ip: (ip, KEY), ALLOWED_IPS))
 """ % (",\n".join (map (lambda x: "'%s'" % x, ip_list)))
     f = open (conf_path, "w")
     try:

@@ -19,7 +19,7 @@ assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
 try:
-    from conf.private.migrate_svr import CLIENT_KEYS
+    from conf.private.saas import CLIENT_KEYS
 except ImportError:
     CLIENT_KEYS = None
 
