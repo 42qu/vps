@@ -127,7 +127,7 @@ class RPC_Client(object):
         self.sock.settimeout(self.timeout)
 
     def set_timeout(self, timeout):
-        if self.sock:
+        if self.connected and self.sock:
             self.sock.settimeout(timeout)
         self.timeout = timeout
 
@@ -160,6 +160,7 @@ class RPC_Client(object):
     def close(self):
         if self.connected:
             self.sock.close()
+            self.sock = None
             self.connected = False
 
 
