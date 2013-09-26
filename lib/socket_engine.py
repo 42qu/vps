@@ -679,29 +679,33 @@ class SocketEngine():
         """ you need to call this in a loop, return fd numbers polled each time,
             timeout is in ms.
         """
-        self._poll_tid = thread.get_ident()
-        __exec_callback = self._exec_callback
-        #locking when poll may be prevent other thread to lock, but it's possible poll is not thread-safe, so we do the lazy approach
-        if self._pending_ops:
-            self._lock()
-            fd_ops = self._pending_ops
-            self._pending_ops = []
-            self._unlock()
-            for _cb in fd_ops:
-                _cb[0](_cb[1])
-        if self._cbs:
-            self._lock()
-            cbs = self._cbs
-            self._cbs = []
-            self._unlock()
-            for cb in cbs:
-                __exec_callback(*cb)
-        else:
-            hlist = self._poll.poll(timeout)
-            for h in hlist:
-                __exec_callback(h[0], h[1])
-        if self._checktimeout_inv > 0 and time.time() - self._last_checktimeout > self._checktimeout_inv:
-            self._check_timeout()
+        try:
+            self._poll_tid = thread.get_ident()
+            __exec_callback = self._exec_callback
+            #locking when poll may be prevent other thread to lock, but it's possible poll is not thread-safe, so we do the lazy approach
+            if self._pending_ops:
+                self._lock()
+                fd_ops = self._pending_ops
+                self._pending_ops = []
+                self._unlock()
+                for _cb in fd_ops:
+                    _cb[0](_cb[1])
+            if self._cbs:
+                self._lock()
+                cbs = self._cbs
+                self._cbs = []
+                self._unlock()
+                for cb in cbs:
+                    __exec_callback(*cb)
+            else:
+                hlist = self._poll.poll(timeout)
+                for h in hlist:
+                    __exec_callback(h[0], h[1])
+            if self._checktimeout_inv > 0 and time.time() - self._last_checktimeout > self._checktimeout_inv:
+                self._check_timeout()
+        except IOError, e;
+            if e[0] == errno.EINTR: 
+                return
 
 
 class TCPSocketEngine(SocketEngine):
