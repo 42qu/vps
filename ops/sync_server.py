@@ -94,7 +94,8 @@ og file=/dev/null
         time.sleep(1)
 
     def stop_rsync(self):
-        assert self._rsync_popen is not None
+        if self._rsync_popen is None:
+            return
         self.logger.info("stopping rsync")
         try:
             os.kill(self._rsync_popen.pid, signal.SIGTERM)
