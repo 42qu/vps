@@ -41,7 +41,6 @@ class SyncServerBase(object):
         self.listen_ip = "0.0.0.0"
         self.inf_addr = (self.listen_ip, conf.INF_PORT)
         self.rsync_port = conf.RSYNC_PORT
-        assert conf.CLIENT_KEYS
         self.server = AES_RPC_Server(
                 self.inf_addr,
                 client_keys=client_keys,
