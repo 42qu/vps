@@ -703,7 +703,7 @@ class SocketEngine():
                     __exec_callback(h[0], h[1])
             if self._checktimeout_inv > 0 and time.time() - self._last_checktimeout > self._checktimeout_inv:
                 self._check_timeout()
-        except IOError, e;
+        except IOError, e:
             if e[0] == errno.EINTR: 
                 return
 
