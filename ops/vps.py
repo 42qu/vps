@@ -28,24 +28,11 @@ default_swap_bps = 'BLK_SWAP_BPS' in dir(conf) and conf.BLK_SWAP_BPS or 0
 class XenVPS(object):
     """ needs root to run xen command """
 
-    xen_inf = None
-    name = None
-    root_store = None
-    swap_store = None
     config_path = None
     auto_config_path = None
     xen_bridge = None
     has_all_attr = False
-    vcpu = None
-    mem_m = None
-    disk_g = None
-    ip = None # main ip
-    netmask = None # main ip netmask
-    gateway = None
     template_image = None
-    root_pw = None
-    data_disks = None
-    os_id = None
 
     def __init__(self, _id):
         assert isinstance(_id, int)
@@ -62,6 +49,17 @@ class XenVPS(object):
         self.data_disks = {}
         self.trash_disks = {}
         self.vifs = {}
+        self.root_store = None
+        self.swap_store = None
+        self.ip = None # main ip
+        self.netmask = None # main ip netmask
+        self.gateway = None
+        self.os_id = None
+        self.root_pw = None
+        self.vcpu = None
+        self.mem_m = None
+        self.disk_g = None
+
 
     vif_ext = property(lambda self: self.vifs.get(self.vif_ext_name))
 

@@ -19,6 +19,7 @@ from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
 import ops._env
 import conf
 from lib.command import call_cmd
+from vps_scan import scan_port_open
 
 if conf.USE_OVS:
     from ops.openvswitch import OVSOps
@@ -104,7 +105,11 @@ class VPSOps(object):
         err = None
         xv.start()
         if not xv.wait_until_reachable(120):
-            raise Exception("the vps started, seems not reachable")
+            if not is_new:
+                if not scan_port_open(xv.vif_ext.ip or xv.vif_int.ip):
+                    raise Exception("the vps started, seems not reachable")
+            else:
+                raise Exception("the vps started, seems not reachable")
         if is_new:
             _e = None
             for i in xrange(0, 5):
