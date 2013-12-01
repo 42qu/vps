@@ -23,6 +23,7 @@ try:
 except ImportError:
     CLIENT_KEYS = None
 
+
 class MigrateServer(SyncServerBase):
 
     def __init__(self, logger):
@@ -47,27 +48,28 @@ class MigrateServer(SyncServerBase):
         self._lock.acquire()
         if self._partition_jobs.has_key(name):
             del self._partition_jobs[name]
-        if len(self._partition_jobs.keys()) == 0 and  self._rsync_running:
+        if len(self._partition_jobs.keys()) == 0 and self._rsync_running:
             self.stop_rsync()
             self._rsync_running = False
         self._lock.release()
-        
+
 #    def poll(self):
 #        SyncServerBase.poll()
 #        returncode = self._rsync_popen.poll()
 #        if returncode is not None:
 #            if self.is_running:
-#                #err = "\n".join(self._rsync_popen.stderr.readlines())
+# err = "\n".join(self._rsync_popen.stderr.readlines())
 #                returncode, out, err = self._rsync_popen.get_result()
-#                self.logger.error("returncode=%d, error=%s" % (returncode, err)) 
-#                #self._rsync_popen.stderr.close()
+#                self.logger.error("returncode=%d, error=%s" % (returncode, err))
+# self._rsync_popen.stderr.close()
 #                self.logger.error("rsync daemon exited, restart it")
 #                self.start_rsync()
 #
 
     def alloc_partition(self, partition_name, size_g, fs_type):
         try:
-            storage = vps_store_new(partition_name, None, fs_type, None, size_g)
+            storage = vps_store_new(
+                partition_name, None, fs_type, None, size_g)
             if not storage.exists():
                 if storage.trash_exists():
                     storage.restore_from_trash()
@@ -79,16 +81,17 @@ class MigrateServer(SyncServerBase):
             mount_point = storage.get_mounted_dir()
             if not mount_point:
                 mount_point = storage.mount_tmp()
-                self.logger.info("%s mounted on %s" % (str(storage), mount_point))
+                self.logger.info("%s mounted on %s" %
+                                 (str(storage), mount_point))
             else:
-                self.logger.info("%s already mounted on %s" % (str(storage), mount_point))
+                self.logger.info("%s already mounted on %s" %
+                                 (str(storage), mount_point))
             mount_point_name = os.path.basename(mount_point)
             self._start_rsync(mount_point_name)
             return mount_point_name
         except Exception, e:
             self.logger.exception(e)
             raise
-
 
     def umount(self, mount_point):
         mount_point_path = os.path.join(conf.MOUNT_POINT_DIR, mount_point)
@@ -100,13 +103,14 @@ class MigrateServer(SyncServerBase):
             self.logger.exception(e)
             raise
 
-
     def create_vps(self, meta, origin_host_id):
         try:
             xv = XenVPS.from_meta(meta)
-            self.logger.info("vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
+            self.logger.info("vps %s immigrate from host=%s" %
+                             (xv.vps_id, origin_host_id))
             vpsops = VPSOps(self.logger)
-            vpsops.create_from_migrate(xv.clone())  # some setting various between different hosts
+            # some setting various between different hosts
+            vpsops.create_from_migrate(xv.clone())
         except Exception, e:
             self.logger.exception(e)
             raise
@@ -114,7 +118,8 @@ class MigrateServer(SyncServerBase):
     def save_closed_vps(self, meta, origin_host_id):
         try:
             xv = XenVPS.from_meta(meta)
-            self.logger.info("closed vps %s immigrate from host=%s" % (xv.vps_id, origin_host_id))
+            self.logger.info("closed vps %s immigrate from host=%s" %
+                             (xv.vps_id, origin_host_id))
             vpsops = VPSOps(self.logger)
             vpsops.save_vps_meta(xv, is_trash=True)
         except Exception, e:
@@ -127,7 +132,6 @@ class MigrateClient(SyncClientBase):
     def __init__(self, logger, server_ip):
         SyncClientBase.__init__(self, logger, server_ip)
 
-
     def snapshot_sync(self, dev, speed=None):
         snapshot_name = "sync_%s" % (os.path.basename(dev))
         snapshot_dev = "/dev/%s/%s" % (conf.VPS_LVM_VGNAME, snapshot_name)
@@ -135,7 +139,8 @@ class MigrateClient(SyncClientBase):
             vps_common.lv_snapshot(dev, snapshot_name, conf.VPS_LVM_VGNAME)
         self.logger.info("made snapshot %s for %s" % (snapshot_dev, dev))
         try:
-            self.sync_partition(snapshot_dev, partition_name=os.path.basename(dev), speed=speed)
+            self.sync_partition(
+                snapshot_dev, partition_name=os.path.basename(dev), speed=speed)
         finally:
             vps_common.lv_delete(snapshot_dev)
             self.logger.info("delete snapshot %s" % (snapshot_dev))
@@ -145,22 +150,23 @@ class MigrateClient(SyncClientBase):
         file_name = os.path.basename(file_path)
         om = re.match(r'(\w+)\.img', file_name)
         assert om is not None
-        partition_name = om.group(1) 
+        partition_name = om.group(1)
         if partition_name.find("data") < 0:
             partition_name += "_root"
         s = os.stat(file_path)
         size_g = s.st_size / 1024 / 1024 / 1024
-        mount_point = vps_common.get_mountpoint(file_path) 
+        mount_point = vps_common.get_mountpoint(file_path)
         if mount_point:
-            self.logger.info("%s already mounted on %s" % (file_path, mount_point))
+            self.logger.info("%s already mounted on %s" %
+                             (file_path, mount_point))
         else:
-            mount_point = vps_common.mount_loop_tmp(file_path, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+            mount_point = vps_common.mount_loop_tmp(
+                file_path, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
             self.logger.info("%s mounted on %s" % (file_path, mount_point))
         return mount_point, size_g, partition_name
 
-
     def _load_lvm(self, dev):
-        #return partition_name, size_g, mount_point
+        # return partition_name, size_g, mount_point
         arr = dev.split("/")
         partition_name = arr[-1]
         size_g = vps_common.lv_getsize(dev)
@@ -168,10 +174,10 @@ class MigrateClient(SyncClientBase):
         if mount_point:
             self.logger.info("%s already mounted on %s" % (dev, mount_point))
         else:
-            mount_point = vps_common.mount_partition_tmp(dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
+            mount_point = vps_common.mount_partition_tmp(
+                dev, readonly=True, temp_dir=conf.MOUNT_POINT_DIR)
             self.logger.info("%s mounted on %s" % (dev, mount_point))
         return mount_point, size_g, partition_name
-
 
     def sync_partition(self, dev, partition_name=None, speed=None):
         """ when you sync a snapshot lv to remote, you'll need to specify partition_name
@@ -186,7 +192,8 @@ class MigrateClient(SyncClientBase):
         try:
             fs_type = vps_common.get_fs_type(dev)
             self.connect(timeout=size_g / 2 + 12)
-            remote_mount_point = self.rpc.call("alloc_partition", partition_name, size_g, fs_type)
+            remote_mount_point = self.rpc.call(
+                "alloc_partition", partition_name, size_g, fs_type)
             self.logger.info("remote(%s) mounted" % (remote_mount_point))
             ret, err = self.rsync(mount_point, remote_mount_point, speed=speed)
             if ret == 0:
@@ -194,15 +201,17 @@ class MigrateClient(SyncClientBase):
                 self.logger.info("rsync %s to %s ok" % (dev, self.server_ip))
             else:
                 print "rsync failed", err
-                self.logger.info("rsync %s to %s error, ret=%s, err=%s" % (dev, self.server_ip, ret, err))
+                self.logger.info("rsync %s to %s error, ret=%s, err=%s" %
+                                 (dev, self.server_ip, ret, err))
             time.sleep(3)
             self.rpc.call("umount", remote_mount_point)
             print "remote umounted %s" % (partition_name)
             self.logger.info("remote(%s) umounted" % (remote_mount_point))
         finally:
-            vps_common.umount_tmp(mount_point) # probably not work when keyboard cancel
+            # probably not work when keyboard cancel
+            vps_common.umount_tmp(mount_point)
             self.close()
-            
+
     def create_vps(self, xv):
         meta = xv.to_meta()
         try:
@@ -218,5 +227,3 @@ class MigrateClient(SyncClientBase):
             self.rpc.call("save_closed_vps", meta, origin_host_id=conf.HOST_ID)
         finally:
             self.close()
-
-

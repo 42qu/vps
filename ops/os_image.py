@@ -6,6 +6,7 @@ import _env
 import conf
 assert isinstance(conf.OS_IMAGE_DICT, dict)
 
+
 def find_os_image(os_id):
     v = conf.OS_IMAGE_DICT.get(os_id)
     if not v or not isinstance(v, dict):
@@ -23,5 +24,3 @@ def find_os_image(os_id):
         else:
             image_path = os.path.join(conf.OS_IMAGE_DIR, image)
     return(image_path, os_type, version)
-
-

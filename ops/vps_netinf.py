@@ -5,8 +5,8 @@ import conf
 assert conf.XEN_BRIDGE
 assert conf.XEN_INTERNAL_BRIDGE
 
+
 class VPSNet(object):
-    
 
     def __init__(self, ifname, ip_dict, bridge, mac, bandwidth=0):
         # ip_dict: ip=>netmask
@@ -22,14 +22,18 @@ class VPSNet(object):
         self = None
         if _class == VPSNetExt.__name__:
             if data.has_key("ip"):
-                self = VPSNetExt(data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get('bandwidth'))
+                self = VPSNetExt(
+                    data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get('bandwidth'))
             else:
-                self = VPSNetExt(data['ifname'], data['ip_dict'], data['mac'], data.get('bandwidth'))
+                self = VPSNetExt(data['ifname'], data['ip_dict'],
+                                 data['mac'], data.get('bandwidth'))
         if _class == VPSNetInt.__name__:
             if data.has_key("ip"):
-                self = VPSNetInt(data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get('bandwidth'))
+                self = VPSNetInt(
+                    data['ifname'], {data['ip']: data['netmask']}, data['mac'], data.get('bandwidth'))
             else:
-                self = VPSNetInt(data['ifname'], data['ip_dict'], data['mac'], data.get('bandwidth'))
+                self = VPSNetInt(data['ifname'], data['ip_dict'],
+                                 data['mac'], data.get('bandwidth'))
         if self:
             return self
         raise TypeError(_class)
@@ -44,19 +48,23 @@ class VPSNet(object):
         return data
 
     def clone(self):
-        data = self.__class__(self.ifname, self.ip_dict.copy(), self.mac, self.bandwidth)
+        data = self.__class__(
+            self.ifname, self.ip_dict.copy(), self.mac, self.bandwidth)
         return data
+
 
 class VPSNetExt(VPSNet):
 
     def __init__(self, ifname, ip_dict, mac, bandwidth=0):
-        VPSNet.__init__(self, ifname, ip_dict, conf.XEN_BRIDGE, mac, bandwidth=bandwidth)
+        VPSNet.__init__(self, ifname, ip_dict, conf.XEN_BRIDGE,
+                        mac, bandwidth=bandwidth)
 
 
 class VPSNetInt(VPSNet):
 
     def __init__(self, ifname, ip_dict, mac, bandwidth=0):
-        VPSNet.__init__(self, ifname, ip_dict, conf.XEN_INTERNAL_BRIDGE, mac, bandwidth=bandwidth)
+        VPSNet.__init__(self, ifname, ip_dict,
+                        conf.XEN_INTERNAL_BRIDGE, mac, bandwidth=bandwidth)
 
 
 

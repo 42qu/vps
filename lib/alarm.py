@@ -17,8 +17,9 @@ from lib.job_queue import Job
 
 import socket
 
+
 class AlarmJob(Job):
-    
+
     def __init__(self, email_alarm, subject, body=""):
         Job.__init__(self)
         self.email_alarm = email_alarm
@@ -42,7 +43,8 @@ class EmailAlarm(object):
             server.ehlo()
             server.esmtp_features['auth'] = 'LOGIN PLAIN'
             if config_email.SMTP != 'localhost':
-                server.login(config_email.SMTP_USERNAME, config_email.SMTP_PASSWORD)
+                server.login(config_email.SMTP_USERNAME,
+                             config_email.SMTP_PASSWORD)
 
             enc = 'utf-8'
             format = 'plain'
@@ -58,12 +60,13 @@ class EmailAlarm(object):
             recipient = ",".join(self.address_list)
             msg['To'] = recipient
 
-            server.sendmail(config_email.SENDER_MAIL, recipient, msg.as_string())
-            self.logger.info("sent %s " %  (subject))
+            server.sendmail(config_email.SENDER_MAIL,
+                            recipient, msg.as_string())
+            self.logger.info("sent %s " % (subject))
         except Exception, e:
             self.logger.exception(e)
-            self.logger.error("cannot send %s " %  (subject))
+            self.logger.error("cannot send %s " % (subject))
 
-        
+
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

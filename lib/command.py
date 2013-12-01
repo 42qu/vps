@@ -31,10 +31,12 @@ class CommandException(Exception):
 
     def __str__(self):
         if self.status is not None:
-            output = "cmd '%s' exit %d, %s" % (self.command, self.status, self.msg)
+            output = "cmd '%s' exit %d, %s" % (
+                self.command, self.status, self.msg)
         else:
             output = "cmd '%s', %s" % (self.command, self.msg)
         return output
+
 
 class CommandTimeoutException(CommandException):
 
@@ -44,6 +46,7 @@ class CommandTimeoutException(CommandException):
     def __str__(self):
         output = "cmd '%s' %s" % (self.command, self.msg)
         return output
+
 
 class Command(object):
 
@@ -63,8 +66,8 @@ class Command(object):
     _start_ts = None
     _last_ts = None
     _pid = None
-    _status = None # which is the process exit status
-    _exitcode = None # which returned by os.waitpid
+    _status = None  # which is the process exit status
+    _exitcode = None  # which returned by os.waitpid
 
     _res_code = None
     _res_out = None
@@ -75,7 +78,7 @@ class Command(object):
             self.timeout = timeout
             self._timeout = timeout
         else:
-            self._timeout = None # must not be 0
+            self._timeout = None  # must not be 0
         if isinstance(cmd, basestring):
             self.cmd_line = cmd
             self.args = ['/bin/sh', '-c', cmd]
@@ -85,14 +88,14 @@ class Command(object):
         self.close_fds = close_fds and True or False
 
     pid = property(lambda self: self._pid)
-    
+
     def _close_fd(self):
         try:
             fdl = [int(i) for i in os.listdir('/proc/self/fd')]
         except OSError:
             fdl = range(1024)
         for i in [i for i in fdl if i > 2]:
-            try: 
+            try:
                 os.close(i)
             except OSError:
                 pass
@@ -104,8 +107,9 @@ class Command(object):
         try:
             self._pid = os.fork()
         except OSError, e:
-            raise CommandException(self.cmd_line, "fork child error, %s" % (e.args[0]))
-        if self._pid == 0: #child
+            raise CommandException(
+                self.cmd_line, "fork child error, %s" % (e.args[0]))
+        if self._pid == 0:  # child
             os.dup2(stdin, 0)
             os.dup2(stdout, 1)
             os.dup2(stderr, 2)
@@ -115,13 +119,13 @@ class Command(object):
             if self.close_fds:
                 self._close_fd()
 
-            #on timeout kill the whole process group, so create new PG first
+            # on timeout kill the whole process group, so create new PG first
             os.setsid()
             try:
                 os.execvp(self.args[0], self.args)
             finally:
                 os._exit(1)
-        else: #parent
+        else:  # parent
             os.close(stdin)
             os.close(stdout)
             os.close(stderr)
@@ -134,7 +138,6 @@ class Command(object):
             self._wrset = []
             self._wrset.append(self._stdin)
             self._last_ts = self._start_ts = time.time()
-            
 
     def cleanup(self):
         self._out_stream.close()
@@ -160,9 +163,10 @@ class Command(object):
             self.cleanup()
             pgid = os.getpgid(self._pid)
             os.killpg(pgid, signal.SIGKILL)
-            raise CommandTimeoutException(self.cmd_line, "exec timeout, %f sec passed" % (now - self._start_ts))
+            raise CommandTimeoutException(
+                self.cmd_line, "exec timeout, %f sec passed" % (now - self._start_ts))
 
-    def _wait_child(self, isblock): 
+    def _wait_child(self, isblock):
         """ if the child has finished, return True, otherwise False """
         if not self._exitcode is None:
             return True
@@ -181,7 +185,8 @@ class Command(object):
             except OSError, e:
                 if e.args[0] == errno.EINTR:
                     continue
-                raise CommandException(self.cmd_line, "wait error, %s" % (str(e)))
+                raise CommandException(
+                    self.cmd_line, "wait error, %s" % (str(e)))
 
     def _proc_result(self):
         self._wait_child(True)
@@ -190,12 +195,12 @@ class Command(object):
         self.cleanup()
         if os.WIFSIGNALED(self._exitcode):
             raise CommandException(self.cmd_line, "terminated by signal, %d" %
-                (os.WSTOPSIG(self._exitcode)))
-        elif os.WIFEXITED(self._exitcode): 
+                                   (os.WSTOPSIG(self._exitcode)))
+        elif os.WIFEXITED(self._exitcode):
             status = os.WEXITSTATUS(self._exitcode)
         elif os.WIFSTOPPED(self._exitcode):
             raise CommandException(self.cmd_line, "stopped by job control")
-        else:      
+        else:
             raise CommandException(self.cmd_line, "terminated abnormally")
         self._res_code = status
         self._res_out = output
@@ -204,7 +209,8 @@ class Command(object):
 
     def _poll(self, timeout=0):
         try:
-            rlist, wlist, xlist = select.select(self._rdset, self._wrset, [], timeout or 0)
+            rlist, wlist, xlist = select.select(
+                self._rdset, self._wrset, [], timeout or 0)
             if self._stdin in wlist:
                 try:
                     res = os.write(self._stdin, self._input_buf)
@@ -220,7 +226,7 @@ class Command(object):
                         self._stdin = None
                     else:
                         raise e
-            if self._stdout in rlist: 
+            if self._stdout in rlist:
                 buf = os.read(self._stdout, self.PIPE_BUFSIZE)
                 if not buf:
                     self._rdset.remove(self._stdout)
@@ -236,11 +242,13 @@ class Command(object):
         except select.error, e:
             if e.args[0] != errno.EINTR:
                 self.cleanup()
-                raise CommandException(self.cmd_line, "select error, %s" % (str(e)))
+                raise CommandException(
+                    self.cmd_line, "select error, %s" % (str(e)))
         except IOError, e:
             if e.args[0] != errno.EINTR:
                 self.cleanup()
-                raise CommandException(self.cmd_line, "pipe error, %s" % (str(e)))
+                raise CommandException(
+                    self.cmd_line, "pipe error, %s" % (str(e)))
 
     def poll(self, timeout=None):
         """ if the child has finished, return exitcode, otherwise None.
@@ -253,7 +261,6 @@ class Command(object):
         else:
             self._poll(timeout)
             return None
-
 
     def wait(self):
         while self._rdset or self._wrset:
@@ -271,7 +278,8 @@ class Command(object):
                 except select.error, e:
                     if not e.args[0] == errno.EINTR:
                         self.cleanup()
-                        raise CommandException(self.cmd_line, "select error, %s" % (str(e)))
+                        raise CommandException(
+                            self.cmd_line, "select error, %s" % (str(e)))
         else:
             self._wait_child(True)
         return self._proc_result()
@@ -293,7 +301,6 @@ class Command(object):
         self.start()
         return self.wait()
 
-
     def write_to(self, input_str):
         """ open a pipe of command and write input_str to it
             if command not exited using exit(), raise CommandException;
@@ -307,13 +314,13 @@ class Command(object):
                 return(self._res_code, self._res_err)
         return(self._res_code, self._res_out)
 
-
     def write_to_ex(self, input_str):
         self._input_buf = input_str
         self.start()
         return self.wait()
 
-##########
+#
+
 
 def search_path(prog_name):
     """ search an executable in system's PATH, return the abs path """
@@ -326,8 +333,9 @@ def search_path(prog_name):
     for p in paths:
         bin_path = os.path.join(p, prog_name)
         if os.path.isfile(bin_path) and os.access(bin_path, os.X_OK):
-            return bin_path 
+            return bin_path
     return None
+
 
 def call_cmd(cmd):
     c = Command(cmd)

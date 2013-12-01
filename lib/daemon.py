@@ -15,19 +15,20 @@ def _fork_service(func, pid_file, log_func=None):
     try:
         pid = os.fork()
     except OSError, e:
-        if callable(log_func): log_func("cannot fork service: %s" % (str(e)))
+        if callable(log_func):
+            log_func("cannot fork service: %s" % (str(e)))
         return None
     if not pid:
-        #service child
+        # service child
         signal.signal(signal.SIGCHLD, signal.SIG_DFL)
-        # set SIGCHLD to default action, 
+        # set SIGCHLD to default action,
         # otherwise SIG_IGN will conflict with subprocess module
         prog_name = sys.argv[0]
         sys.argv[0] = prog_name + " [service]"
         try:
             os.setsid()
-        except OSError, e: 
-            if callable(log_func): 
+        except OSError, e:
+            if callable(log_func):
                 log_func("setsid : %s" % (str(e)))
         si = open("/dev/null", 'r')
         os.dup2(si.fileno(), sys.stdin.fileno())
@@ -38,14 +39,16 @@ def _fork_service(func, pid_file, log_func=None):
             func()
             os._exit(0)
         except Exception, e:
-            if callable(log_func): log_func("main_func caught exception: %s" % (str(e)))
+            if callable(log_func):
+                log_func("main_func caught exception: %s" % (str(e)))
             os._exit(1)
     else:
-        #parent
+        # parent
         try:
             write_pid(pid_file, pid)
         except IOError, e:
-            if callable(log_func): log_func("cannot save service's pidfile: %s" % (str(e)))
+            if callable(log_func):
+                log_func("cannot save service's pidfile: %s" % (str(e)))
             os.kill(pid, signal.SIGKILL)
             return None
         return pid
@@ -57,45 +60,49 @@ def daemonize(func, pid_file, mon_pid_file, log_func=None):
     mon_pid = None
     signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     if mon_pid_file:
-        #need monitor
+        # need monitor
         try:
             mon_pid = os.fork()
         except OSError, e:
-            if callable(log_func): log_func("cannot fork monitor: %s" % (str(e)))
+            if callable(log_func):
+                log_func("cannot fork monitor: %s" % (str(e)))
             sys.exit(1)
         if mon_pid:
-            #parent
+            # parent
             try:
                 write_pid(mon_pid_file, mon_pid)
             except IOError, e:
-                if callable(log_func): log_func("cannot save monitor's pidfile: %s" % (str(e)))
+                if callable(log_func):
+                    log_func("cannot save monitor's pidfile: %s" % (str(e)))
                 os.kill(mon_pid, signal.SIGKILL)
                 sys.exit(1)
             return
         else:
-            #monitor child
+            # monitor child
             prog_name = sys.argv[0]
             sys.argv[0] = prog_name + " [monitor]"
             try:
                 os.setsid()
-            except OSError, e: 
+            except OSError, e:
                 pass
-            pid =  _fork_service(func, pid_file, log_func)
+            pid = _fork_service(func, pid_file, log_func)
             if not pid:
                 print "retry in 2 sec, go silent"
             else:
-                print "service started, go silent" 
+                print "service started, go silent"
 
             si = open("/dev/null", 'r')
             os.dup2(si.fileno(), sys.stdin.fileno())
             so = open("/dev/null", 'a+', 0)
             os.dup2(so.fileno(), sys.stdout.fileno())
-            os.dup2(so.fileno(), sys.stderr.fileno()) 
+            os.dup2(so.fileno(), sys.stderr.fileno())
             while True:
                 time.sleep(2)
                 if not pid or not check_alive(pid):
                     generation += 1
-                    if callable(log_func): log_func("service die, trying to fork another(%d)" % (generation))
+                    if callable(log_func):
+                        log_func("service die, trying to fork another(%d)" %
+                                 (generation))
                     sys.argv[0] = prog_name
                     pid = _fork_service(func, pid_file, log_func)
     else:
@@ -112,27 +119,32 @@ def read_pid(pid_file):
         pid = f.readline()
         f.close()
         pid = int(pid.strip("\n"))
-        if pid > 0: return pid
-        else: return None
+        if pid > 0:
+            return pid
+        else:
+            return None
     except IOError:
         return None
-    
-    
+
+
 def write_pid(pid_file, pid):
     assert pid and pid_file
     f = open(pid_file, "w")
     f.write(str(pid))
     f.close()
 
+
 def check_alive(pid):
     """ check process alive, return True or False """
     assert isinstance(pid, int)
     try:
         pgid = os.getpgid(pid)
-        if pgid >= 0: return True
+        if pgid >= 0:
+            return True
         return False
     except OSError, e:
         return False
+
 
 def stop(sig, pid_file, mon_pid_file):
     """ if service process not exist, return False, otherwise return True
@@ -160,6 +172,7 @@ def stop(sig, pid_file, mon_pid_file):
     print "not started"
     return False
 
+
 def _check_status(pid_file):
     """ read pid_file and check whether pid alive, if so return pid, otherwise return None 
         """
@@ -168,6 +181,7 @@ def _check_status(pid_file):
     if pid and check_alive(pid):
         return pid
     return None
+
 
 def status(pid_file, mon_pid_file):
     """ on running ok return 1, on stopped return 0, on error return -1
@@ -190,12 +204,14 @@ def status(pid_file, mon_pid_file):
         print "stopped"
         return 0
 
+
 def start(func, pid_file, mon_pid_file, log_func=None):
     pid = _check_status(mon_pid_file or pid_file)
     if pid:
         print "already started"
     else:
         daemonize(func, pid_file, mon_pid_file, log_func)
+
 
 def cmd_wrapper(action, main, usage, logger, log_dir, run_dir, pid_file, mon_pid_file):
     if not os.path.exists(log_dir):

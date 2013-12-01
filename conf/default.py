@@ -9,8 +9,11 @@ def prepare(o):
     o.USE_OVS = False
     o.OVS_DB_SOCK = "unix:/var/run/openvswitch/db.sock"
     o.SSL_CERT = join(dirname(PREFIX),'conf/private/server.pem')
-    from private.saas import KEY
-    o.KEY = KEY
+    try:
+        from private.saas import KEY
+        o.KEY = KEY
+    except ImportError:
+        pass
     o.SAAS_PORT = 50042
     o.SAAS_HOST = "0.0.0.0"
     o.TIME_ZONE = "Asia/Shanghai"

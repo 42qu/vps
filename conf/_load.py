@@ -15,7 +15,6 @@ def load(self, *args):
                 -1
             )
         except ImportError, e:
-            print 'NO CONFIG %s'%name, e
             return
         for i in name.split('.')[1:]:
             mod = getattr(mod, i)

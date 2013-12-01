@@ -15,6 +15,7 @@ import socket
 
 # you need to checkout https://bitbucket.org/zsp042/private.git into conf/
 
+
 class SaasMonitor(object):
 
     def __init__(self):
@@ -62,17 +63,17 @@ class SaasMonitor(object):
         if state:
             text = "from %s to saas server recovered" % (self.hostname)
         else:
-            text = "from %s to saas server bad(try %s)" % (self.hostname, bad_count)
+            text = "from %s to saas server bad(try %s)" % (
+                self.hostname, bad_count)
         job = AlarmJob(self.emailalarm, ts + text)
         self.alarm_q.put_job(job)
 
-        
     def loop(self):
         bad_count = 0
         recover_count = 0
         while self.is_running:
             time.sleep(2)
-            if self.check(): 
+            if self.check():
                 if self.last_state:
                     bad_count = 0
                     recover_count = 0
@@ -90,10 +91,10 @@ class SaasMonitor(object):
                 self.last_state = False
                 self._alarm_enqueue(False, bad_count)
         self.logger.info("stopped")
-        
-            
+
 
 stop_signal_flag = False
+
 
 def _main():
     prog = SaasMonitor()
@@ -111,6 +112,7 @@ def _main():
     prog.loop()
     return
 
+
 def usage():
     print "usage:\t%s star/stop/restart\t#manage forked daemon" % (sys.argv[0])
     print "\t%s run\t\t# run without daemon, for test purpose" % (sys.argv[0])
@@ -119,7 +121,7 @@ def usage():
 
 if __name__ == "__main__":
 
-    logger = Log("daemon", config=conf) # to ensure log is permitted to write
+    logger = Log("daemon", config=conf)  # to ensure log is permitted to write
     pid_file = "saas_mon.pid"
     mon_pid_file = "saas_mon_mon.pid"
 
@@ -127,7 +129,8 @@ if __name__ == "__main__":
         usage()
     else:
         action = sys.argv[1]
-        daemon.cmd_wrapper(action, _main, usage, logger, conf.log_dir, "/tmp", pid_file, mon_pid_file)
+        daemon.cmd_wrapper(action, _main, usage, logger,
+                           conf.log_dir, "/tmp", pid_file, mon_pid_file)
 
 
 

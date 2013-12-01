@@ -4,7 +4,7 @@
 # 2011-08-03
 
 #
-# @file 
+# @file
 # @version $Id: net_io.py,v 1.2 2010/04/01 03:13:37 anning Exp $
 # @brief
 #
@@ -15,7 +15,8 @@ import socket
 import errno
 
 
-#if suc to send all in buf, return length of buf, otherwise raise socket.error(errno=0) 
+# if suc to send all in buf, return length of buf, otherwise raise
+# socket.error(errno=0)
 def send_all(sock, buf):
     data_len = len(buf)
     while data_len:
@@ -31,7 +32,10 @@ def send_all(sock, buf):
                 raise e
     return data_len
 
-#if suc to recv data of length ="length", return data, otherwise raise socket.error(errno=0)
+# if suc to recv data of length ="length", return data, otherwise raise
+# socket.error(errno=0)
+
+
 def recv_all(sock, length):
     buf = ''
     while length:
@@ -52,7 +56,7 @@ class NetHead:
 
     _STRUCT = '!3I'
     size = struct.calcsize(_STRUCT)
-        
+
     def __init__(self):
         self._id = 0
         self.magic_num = 0xE7342119
@@ -67,7 +71,8 @@ class NetHead:
         """ on error will raise ValueError """
         self = cls()
         if len(buf) != cls.size:
-            raise ValueError("invalid head, size expect %d, but got %d" % (cls.size, len(buf)))
+            raise ValueError("invalid head, size expect %d, but got %d" %
+                             (cls.size, len(buf)))
         fields = struct.unpack(self._STRUCT, buf)
         if self.magic_num != fields[0]:
             raise ValueError("invalid head, magic number error")
@@ -88,7 +93,7 @@ class NetHead:
         if not self.body_len:
             return None
         return recv_all(sock, self.body_len)
-    
+
     def write_msg(self, sock, buf):
         """ possible throw socket.error """
         head_buf = self.pack(len(buf))

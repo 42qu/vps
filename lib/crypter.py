@@ -4,14 +4,16 @@
 from Crypto.Cipher import AES
 from Crypto import Random
 
+
 def fix_len(s, byte_len):
     l = len(s)
     if l < byte_len:
-        return  s + (byte_len - l) * 'x'
+        return s + (byte_len - l) * 'x'
     elif l > byte_len:
-        return s[0 : byte_len]
+        return s[0: byte_len]
     else:
         return s
+
 
 def random_string(n):
     return Random.new().read(n)

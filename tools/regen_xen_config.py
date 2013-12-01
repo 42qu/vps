@@ -7,22 +7,24 @@ import _env
 from vps_mgr import VPSMgr
 import getopt
 
-def usage ():
+
+def usage():
     print "usage: %s vps_id" % (sys.argv[0])
     return
 
-def main ():
-    if len (sys.argv) < 2:
-        usage ()
-        os._exit (0)
+
+def main():
+    if len(sys.argv) < 2:
+        usage()
+        os._exit(0)
     vps_id = int(sys.argv[1])
 
-    client = VPSMgr ()
+    client = VPSMgr()
     vpsops = client.vpsops
-    xv = vpsops.load_vps_meta (vps_id)
-    vpsops.create_xen_config (xv)
+    xv = vpsops.load_vps_meta(vps_id)
+    vpsops.create_xen_config(xv)
 
 if __name__ == '__main__':
-    main ()
+    main()
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

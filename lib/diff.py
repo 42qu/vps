@@ -3,7 +3,6 @@
 import difflib
 
 
-
 def readable_unified(text1, text2, name1="a", name2="b"):
     lines1 = text1.splitlines(True)
     lines2 = text2.splitlines(True)
@@ -14,17 +13,17 @@ def readable_unified(text1, text2, name1="a", name2="b"):
         else:
             arr.append(line)
     return "".join(arr)
-        
+
 
 if __name__ == '__main__':
 
     res = readable_unified("aaa\nbbb\n", "aaa\nccc\n")
     print "[%s]" % (res)
-    
+
     res = readable_unified("aaa\nbbb", "aaa\nbbb\n")
     print "[%s]" % (res)
     assert readable_unified("aaa\n", "aaa\n") == ''
-    
+
 
 
 

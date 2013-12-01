@@ -13,13 +13,15 @@ from lib.command import call_cmd, search_path
 
 assert search_path("file")
 
-#def call_cmd(cmd):
+# def call_cmd(cmd):
 #    res = os.system(cmd)
 #    if res != 0:
 #        raise Exception("%s exit with %d" % (cmd, res))
 
+
 def ping(ip):
     return 0 == os.system("ping -i0.3 -c2 -W1 %s >/dev/null" % (ip))
+
 
 def call_cmd_via_ssh(ip, user, password, cmd):
     import paramiko
@@ -41,9 +43,11 @@ def call_cmd_via_ssh(ip, user, password, cmd):
     finally:
         client.close()
 
+
 def _lv_resize(dev, new_size_g):
     assert isinstance(new_size_g, int)
     call_cmd("lvresize --size %dG %s" % (new_size_g, dev))
+
 
 def lv_resizefs(dev, new_size_g):
     fs_type = get_fs_type(dev)
@@ -62,10 +66,11 @@ def lv_resizefs(dev, new_size_g):
             umount_tmp(mp)
     else:
         raise Exception("unsupported fs_type=%s on %s" % (fs_type, dev))
-        
+
 
 def gen_password(length=10):
-    return "".join([ random.choice(string.hexdigits) for i in xrange(0, length) ])
+    return "".join([random.choice(string.hexdigits) for i in xrange(0, length)])
+
 
 def gen_mac():
     cmd = """(date; cat /proc/interrupts) | md5sum | sed -r 's/^(.{6}).*$/\\1/; s/([0-9a-f]{2})/\\1:/g; s/:$//;'"""
@@ -73,15 +78,17 @@ def gen_mac():
     out = call_cmd(cmd)
     return s + out
 
+
 def mkdtemp(prefix=None, temp_dir=None):
-    # tempfile.mkdtemp on some system(like centos5) is buggy,  but this implement is not protected against race condition either 
+    # tempfile.mkdtemp on some system(like centos5) is buggy,  but this
+    # implement is not protected against race condition either
     for i in xrange(0, 3):
         tmp_mount = tempfile.mkdtemp(prefix=prefix, dir=temp_dir)
         if os.path.isdir(tmp_mount):
             return tmp_mount
         time.sleep(0.2)
     raise Exception("cannot create temporary mountpoint")
-            
+
 
 def mount_loop_tmp(img_path, readonly=False, temp_dir=None):
     """ create temporary mount point and mount loop file """
@@ -96,6 +103,7 @@ def mount_loop_tmp(img_path, readonly=False, temp_dir=None):
         raise e
     return tmp_mount
 
+
 def mount_partition_tmp(dev_path, readonly=False, temp_dir=None):
     prefix = "mp" + os.path.basename(dev_path)
     tmp_mount = mkdtemp(prefix, temp_dir=temp_dir)
@@ -108,6 +116,7 @@ def mount_partition_tmp(dev_path, readonly=False, temp_dir=None):
         os.rmdir(tmp_mount)
         raise e
     return tmp_mount
+
 
 def get_blk_size(dev):
     out = call_cmd("blockdev --getsize64 %s" % (dev))
@@ -138,6 +147,7 @@ def get_fs_type(dev_path):
     else:
         raise Exception("unknown fs: %s" % (out.strip("\r\n")))
 
+
 def get_mounted_fs_type(mount_point=None, dev_path=None):
     """ NOTE that /dev/main/vps00_root will actually be  /dev/mapper/main-vps00_root in /proc/mounts, so dev_path is not likely to be reliable
     """
@@ -162,6 +172,7 @@ def get_mounted_fs_type(mount_point=None, dev_path=None):
     elif dev_path:
         raise Exception("device %s is not mounted" % (dev_path))
 
+
 def get_mountpoint(dev):
     f = open("/proc/mounts", "r")
     lines = None
@@ -181,13 +192,16 @@ def umount_tmp(tmp_mount):
     call_cmd("umount -f %s" % (tmp_mount))
     os.rmdir(tmp_mount)
 
+
 def create_raw_image(path, size_g, sparse=False):
     assert size_g > 0
     size_m = int(size_g * 1024)
     if sparse:
-        call_cmd("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" % (path, size_m - 1))
+        call_cmd("dd if=/dev/zero of=%s bs=1M count=1 seek=%d" %
+                 (path, size_m - 1))
     else:
         call_cmd("dd if=/dev/zero of=%s bs=1M count=%d" % (path, size_m))
+
 
 def format_fs(fs_type, target):
     if fs_type in ['ext4', 'ext3', 'ext2']:
@@ -210,9 +224,10 @@ def sync_img(vpsmountpoint, template_img_path):
     if template_mount[-1] != '/':
         template_mount += "/"
     try:
-        call_cmd("rsync -a '%s/' '%s/'" % (template_mount, vpsmountpoint)) 
+        call_cmd("rsync -a '%s/' '%s/'" % (template_mount, vpsmountpoint))
     finally:
         umount_tmp(template_mount)
+
 
 def unpack_tarball(vpsmountpoint, tarball_path):
     pwd = os.getcwd()
@@ -225,11 +240,14 @@ def unpack_tarball(vpsmountpoint, tarball_path):
     finally:
         os.chdir(pwd)
 
+
 def vg_space(vg_name):
-    out = call_cmd("vgs --noheadings -o vg_free --units g --nosuffix /dev/%s" % (vg_name))
+    out = call_cmd("vgs --noheadings -o vg_free --units g --nosuffix /dev/%s" %
+                   (vg_name))
     out = out.strip()
     free_space = int(float(out))
-    out = call_cmd("vgs --noheadings -o vg_size --units g --nosuffix /dev/%s" % (vg_name))
+    out = call_cmd("vgs --noheadings -o vg_size --units g --nosuffix /dev/%s" %
+                   (vg_name))
     out = out.strip()
     total_space = int(float(out))
     return free_space, total_space
@@ -238,17 +256,21 @@ def vg_space(vg_name):
 def lv_create(vg_name, lv_name, size_g):
     assert size_g > 0
     size_m = int(size_g * 1024)
-    call_cmd("lvcreate --name %s --size %dM /dev/%s" % (lv_name, size_m, vg_name))
+    call_cmd("lvcreate --name %s --size %dM /dev/%s" %
+             (lv_name, size_m, vg_name))
     lv_dev = "/dev/%s/%s" % (vg_name, lv_name)
     if not os.path.exists(lv_dev):
         raise Exception("lv %s not exists after creating" % (lv_dev))
     return lv_dev
 
+
 def lv_delete(lv_dev):
     call_cmd("lvremove -f %s" % (lv_dev))
 
+
 def lv_rename(src_dev, dest_dev):
     call_cmd("lvrename %s %s " % (src_dev, dest_dev))
+
 
 def lv_getsize(dev):
     out = call_cmd("lvs --noheadings -o lv_size --units g %s" % (dev))
@@ -256,13 +278,15 @@ def lv_getsize(dev):
     out = out.strip("gG")
     return float(out)
 
+
 def file_getsize(filename):
     # return in G
     s = os.stat(filename)
     return float(s.st_size) / 1024.0 / 1024.0 / 1024.0
 
+
 def lv_get_mountpoint(dev):
-    arr = dev.split("/") 
+    arr = dev.split("/")
     assert arr[0] == "" and arr[1] == 'dev' and len(arr) == 4
     if arr[2] != 'mapper':
         dev = "/dev/mapper/%s-%s" % (arr[2], arr[3])
@@ -276,13 +300,15 @@ def lv_snapshot(dev, snapshot_name, vg_name):
     if os.path.exists(snapshot_dev):
         raise Exception("%s already exists" % (snapshot_dev))
     size = lv_getsize(dev)
-    call_cmd("lvcreate --name %s --size %dG -s %s" % (snapshot_name, size, dev))
+    call_cmd("lvcreate --name %s --size %dG -s %s" %
+             (snapshot_name, size, dev))
     return snapshot_dev
+
 
 def get_sector_size(dev):
     dev = os.path.realpath(dev)
     arr = dev.split("/")
-    p = "/sys/block/%s/queue/hw_sector_size"  % (arr[-1])
+    p = "/sys/block/%s/queue/hw_sector_size" % (arr[-1])
     f = open(p, "r")
     result = None
     try:
@@ -292,6 +318,7 @@ def get_sector_size(dev):
         f.close()
     return result
 
+
 def get_fs_from_tarball_name(tarball_path):
     om = re.match(r"^.*?fs[_\-](\w+).*?$", os.path.basename(tarball_path))
     if not om:
@@ -299,11 +326,15 @@ def get_fs_from_tarball_name(tarball_path):
     fs_type = om.group(1)
     return fs_type
 
+
 def xm_network_attach(domain, vifname, mac, ip, bridge):
-    call_cmd("xm network-attach %s mac=%s ip=%s vifname=%s bridge=%s" % (domain, mac, ip, vifname, bridge))
+    call_cmd("xm network-attach %s mac=%s ip=%s vifname=%s bridge=%s" %
+             (domain, mac, ip, vifname, bridge))
+
 
 def xm_network_detach(domain, mac):
     call_cmd("xm network-detach %s %s" % (domain, mac))
+
 
 def get_dev_no(dev):
     dev = os.path.realpath(dev)
@@ -313,7 +344,7 @@ def get_dev_no(dev):
     return major, minor
 
 
-#def check_loop(img_path):
+# def check_loop(img_path):
 #    "return loop device name matching img_path. return None when not found"
 #    _out = subprocess.check_output(["losetup", "-a"])
 #    lines = _out.split("\n")
@@ -326,7 +357,7 @@ def get_dev_no(dev):
 #    return None
 #
 #
-#def setup_loop(img_path):
+# def setup_loop(img_path):
 #    """ return loop device filename """
 #    img_path = os.path.abspath(img_path)
 #    lo_dev = check_loop(img_path)
@@ -338,20 +369,23 @@ def get_dev_no(dev):
 #    assert lo_dev
 #    return lo_dev
 #
-#def teardown_loop(lo_dev):
+# def teardown_loop(lo_dev):
 #    call_cmd("losetup -d %s" % (lo_dev))
 
 
 if __name__ == '__main__':
     import unittest
     print get_sector_size("/dev/sda")
-    #print get_sector_size("/dev/main/vps1024_root")
+    # print get_sector_size("/dev/main/vps1024_root")
 
     class TestVPSCommon(unittest.TestCase):
 
         def test_fs_from_tarball_name(self):
-            self.assertEqual(get_fs_from_tarball_name("/vps/ubuntu-11.10-amd64-fs-ext4.tar.gz"), "ext4")
-            self.assertEqual(get_fs_from_tarball_name("ubuntu_11.10_amd64_fs_ext4.tar.gz"), "ext4")
-            self.assertEqual(get_fs_from_tarball_name("ubuntu_11.10_amd64.tar.gz"), None)
+            self.assertEqual(
+                get_fs_from_tarball_name("/vps/ubuntu-11.10-amd64-fs-ext4.tar.gz"), "ext4")
+            self.assertEqual(
+                get_fs_from_tarball_name("ubuntu_11.10_amd64_fs_ext4.tar.gz"), "ext4")
+            self.assertEqual(
+                get_fs_from_tarball_name("ubuntu_11.10_amd64.tar.gz"), None)
 
     unittest.main()

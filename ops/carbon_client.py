@@ -5,11 +5,13 @@ import socket
 import struct
 import pickle
 
+
 def fix_flow(d):
     if d >= 1000 * 1000 * 1000 or d < 0:
         return 0
     else:
         return d
+
 
 class CarbonPayload(object):
 

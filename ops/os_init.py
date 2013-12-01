@@ -20,10 +20,11 @@ if 'TIME_ZONE' in dir(conf):
 if 'DNS_SERVERS' in dir(conf):
     DNS_SERVERS = conf.DNS_SERVERS
 
+
 def os_init(xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True, to_init_fstab=False):
     assert isinstance(xv, XenVPS)
     assert vps_mountpoint and os.path.exists(vps_mountpoint)
-    
+
     if os_type.find('gentoo') == 0:
         gentoo_init(xv, vps_mountpoint, is_new=is_new)
     elif re.match(r'^(redhat|rhel|centos).*', os_type):
@@ -43,13 +44,14 @@ def os_init(xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd
     if is_new:
         clean_up(vps_mountpoint)
 
+
 def clean_up(vps_mountpoint):
     files = [
-            "root/.bash_history",
-            "root/.ssh/known_hosts",
-            "var/log/*.log",
-            "tmp/*",
-            ]
+        "root/.bash_history",
+        "root/.ssh/known_hosts",
+        "var/log/*.log",
+        "tmp/*",
+    ]
     for file_path in files:
         a_path = os.path.join(vps_mountpoint, file_path)
         files = glob.glob(a_path)
@@ -58,15 +60,16 @@ def clean_up(vps_mountpoint):
                 print "remove %s" % (f)
                 os.remove(f)
 
+
 def clean_up_img(vps_mountpoint):
     files = [
-            "root/.*",
-            "var/log/*",
-            "tmp/*",
-            "tmp/.*",
-            "var/tmp/*",
-            "usr/portage/distfiles/*",
-            ]
+        "root/.*",
+        "var/log/*",
+        "tmp/*",
+        "tmp/.*",
+        "var/tmp/*",
+        "usr/portage/distfiles/*",
+    ]
     for file_path in files:
         a_path = os.path.join(vps_mountpoint, file_path)
         files = glob.glob(a_path)
@@ -77,7 +80,6 @@ def clean_up_img(vps_mountpoint):
                     shutil.rmtree(f)
                 else:
                     os.remove(f)
-
 
 
 def migrate_users(xv, vps_mountpoint, vps_mountpoint_old):
@@ -99,17 +101,18 @@ def migrate_users(xv, vps_mountpoint, vps_mountpoint_old):
             lines = f.readlines()
         finally:
             f.close()
-        for line in lines: 
+        for line in lines:
             line = line.strip("\n")
             arr = line.split(":")
             if arr[2]:
                 ugid = int(arr[2])
-                if  ugid >= 500 and ugid != 65534: # non-system users/groups are copied
+                # non-system users/groups are copied
+                if ugid >= 500 and ugid != 65534:
                     data_dict[arr[0]] = line
         return
     __parse(passwd_path_old, passwd_data)
     __parse(group_path_old, group_data)
-    
+
     f = open(shadow_path_old, "r")
     try:
         lines = f.readlines()
@@ -122,7 +125,7 @@ def migrate_users(xv, vps_mountpoint, vps_mountpoint_old):
             root_shadow = arr[1]
         elif passwd_data.has_key(arr[0]):
             shadow_data[arr[0]] = line
-    
+
     def __append_data(filepath, data_dict):
         f = open(filepath, "a")
         try:
@@ -131,10 +134,10 @@ def migrate_users(xv, vps_mountpoint, vps_mountpoint_old):
         finally:
             f.close()
         return
-    #write passwd & group
+    # write passwd & group
     __append_data(passwd_path, passwd_data)
     __append_data(group_path, group_data)
-    
+
     f = open(shadow_path, "r")
     shadow_arr = []
     try:
@@ -153,14 +156,14 @@ def migrate_users(xv, vps_mountpoint, vps_mountpoint_old):
     shadow_arr += shadow_data.values()
     s = os.stat(shadow_path)
     old_mode = s.st_mode
-    #write shadow
+    # write shadow
     f = open(shadow_path, "w")
     try:
         f.write("\n".join(shadow_arr))
     finally:
         f.close()
     os.chmod(shadow_path, old_mode)
-    
+
 
 def gen_fstab(xv, vps_mountpoint):
 
@@ -171,17 +174,20 @@ devpts                  /dev/pts                devpts  gid=5,mode=620  0 0
 sysfs                   /sys                    sysfs   defaults        0 0
 proc                    /proc                   proc    defaults        0 0
 """)
-    fstab = fstab_t.substitute(root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.get_fs_type())
+    fstab = fstab_t.substitute(
+        root_xen_dev=xv.root_store.xen_dev, root_fs_type=xv.root_store.get_fs_type())
     if xv.swap_store.size_g > 0:
-        fstab += "/dev/%s   none    swap    sw  0 0\n"  % (xv.swap_store.xen_dev)
+        fstab += "/dev/%s   none    swap    sw  0 0\n" % (xv.swap_store.xen_dev)
     keys = xv.data_disks.keys()
     keys.remove(xv.root_store.xen_dev)
     keys.sort()
     for k in keys:
         disk = xv.data_disks[k]
         if disk.mount_point and disk.mount_point not in ['none', '/']:
-            fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev, disk.mount_point, disk.get_fs_type()) 
-            mount_dir = os.path.join(vps_mountpoint, disk.mount_point.strip("/"))
+            fstab += "/dev/%s   %s  %s  defaults    0 0\n" % (disk.xen_dev,
+                                                              disk.mount_point, disk.get_fs_type())
+            mount_dir = os.path.join(
+                vps_mountpoint, disk.mount_point.strip("/"))
             if not os.path.exists(mount_dir):
                 os.makedirs(mount_dir, 0755)
     f = open(os.path.join(vps_mountpoint, "etc/fstab"), 'w')
@@ -190,14 +196,15 @@ proc                    /proc                   proc    defaults        0 0
     finally:
         f.close()
 
+
 def gen_resolv(vps_mountpoint):
     if DNS_SERVERS:
         resolv_path = os.path.join(vps_mountpoint, "etc/resolv.conf")
         if not os.path.isfile(resolv_path):
             return False
         resolv_content = "".join(
-                map(lambda s: "nameserver %s\n" % (s), DNS_SERVERS) 
-                )
+            map(lambda s: "nameserver %s\n" % (s), DNS_SERVERS)
+        )
         f = open(resolv_path, "w")
         try:
             f.write(resolv_content)
@@ -205,11 +212,14 @@ def gen_resolv(vps_mountpoint):
             f.close()
         return True
 
+
 def set_timezone(vps_mountpoint):
     if TIME_ZONE:
         localtime_path = os.path.join(vps_mountpoint, "etc/localtime")
-        zone_info_path = os.path.join(vps_mountpoint, "usr/share/zoneinfo/", TIME_ZONE)
+        zone_info_path = os.path.join(
+            vps_mountpoint, "usr/share/zoneinfo/", TIME_ZONE)
     shutil.copy(zone_info_path, localtime_path)
+
 
 def set_root_passwd(xv, vps_mountpoint):
     if not xv.root_pw:
@@ -226,14 +236,17 @@ echo 'root:%s' | /usr/sbin/chpasswd
             f.write(sh_script)
         finally:
             f.close()
-        call_cmd("chroot %s /bin/sh /root/user_data" % (vps_mountpoint)) # chroot's path varies among linux distribution
+        # chroot's path varies among linux distribution
+        call_cmd("chroot %s /bin/sh /root/user_data" % (vps_mountpoint))
     finally:
         if os.path.exists(user_data):
             os.remove(user_data)
 
+
 def generate_shadow_hash(passwd):
     return crypt.crypt(passwd, '\$5\$SA213LTsalt\$')
-    
+
+
 def set_root_passwd_2(xv, vps_mountpoint):
     root_shadow = generate_shadow_hash(xv.root_pw)
     shadow_path = os.path.join(vps_mountpoint, "etc", "shadow")
@@ -254,13 +267,14 @@ def set_root_passwd_2(xv, vps_mountpoint):
             shadow_arr.append(line)
     s = os.stat(shadow_path)
     old_mode = s.st_mode
-    #write shadow
+    # write shadow
     f = open(shadow_path, "w")
     try:
         f.write("\n".join(shadow_arr))
     finally:
         f.close()
     os.chmod(shadow_path, old_mode)
+
 
 def gentoo_init(xv, vps_mountpoint, is_new=True):
 
@@ -280,18 +294,21 @@ def gentoo_init(xv, vps_mountpoint, is_new=True):
         vm_net_eth = string.Template("""
 config_eth$NUMBER="$IPS"
 """).substitute(
-        NUMBER=i,
-        IPS="\n".join(map(lambda x: "%s netmask %s" % (x[0], x[1]), vif.ip_dict.items())),
+            NUMBER=i,
+            IPS="\n".join(map(lambda x: "%s netmask %s" %
+                              (x[0], x[1]), vif.ip_dict.items())),
         )
         net_lo_path = os.path.join(vps_mountpoint, "etc/init.d/net.lo")
-        net_eth_path = os.path.join(vps_mountpoint, "etc/init.d/net.eth%d" % (i))
-        runlevel_net_eth_path = os.path.join(vps_mountpoint, "etc/runlevels/default/net.eth%d" % (i))
+        net_eth_path = os.path.join(
+            vps_mountpoint, "etc/init.d/net.eth%d" % (i))
+        runlevel_net_eth_path = os.path.join(
+            vps_mountpoint, "etc/runlevels/default/net.eth%d" % (i))
         if not os.path.islink(net_eth_path):
             os.symlink("/etc/init.d/net.lo", net_eth_path)
         if not os.path.islink(runlevel_net_eth_path):
             os.symlink("/etc/init.d/net.eth%d" % (i), runlevel_net_eth_path)
         vm_net_config += vm_net_eth
-        if i == 0 and xv.gateway: 
+        if i == 0 and xv.gateway:
             vm_route = string.Template("""routes_eth0="default via $GATEWAY"
     """).substitute(GATEWAY=xv.gateway)
             vm_net_config += vm_route
@@ -301,6 +318,7 @@ config_eth$NUMBER="$IPS"
         f.write(vm_net_config)
     finally:
         f.close()
+
 
 def _debain_vif(eth_name, vif, gateway_ip=None):
     ips = vif.ip_dict.items()
@@ -327,7 +345,6 @@ iface $ETH:$NUMBER inet static
     return eth_conf
 
 
-
 def debian_init(xv, vps_mountpoint, is_new=True):
     if is_new:
         f = open(os.path.join(vps_mountpoint, "etc/hostname"), "w+")
@@ -346,13 +363,15 @@ iface lo inet loopback
     for i in xrange(0, len(vif_keys)):
         vif_name = vif_keys[i]
         vif = xv.vifs.get(vif_name)
-        vm_net_config += _debain_vif("eth%d" % i, vif, i == 0 and xv.gateway or None)
-        
+        vm_net_config += _debain_vif("eth%d" %
+                                     i, vif, i == 0 and xv.gateway or None)
+
     f = open(os.path.join(vps_mountpoint, "etc/network/interfaces"), "w+")
     try:
         f.write(vm_net_config)
     finally:
         f.close()
+
 
 def _redhat_vif(eth_name, vif, vps_mountpoint, gateway_ip=None):
     ips = vif.ip_dict.items()
@@ -367,12 +386,13 @@ NETMASK=$NETMASK
 """).substitute(ETH=eth_name, ADDRESS=ips[0][0], NETMASK=ips[0][1])
     if gateway_ip:
         ifcfg_eth += "GATEWAY=%s\n" % gateway_ip
-    f = open(os.path.join(vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-%s" % (eth_name)), "w+")
+    f = open(os.path.join(vps_mountpoint,
+             "etc/sysconfig/network-scripts/ifcfg-%s" % (eth_name)), "w+")
     try:
         f.write(ifcfg_eth)
     finally:
         f.close()
- 
+
     if len(ips) > 1:
         for i in xrange(1, len(ips)):
             ifcfg_eth = string.Template("""
@@ -383,12 +403,12 @@ TYPE=Ethernet
 IPADDR=$ADDRESS
 NETMASK=$NETMASK
 """).substitute(ETH=eth_name, NUMBER=i, ADDRESS=ips[i][0], NETMASK=ips[i][1])
-            f = open(os.path.join(vps_mountpoint, "etc/sysconfig/network-scripts/ifcfg-%s:%s" % (eth_name, i)), "w+")
+            f = open(os.path.join(vps_mountpoint,
+                     "etc/sysconfig/network-scripts/ifcfg-%s:%s" % (eth_name, i)), "w+")
             try:
                 f.write(ifcfg_eth)
             finally:
                 f.close()
-     
 
 
 def redhat_init(xv, vps_mountpoint, is_new=True):
@@ -410,9 +430,9 @@ HOSTNAME=%s
     for i in xrange(0, len(vif_keys)):
         vif_name = vif_keys[i]
         vif = xv.vifs.get(vif_name)
-        _redhat_vif("eth%d" % (i), vif, vps_mountpoint, i == 0 and xv.gateway or None)
+        _redhat_vif("eth%d" %
+                    (i), vif, vps_mountpoint, i == 0 and xv.gateway or None)
 
-   
 
 def arch_init(xv, vps_mountpoint, is_new=True):
 
@@ -444,6 +464,7 @@ DAEMONS=(syslog-ng network crond sshd)
     finally:
         f.close()
 
+
 def pack_vps_fs_tarball(img_path, tarball_dir_or_path, is_image=False):
     """ if tarball_dir_or_path is a directory, will generate filename like XXX_fs_FSTYPE.tar.gz  """
     tarball_dir = None
@@ -460,16 +481,19 @@ def pack_vps_fs_tarball(img_path, tarball_dir_or_path, is_image=False):
 
     if not tarball_path and tarball_dir:
         fs_type = vps_common.get_fs_type(img_path)
-        tarball_name = "%s_fs_%s.tar.gz" % (os.path.basename(img_path), fs_type)
+        tarball_name = "%s_fs_%s.tar.gz" % (
+            os.path.basename(img_path), fs_type)
         tarball_path = os.path.join(tarball_dir, tarball_name)
         if os.path.exists(tarball_path):
             raise Exception("file %s already exists" % (tarball_path))
- 
+
     if img_path.find("/dev") == 0:
-        mount_point = vps_common.mount_partition_tmp(img_path, readonly=not is_image)
+        mount_point = vps_common.mount_partition_tmp(
+            img_path, readonly=not is_image)
     else:
-        mount_point = vps_common.mount_loop_tmp(img_path, readonly=not is_image)
-    
+        mount_point = vps_common.mount_loop_tmp(
+            img_path, readonly=not is_image)
+
     if is_image:
         clean_up_img(mount_point)
 
@@ -482,6 +506,6 @@ def pack_vps_fs_tarball(img_path, tarball_dir_or_path, is_image=False):
         vps_common.umount_tmp(mount_point)
     return tarball_path
 
-   
+
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

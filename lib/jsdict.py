@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-#coding:utf-8
+# coding:utf-8
+
 
 class JsDict(object):
+
     def __init__(self, o=None):
         if o is None:
             o = {}
@@ -33,5 +35,3 @@ class JsDict(object):
 
     def __delitem__(self, name):
         del self.__o[name]
-
-

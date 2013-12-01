@@ -6,6 +6,9 @@ import re
 import time
 import socket
 import threading
+import glob
+
+from ops.openvswitch import OVSOps
 try:
     import json
 except ImportError:
@@ -15,23 +18,25 @@ import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
 from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
+from ops.ixen import XenStore
 
 import ops._env
-import conf
 from lib.command import call_cmd
 from vps_scan import scan_port_open
+import conf
 
-if conf.USE_OVS:
-    from ops.openvswitch import OVSOps
-assert conf.DEFAULT_FS_TYPE
-assert conf.VPS_METADATA_DIR
-assert conf.CLOSE_EXPIRE_DAYS
 
 
 class VPSOps(object):
 
     def __init__(self, logger):
         self.logger = logger
+        assert conf.DEFAULT_FS_TYPE
+        assert conf.VPS_METADATA_DIR
+        assert conf.CLOSE_EXPIRE_DAYS
+        assert conf.XEN_CONFIG_DIR and os.path.isdir(conf.XEN_CONFIG_DIR)
+        assert conf.VPS_METADATA_DIR and os.path.isdir(conf.VPS_METADATA_DIR)
+
 
     def loginfo(self, xv, msg):
         message = "[%s] %s" % (xv.name, msg)
@@ -39,6 +44,24 @@ class VPSOps(object):
             print message
         else:
             self.logger.info(message)
+
+    @property
+    def running_count(self):
+        domain_dict = XenStore.domain_name_id_map()
+        del domain_dict['Domain-0']
+        return len(domain_dict)
+
+    def all_vpsid_from_config(self):
+        all_ids = []
+        configs = glob.glob(os.path.join(conf.XEN_CONFIG_DIR, "vps*"))
+        for config in configs:
+            om = re.match(r'^vps(\d+)$', os.path.basename(config))
+            if not om:
+                continue
+            vps_id = int(om.group(1))
+            all_ids.append(vps_id)
+        all_ids.sort()
+        return all_ids
 
     def create_xen_config(self, xv):
         """ will override config """
@@ -56,7 +79,8 @@ class VPSOps(object):
     @staticmethod
     def _meta_path(vps_id, is_trash=False, is_deleted=False):
         if not os.path.isdir(conf.VPS_METADATA_DIR):
-            raise Exception("directory %s is not exists" % (conf.VPS_METADATA_DIR))
+            raise Exception("directory %s is not exists" %
+                            (conf.VPS_METADATA_DIR))
         filename = "vps%d.json" % (vps_id)
         if is_trash:
             filename += ".trash"
@@ -86,7 +110,8 @@ class VPSOps(object):
         data = xv.to_meta()
         if data is None:
             raise Exception("error in XenVPS.to_meta()")
-        meta_path = self._meta_path(xv.vps_id, is_trash=is_trash, is_deleted=is_deleted)
+        meta_path = self._meta_path(
+            xv.vps_id, is_trash=is_trash, is_deleted=is_deleted)
         if os.path.exists(meta_path) and override is False:
             return
         f = open(meta_path, "w")
@@ -95,8 +120,7 @@ class VPSOps(object):
         finally:
             f.close()
         self.loginfo(xv, "meta saved to %s" % (meta_path))
-        
-    
+
     def _boot_and_test(self, xv, is_new=True):
         assert isinstance(xv, XenVPS)
         self.loginfo(xv, "booting")
@@ -113,46 +137,52 @@ class VPSOps(object):
         if is_new:
             _e = None
             for i in xrange(0, 5):
-                self.loginfo(xv, "started and reachable, wait for ssh connection")
+                self.loginfo(
+                    xv, "started and reachable, wait for ssh connection")
                 time.sleep(5)
                 try:
-                    status, out, err = vps_common.call_cmd_via_ssh(xv.ip, user="root", password=xv.root_pw, cmd="free|grep Swap")
+                    status, out, err = vps_common.call_cmd_via_ssh(
+                        xv.ip, user="root", password=xv.root_pw, cmd="free|grep Swap")
                     self.loginfo(xv, "ssh login ok")
                     if status == 0:
                         if xv.swap_store.size_g > 0:
                             swap_size = int(out.split()[1])
                             if swap_size == 0:
-                                raise Exception("it seems swap has not properly configured, please check") 
-                            self.loginfo(xv, "checked swap size is %d" % (swap_size))
+                                raise Exception(
+                                    "it seems swap has not properly configured, please check")
+                            self.loginfo(xv, "checked swap size is %d" %
+                                         (swap_size))
                     else:
-                        raise Exception("cmd 'free' on via returns %s %s" % (out, err))
+                        raise Exception("cmd 'free' on via returns %s %s" %
+                                        (out, err))
                     return
                 except socket.error, e:
                     _e = e
                     continue
             if _e:
                 raise Exception(_e)
-        else: # if it's recoverd os, passwd is likely to be changed by user
+        else:  # if it's recoverd os, passwd is likely to be changed by user
             self.loginfo(xv, "started and reachable")
-
 
     def create_vps(self, xv, vps_image=None, is_new=True):
         """ check resources, create vps, wait for ip reachable, check ssh loging and check swap of vps.
             on error raise Exception, the caller should log exception """
         assert isinstance(xv, XenVPS)
         assert xv.has_all_attr
-        
+
         _vps_image, os_type, os_version = os_image.find_os_image(xv.os_id)
         if not vps_image:
             vps_image = _vps_image
         if not vps_image:
-            raise Exception("no template image configured for os_type=%s, os_id=%s" % (os_type, xv.os_id))
+            raise Exception(
+                "no template image configured for os_type=%s, os_id=%s" %
+                (os_type, xv.os_id))
         if not os.path.exists(vps_image):
             raise Exception("image %s not exists" % (vps_image))
 
         xv.check_resource_avail()
 
-        #fs_type is tied to the image
+        # fs_type is tied to the image
         fs_type = vps_common.get_fs_from_tarball_name(vps_image)
         if not fs_type:
             fs_type = conf.DEFAULT_FS_TYPE
@@ -174,14 +204,15 @@ class VPSOps(object):
             else:
                 vps_common.unpack_tarball(vps_mountpoint, vps_image)
             self.loginfo(xv, "synced vps os to %s" % (str(xv.root_store)))
-            
+
             self.loginfo(xv, "begin to init os")
-            os_init.os_init(xv, vps_mountpoint, os_type, os_version, is_new=is_new, to_init_passwd=is_new, to_init_fstab=True)
+            os_init.os_init(xv, vps_mountpoint, os_type, os_version,
+                            is_new=is_new, to_init_passwd=is_new, to_init_fstab=True)
             self.loginfo(xv, "done init os")
             xv.root_store.create_limit()
         finally:
             vps_common.umount_tmp(vps_mountpoint)
-        
+
         self.create_xen_config(xv)
         self._boot_and_test(xv, is_new=is_new)
         self.loginfo(xv, "done vps creation")
@@ -212,7 +243,7 @@ class VPSOps(object):
         if xv.swap_store.exists():
             xv.swap_store.delete()
             self.loginfo(xv, "deleted %s" % (str(xv.swap_store)))
-        if os.path.islink(xv.auto_config_path): 
+        if os.path.islink(xv.auto_config_path):
             os.remove(xv.auto_config_path)
             self.loginfo(xv, "deleted %s" % (xv.auto_config_path))
         if os.path.exists(xv.config_path):
@@ -226,12 +257,12 @@ class VPSOps(object):
         self.save_vps_meta(xv, is_trash=True)
         self.loginfo(xv, "closed")
 
-
     def _clear_nonexisting_trash(self, xv):
         trash = xv.get_nonexisting_trash()
         for disk in trash:
             xv.delete_trash(disk)
-            self.loginfo(xv, "delete nonexisting trash %s from meta" % disk.trash_str())
+            self.loginfo(xv, "delete nonexisting trash %s from meta" %
+                         disk.trash_str())
 
     def is_trash_exists(self, vps_id):
         trash_meta_path = self._meta_path(vps_id, is_trash=True)
@@ -295,7 +326,6 @@ class VPSOps(object):
         self._boot_and_test(xv, is_new=False)
         self.loginfo(xv, "done vps creation")
 
-
     def _delete_disk(self, xv, disk):
         if disk.exists():
             disk.delete()
@@ -304,20 +334,21 @@ class VPSOps(object):
             disk.delete_trash()
             self.loginfo(xv, "deleted %s" % (disk.trash_str()))
 
-        
     def delete_vps(self, vps_id, _xv=None, check_date=False):
         meta_path = self._meta_path(vps_id)
         trash_meta_path = self._meta_path(vps_id, is_trash=True)
         if os.path.exists(meta_path):
             if check_date:
-                raise Exception("check_date not pass, you should manually delete it")
+                raise Exception(
+                    "check_date not pass, you should manually delete it")
             xv = self._load_vps_meta(meta_path)
             self.loginfo(xv, "loaded %s" % (meta_path))
         elif os.path.exists(trash_meta_path):
             if check_date:
                 st = os.stat(trash_meta_path)
                 if time.time() - st.st_ctime < 3600 * 24 * conf.CLOSE_EXPIRE_DAYS:
-                    raise Exception("check_date not pass, you should manually delete it")
+                    raise Exception(
+                        "check_date not pass, you should manually delete it")
             xv = self._load_vps_meta(trash_meta_path)
             self.loginfo(xv, "loaded %s" % (trash_meta_path))
         elif _xv:
@@ -331,7 +362,8 @@ class VPSOps(object):
             self.loginfo(xv, "vps stopped, going to delete data")
         else:
             xv.destroy()
-            self.loginfo(xv, "vps cannot shutdown, destroyed it, going to delete data")
+            self.loginfo(
+                xv, "vps cannot shutdown, destroyed it, going to delete data")
         time.sleep(3)
         for disk in xv.data_disks.values():
             self._delete_disk(xv, disk)
@@ -383,7 +415,6 @@ class VPSOps(object):
         self._boot_and_test(xv_new, is_new=False)
         self.loginfo(xv_new, "done vps upgrade")
 
-
     def _upgrade(self, xv_new, xv_old):
         # TODO: check hard disk downgrade size
         _vps_image, os_type, os_version = os_image.find_os_image(xv_new.os_id)
@@ -409,21 +440,30 @@ class VPSOps(object):
                         new_disk.destroy_limit()
                         new_disk.resize(new_disk.size_g)
                         new_disk.create_limit()
-                        self.loginfo(xv_new, "resized %s from %s to %s" % (str(new_disk), old_size, new_size))
+                        self.loginfo(xv_new, "resized %s from %s to %s" %
+                                     (str(new_disk), old_size, new_size))
                     else:
-                        old_disk, new_disk = xv_new.renew_storage(xen_dev, new_size=new_disk.size_g)
+                        old_disk, new_disk = xv_new.renew_storage(
+                            xen_dev, new_size=new_disk.size_g)
                         vps_mountpoint_bak = old_disk.mount_trash_temp()
-                        self.loginfo(xv_new, "mounted %s" % (old_disk.trash_str()))
+                        self.loginfo(xv_new, "mounted %s" %
+                                     (old_disk.trash_str()))
                         try:
-                            fs_type = vps_common.get_mounted_fs_type(mount_point=vps_mountpoint_bak)
+                            fs_type = vps_common.get_mounted_fs_type(
+                                mount_point=vps_mountpoint_bak)
                             new_disk.create(fs_type)
                             new_disk.destroy_limit()
-                            self.loginfo(xv_new, "create new %s" % (str(new_disk)))
+                            self.loginfo(xv_new, "create new %s" %
+                                         (str(new_disk)))
                             vps_mountpoint = new_disk.mount_tmp()
-                            self.loginfo(xv_new, "mounted %s" % (str(new_disk)))
+                            self.loginfo(xv_new, "mounted %s" %
+                                         (str(new_disk)))
                             try:
-                                call_cmd("rsync -a '%s/' '%s/'" % (vps_mountpoint_bak, vps_mountpoint))
-                                self.loginfo(xv_new, "synced old %s to new one" % (str(new_disk)))
+                                call_cmd("rsync -a '%s/' '%s/'" %
+                                         (vps_mountpoint_bak, vps_mountpoint))
+                                self.loginfo(
+                                    xv_new, "synced old %s to new one" %
+                                    (str(new_disk)))
                             finally:
                                 vps_common.umount_tmp(vps_mountpoint)
                             new_disk.create_limit()
@@ -439,11 +479,11 @@ class VPSOps(object):
         self.loginfo(xv_new, "begin to init os")
         vps_mountpoint = xv_new.root_store.mount_tmp()
         try:
-            os_init.os_init(xv_new, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=True)
+            os_init.os_init(xv_new, vps_mountpoint, os_type, os_version,
+                            is_new=False, to_init_passwd=False, to_init_fstab=True)
             self.loginfo(xv_new, "done init os")
         finally:
             vps_common.umount_tmp(vps_mountpoint)
-
 
     def reset_pw(self, xv):
         if not xv.root_pw:
@@ -461,7 +501,6 @@ class VPSOps(object):
         self._boot_and_test(xv, is_new=True)
         self.loginfo(xv, "done vps reset passwd")
 
-
     def reinstall_os(self, vps_id, _xv=None, os_id=None, vps_image=None):
         meta_path = self._meta_path(vps_id, is_trash=False)
         xv = None
@@ -469,7 +508,7 @@ class VPSOps(object):
             xv = self._load_vps_meta(meta_path)
             if os_id:
                 xv.os_id = os_id
-            elif _xv: 
+            elif _xv:
                 xv.os_id = _xv.os_id
                 self._update_vif_setting(xv, _xv)
             else:
@@ -483,10 +522,12 @@ class VPSOps(object):
         if not vps_image:
             vps_image = _vps_image
         if not vps_image:
-            raise Exception("no template image configured for os_type=%s, os_id=%s" % (os_type, xv.os_id))
+            raise Exception(
+                "no template image configured for os_type=%s, os_id=%s" %
+                (os_type, xv.os_id))
         if not os.path.exists(vps_image):
             raise Exception("image %s not exists" % (vps_image))
-        #fs_type is tied to the image
+        # fs_type is tied to the image
         fs_type = vps_common.get_fs_from_tarball_name(vps_image)
         if not fs_type:
             fs_type = conf.DEFAULT_FS_TYPE
@@ -498,7 +539,8 @@ class VPSOps(object):
             xv.destroy()
             self.loginfo(xv, "force destroy")
         time.sleep(3)
-        root_store_trash, root_store = xv.renew_storage(xv.root_store.xen_dev, 5)
+        root_store_trash, root_store = xv.renew_storage(
+            xv.root_store.xen_dev, 5)
         xv.root_store.create(fs_type)
         self.loginfo(xv, "create new root")
 
@@ -515,7 +557,7 @@ class VPSOps(object):
         try:
             vps_mountpoint = xv.root_store.mount_tmp()
             self.loginfo(xv, "mounted vps image %s" % (str(xv.root_store)))
-        
+
             try:
                 xv.root_store.destroy_limit()
                 if re.match(r'.*\.img$', vps_image):
@@ -523,21 +565,25 @@ class VPSOps(object):
                 else:
                     vps_common.unpack_tarball(vps_mountpoint, vps_image)
                 self.loginfo(xv, "synced vps os to %s" % (str(xv.root_store)))
-                
+
                 for sync_dir in ['home', 'root']:
                     dir_org = os.path.join(vps_mountpoint_bak, sync_dir)
                     dir_now = os.path.join(vps_mountpoint, sync_dir)
                     if os.path.exists(dir_org):
-                        call_cmd("rsync -a --exclude='.bash*'  '%s/' '%s/'" % (dir_org, dir_now))
+                        call_cmd("rsync -a --exclude='.bash*'  '%s/' '%s/'" %
+                                 (dir_org, dir_now))
                         self.loginfo(xv, "sync dir /%s to new os" % (sync_dir))
 
                 self.loginfo(xv, "begin to init os")
                 if _xv:
                     xv.root_pw = _xv.root_pw
-                    os_init.os_init(xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=True, to_init_fstab=True)
-                else: # if no user data provided from backend
-                    os_init.os_init(xv, vps_mountpoint, os_type, os_version, is_new=True, to_init_passwd=False, to_init_fstab=True,)
-                    os_init.migrate_users(xv, vps_mountpoint, vps_mountpoint_bak)
+                    os_init.os_init(xv, vps_mountpoint, os_type, os_version,
+                                    is_new=True, to_init_passwd=True, to_init_fstab=True)
+                else:  # if no user data provided from backend
+                    os_init.os_init(xv, vps_mountpoint, os_type, os_version,
+                                    is_new=True, to_init_passwd=False, to_init_fstab=True,)
+                    os_init.migrate_users(
+                        xv, vps_mountpoint, vps_mountpoint_bak)
                 self.loginfo(xv, "done init os")
                 xv.root_store.create_limit()
             finally:
@@ -563,7 +609,8 @@ class VPSOps(object):
         if xv.has_netinf(vifname):
             mac = xv.vifs[vifname].mac
             if ip in xv.vifs[vifname].ip_dict.keys():
-                self.loginfo(xv, "no need to change vif %s, ip is the same" % (vifname))
+                self.loginfo(xv, "no need to change vif %s, ip is the same" %
+                             (vifname))
                 return False
             if not is_ip_available:
                 raise Exception("ip %s is in use" % (ip))
@@ -573,12 +620,11 @@ class VPSOps(object):
         elif not is_ip_available:
             raise Exception("ip %s is in use" % (ip))
 
-        vif = xv.add_netinf_int({ip : netmask}, mac)
+        vif = xv.add_netinf_int({ip: netmask}, mac)
         vps_common.xm_network_attach(xv.name, vifname, vif.mac, ip, vif.bridge)
         self.create_xen_config(xv)
         self.loginfo(xv, "added internal vif ip=%s" % (ip))
         return True
-
 
     def change_qos(self, _xv):
         meta_path = self._meta_path(_xv.vps_id)
@@ -601,7 +647,8 @@ class VPSOps(object):
                     ovsops = OVSOps()
                     ovsops.unset_traffic_limit(vif_name)
                     ovsops.set_traffic_limit(vif_name, int(bandwidth * 1000))
-                    self.loginfo(xv, "updated vif=%s bandwidth to %s Mbps" % (vif_name, bandwidth))
+                    self.loginfo(xv, "updated vif=%s bandwidth to %s Mbps" %
+                                 (vif_name, bandwidth))
                     if not xv.wait_until_reachable(5):
                         raise Exception("ip unreachable!")
             else:
@@ -635,28 +682,27 @@ class VPSOps(object):
         self.loginfo(xv, "mounted vps image %s" % (str(xv.root_store)))
         try:
             self.loginfo(xv, "begin to init os")
-            os_init.os_init(xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=False)
+            os_init.os_init(xv, vps_mountpoint, os_type, os_version,
+                            is_new=False, to_init_passwd=False, to_init_fstab=False)
             self.loginfo(xv, "done init os")
         finally:
             vps_common.umount_tmp(vps_mountpoint)
         self.create_xen_config(xv)
         self._boot_and_test(xv, is_new=False)
         self.loginfo(xv, "done vps change ip")
-      
 
 #    def create_from_hot_migrate(self, xv):
 #        """ server side """
 #        xv.check_storage_integrity()
 #        self._clear_nonexisting_trash(xv)
 #        self.create_xen_config(xv)
-#        # test
+# test
 #        xv.restore()
 #        if not xv.wait_until_reachable(120):
 #            raise Exception("the vps started, seems not reachable")
 #        os.remove(xv.save_path)
 #        self.loginfo(xv, "removed %s" % (xv.save_path))
 #        self.loginfo(xv, "done vps hot immigrate")
-
 #    def _send_swap(self, migclient, xv, remote_path, result):
 #        assert isinstance(result, dict)
 #        if not xv.swap_store or xv.swap_store.size_g <= 0:
@@ -670,7 +716,6 @@ class VPSOps(object):
 #            self.logger.exception(e)
 #            result["swap"] = (1, str(e))
 #        return result
-
 #    def _send_savefile(self, migclient, xv, result):
 #        assert isinstance(result, dict)
 #        self.logger.info("going to send %s" % (xv.save_path))
@@ -681,8 +726,6 @@ class VPSOps(object):
 #        else:
 #            self.logger.error("sending %s error: %s" % (xv.save_path, err))
 #        return result
-
-
 #    def migrate_vps_hot(self, migclient, vps_id, dest_ip, speed=None):
 #        """client size"""
 #        xv = self.load_vps_meta(vps_id)
@@ -707,7 +750,7 @@ class VPSOps(object):
 #                migclient.vps_hot_immigrate(xv)
 #                self.loginfo(xv, "emigrated to %s" % (dest_ip))
 #                print "ok"
-#                # ok
+# ok
 #                return
 #            else:
 #                if swap_result and swap_result[0] != 0:
@@ -717,7 +760,7 @@ class VPSOps(object):
 #        except Exception, e:
 #            self.logger.exception(e)
 #            print "error %s" % (e)
-#        # error
+# error
 #        print "going to restore vps %s" % (xv.vps_id)
 #        xv.restore()
 #        msg = "vps %s restored" % (xv.vps_id)
@@ -725,8 +768,6 @@ class VPSOps(object):
 #        self.logger.info(msg)
 #        os.remove(xv.save_path)
 #        return False
-        
-
     def create_from_migrate(self, xv):
         """ server side """
         xv.check_resource_avail(ignore_trash=True)
@@ -743,7 +784,8 @@ class VPSOps(object):
         try:
             _vps_image, os_type, os_version = os_image.find_os_image(xv.os_id)
             self.loginfo(xv, "begin to init os")
-            os_init.os_init(xv, vps_mountpoint, os_type, os_version, is_new=False, to_init_passwd=False, to_init_fstab=True)
+            os_init.os_init(xv, vps_mountpoint, os_type, os_version,
+                            is_new=False, to_init_passwd=False, to_init_fstab=True)
             self.loginfo(xv, "done init os")
         finally:
             vps_common.umount_tmp(vps_mountpoint)
@@ -751,7 +793,6 @@ class VPSOps(object):
         self.create_xen_config(xv)
         self._boot_and_test(xv, is_new=False)
         self.loginfo(xv, "done vps creation")
-       
 
     def migrate_vps(self, migclient, vps_id, dest_ip, xv=None, speed=None):
         """client side """
@@ -764,7 +805,8 @@ class VPSOps(object):
             self.loginfo(xv, "vps cannot shutdown, destroyed it")
         self.loginfo(xv, "going to be migrated to %s" % (dest_ip))
         for disk in xv.data_disks.values():
-            migclient.sync_partition(disk.file_path, partition_name=disk.partition_name, speed=speed)
+            migclient.sync_partition(
+                disk.file_path, partition_name=disk.partition_name, speed=speed)
         self.loginfo(xv, "partition synced, going to boot vps remotely")
         migclient.create_vps(xv)
         self.loginfo(xv, "remote vps started, going to close local vps")
@@ -777,11 +819,11 @@ class VPSOps(object):
             raise Exception("vps %s is still running" % (vps_id))
         self.loginfo(xv, "going to be move to %s" % (dest_ip))
         for disk in xv.data_disks.values():
-            migclient.sync_partition(disk.trash_path, partition_name="trash_%s" % (disk.partition_name), speed=speed)
+            migclient.sync_partition(
+                disk.trash_path, partition_name="trash_%s" %
+                (disk.partition_name), speed=speed)
         migclient.save_closed_vps(xv)
         self.loginfo(xv, "done")
-
-
 
     def hotsync_vps(self, migclient, vps_id, dest_ip, speed=None):
         if not conf.USE_LVM:
@@ -789,6 +831,6 @@ class VPSOps(object):
         xv = self.load_vps_meta(vps_id)
         for disk in xv.data_disks.values():
             migclient.snapshot_sync(disk.dev, speed=speed)
-        
+
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

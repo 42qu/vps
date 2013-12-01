@@ -3,6 +3,7 @@
 
 import nmap
 
+
 def scan_port_open(ip):
     nm = nmap.PortScanner()
     nm.scan(ip, arguments="")

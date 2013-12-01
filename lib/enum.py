@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+
 class Enum(object):
 
     def __init__(self, **k_args):
@@ -8,7 +9,7 @@ class Enum(object):
         self._VALUES_TO_NAMES = dict()
         for k, v in self._pair.iteritems():
             self._VALUES_TO_NAMES[v] = k
-    
+
     def __getattr__(self, name):
         return self._pair[name]
 

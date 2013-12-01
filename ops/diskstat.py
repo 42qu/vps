@@ -4,6 +4,7 @@
 import vps_common
 import os
 
+
 class DiskStat(object):
     read_ops_count = None
     read_byte_count = None
@@ -14,6 +15,7 @@ class DiskStat(object):
 
     def __init__(self, dev):
         self.dev = dev
+
 
 def read_stat(dev_list):
     lines = None
@@ -47,6 +49,7 @@ def read_stat(dev_list):
         result_dict[stat.dev] = stat
     return result_dict
 
+
 def cal_stat(s, last_s, t_elapse):
     read_ops = (s.read_ops_count - last_s.read_ops_count) / t_elapse
     read_byte = (s.read_byte_count - last_s.read_byte_count) / t_elapse
@@ -59,7 +62,7 @@ def cal_stat(s, last_s, t_elapse):
 
 
 if __name__ == '__main__':
-    import pprint 
+    import pprint
     import time
     last_result = None
     while True:

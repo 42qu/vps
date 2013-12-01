@@ -8,10 +8,10 @@ import time
 
 try:
     import conf
-    if 'XEN_PYTHON_LIB' in dir(conf): 
-        sys.path.append(conf.XEN_PYTHON_LIB) # for xen 4.1 in ubuntu
+    if 'XEN_PYTHON_LIB' in dir(conf):
+        sys.path.append(conf.XEN_PYTHON_LIB)  # for xen 4.1 in ubuntu
 except ImportError:
-    #sys.path.append("/usr/lib/xen-default/lib/python/")
+    # sys.path.append("/usr/lib/xen-default/lib/python/")
     pass
 
 import xen.xm.main
@@ -33,20 +33,20 @@ class XenStat(object):
  'cpu_avg':  average_cpu_percentage_divided_by_cores
 }
 """
+
     def __init__(self):
         self.server = ServerProxy(serverURI)
-        self.dom_dict = dict() # name -> dominfo
+        self.dom_dict = dict()  # name -> dominfo
         self.last_ts = None
-        self.total_cpu = 0 # should be less than real cpu number
+        self.total_cpu = 0  # should be less than real cpu number
 
-
-    def run(self, dom_names): 
+    def run(self, dom_names):
         """ dom_names: full domain list, can be either id or name """
         total_cpu_time_diff = 0
         total_vcpu = 0
         total_ts_diff = 0
         new_dom_dict = dict()
-        for dom_name in dom_names: 
+        for dom_name in dom_names:
             domain = self.server.xend.domain(dom_name)
             info = xen.xm.main.parse_doms_info(domain)
             info['ts'] = time.time()
@@ -67,7 +67,7 @@ class XenStat(object):
                 ts_avg = total_ts_diff / len(dom_names)
                 self.total_cpu = total_cpu_time_diff / ts_avg * 100
         self.dom_dict = new_dom_dict
-  
+
 if __name__ == '__main__':
     from ops.ixen import get_xen_inf, XenStore
     xs = XenStat()

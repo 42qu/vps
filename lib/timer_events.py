@@ -9,7 +9,9 @@ import sched
 import threading
 import time
 
+
 class TimerEvents(object):
+
     """ thread-safe timer based on sched.
         test with python 2.4, 2.5, 2.7"""
     s = None
@@ -37,7 +39,7 @@ class TimerEvents(object):
             return
         elif inv > 1:
             inv = 1
-        time.sleep(inv) 
+        time.sleep(inv)
 
     def add_timer(self, inv, func, args=(), prio=1, first_delay=None):
         """ add_timer can only be called before poll """
@@ -48,7 +50,8 @@ class TimerEvents(object):
         k = str(inv) + ":" + str(func)
         self.cond.acquire()
         if not self.event_dict.has_key(k):
-            self.event_dict[k] = self.s.enter(first_delay, prio, self._run_timer, (inv, prio, func, args))
+            self.event_dict[k] = self.s.enter(
+                first_delay, prio, self._run_timer, (inv, prio, func, args))
 #        self.logger.debug("add timer event %s" % (k))
         self.cond.notify()
         self.cond.release()
@@ -60,9 +63,9 @@ class TimerEvents(object):
             self.logger.exception(e)
         k = str(inv) + ":" + str(func)
         self.cond.acquire()
-        self.event_dict[k] = self.s.enter(inv, prio, self._run_timer, (inv, prio, func, args))
+        self.event_dict[k] = self.s.enter(
+            inv, prio, self._run_timer, (inv, prio, func, args))
         self.cond.release()
-        
 
     def add_once_timer(self, delay, func, args=(), prio=1):
         """ add_timer can only be called before poll """
@@ -71,7 +74,8 @@ class TimerEvents(object):
         k = str(delay) + ":" + str(func)
         self.cond.acquire()
         if not self.event_dict.has_key(k):
-            self.event_dict[k] = self.s.enter(delay, prio, self._run_once_timer, (delay, prio, func, args))
+            self.event_dict[k] = self.s.enter(
+                delay, prio, self._run_once_timer, (delay, prio, func, args))
         self.cond.notify()
         self.cond.release()
 
@@ -86,7 +90,6 @@ class TimerEvents(object):
         except Exception, e:
             self.logger.exception(e)
 
-
     def poll(self):
         while self.running:
             self.s.run()
@@ -94,7 +97,7 @@ class TimerEvents(object):
             if self.running and len(self.event_dict) == 0:
                 self.cond.wait()
             self.cond.release()
-    
+
     def start(self):
         if self.running:
             return
@@ -111,10 +114,12 @@ class TimerEvents(object):
         self.cond.acquire()
         for k, ev in self.event_dict.iteritems():
             try:
-                self.s.cancel(ev) # must cancel the current events to let the sched.run() exit
+                # must cancel the current events to let the sched.run() exit
+                self.s.cancel(ev)
                 self.logger.debug("cancel timer event %s" % (k))
-            except Exception, e: # i do not know the exception type
-                # In what condition will a event not found in list? I really can't figure it out, but it did happend.
+            except Exception, e:  # i do not know the exception type
+                # In what condition will a event not found in list? I really
+                # can't figure it out, but it did happend.
                 self.logger.exception(e)
                 is_error = True
         self.running = False

@@ -10,12 +10,13 @@ from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
 import getopt
 
-def delete_vps (vps_id, forced=False):
+
+def delete_vps(vps_id, forced=False):
     """ interact operation """
-    client = VPSMgr ()
+    client = VPSMgr()
     vps = None
     try:
-        vps = client.query_vps (vps_id)
+        vps = client.query_vps(vps_id)
     except Exception, e:
         print "failed to query vps state: [%s] %s" % (str(type(e)), str(e))
         if not forced:
@@ -24,11 +25,12 @@ def delete_vps (vps_id, forced=False):
         print "not backend data for vps %s" % (vps_id)
         if not forced:
             return
-    if vps and vps.host_id == conf.HOST_ID and vps.state != VM_STATE.RM: 
+    if vps and vps.host_id == conf.HOST_ID and vps.state != VM_STATE.RM:
         print "vps %s state=%s, is not to be deleted" % (vps_id, VM_STATE_CN[vps.state])
         if not forced:
             return
-    answer = raw_input ('if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
+    answer = raw_input(
+        'if confirm to delete vps %s, please type "CONFIRM" in uppercase:' % (vps_id))
     if answer != 'CONFIRM':
         print "aborted"
         return
@@ -36,35 +38,34 @@ def delete_vps (vps_id, forced=False):
     time.sleep(5)
     print "begin"
     try:
-        client._vps_delete (vps_id, vps)
+        client._vps_delete(vps_id, vps)
         print "done"
     except Exception, e:
         print type(e), e
     return
 
 
-
-def usage ():
+def usage():
     print "%s vps_id" % (sys.argv[0])
     return
 
 if __name__ == '__main__':
-    if len (sys.argv) <= 1:
-        usage ()
-        os._exit (0)
+    if len(sys.argv) <= 1:
+        usage()
+        os._exit(0)
     forced = False
-    optlist, args = getopt.gnu_getopt (sys.argv[1:], "f", [
-                 "help", "force",
-                 ])
-    vps_id = int (args[-1])
+    optlist, args = getopt.gnu_getopt(sys.argv[1:], "f", [
+        "help", "force",
+    ])
+    vps_id = int(args[-1])
     for opt, v in optlist:
-        if opt == '--help': 
-            usage ()
-            os._exit (0)
-        if opt in [ '-f', '--force' ]:
+        if opt == '--help':
+            usage()
+            os._exit(0)
+        if opt in ['-f', '--force']:
             forced = True
 
-    delete_vps (vps_id, forced)
+    delete_vps(vps_id, forced)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

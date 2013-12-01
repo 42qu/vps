@@ -8,16 +8,17 @@ import conf
 import getopt
 from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
-def usage ():
+
+def usage():
     print "%s vps_id" % (sys.argv[0])
     return
 
 
-def close_vps (vps_id):
-    client = VPSMgr ()
+def close_vps(vps_id):
+    client = VPSMgr()
     vps = None
     try:
-        vps = client.query_vps (vps_id)
+        vps = client.query_vps(vps_id)
     except Exception, e:
         print "failed to query vps state: [%s] %s" % (type(e), str(e))
         return
@@ -28,7 +29,7 @@ def close_vps (vps_id):
         print "vps %s state=%s, is not to be close" % (vps_id, VM_STATE_CN[vps.state])
         return
     try:
-        client.vps_close (vps)
+        client.vps_close(vps)
         print "done"
     except Exception, e:
         print type(e), e
@@ -36,20 +37,20 @@ def close_vps (vps_id):
 
 
 if __name__ == '__main__':
-    if len (sys.argv) <= 1:
-        usage ()
-        os._exit (0)
-    optlist, args = getopt.gnu_getopt (sys.argv[1:], "", [
-                 "help", 
-                 ])
+    if len(sys.argv) <= 1:
+        usage()
+        os._exit(0)
+    optlist, args = getopt.gnu_getopt(sys.argv[1:], "", [
+        "help",
+    ])
 
     for opt, v in optlist:
-        if opt == '--help': 
-            usage ()
-            os._exit (0)
-    vps_id = int (args[0])
+        if opt == '--help':
+            usage()
+            os._exit(0)
+    vps_id = int(args[0])
 
-    close_vps (vps_id)
+    close_vps(vps_id)
 
 
 

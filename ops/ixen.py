@@ -20,6 +20,7 @@ def _get_xen_inf():
 def get_xen_inf():
     return _xentool
 
+
 class IXen(object):
 
     @staticmethod
@@ -67,6 +68,7 @@ class IXen(object):
     def mem_total():
         raise NotImplementedError()
 
+
 class XenXM(IXen):
 
     @staticmethod
@@ -90,7 +92,7 @@ class XenXM(IXen):
 
 #    @staticmethod
 #    def reboot(domain):
-#        # xm reboot is broken, and will cause subsequenced xm shutdown not working
+# xm reboot is broken, and will cause subsequenced xm shutdown not working
 #        call_cmd("xm reboot %s" % (domain))
 
     @staticmethod
@@ -100,7 +102,6 @@ class XenXM(IXen):
     @staticmethod
     def destroy(domain):
         call_cmd("xm destroy %s" % (domain))
-
 
     @staticmethod
     def mem_free():
@@ -113,7 +114,6 @@ class XenXM(IXen):
         """ return mem total(MB) in Xen """
         out = call_cmd("xm info | grep total_memory")
         return int(out.strip("\r\n").split(":")[1].strip())
-
 
     @staticmethod
     def uptime(domain):
@@ -196,18 +196,20 @@ class XenStore(object):
         out = call_cmd(cmd)
         lines = out.split("\n")
         _static = {
-                'node': {},
-                'last_key': None,
-                'last_value': None,
-                'last_space': 0,
+            'node': {},
+            'last_key': None,
+            'last_value': None,
+            'last_space': 0,
         }
         stack = []
+
         def __process(space, key, value):
-            #print _static['last_space'], space, _static['last_key'], _static['last_value'], key, value
+            # print _static['last_space'], space, _static['last_key'],
+            # _static['last_value'], key, value
             if _static['last_key'] is None:
                 _static['last_space'] = 0
             elif _static['last_value'] == "" and _static['last_space'] + 1 == space:
-                _static['node'][_static['last_key']] = {} 
+                _static['node'][_static['last_key']] = {}
                 stack.append(_static['node'])
                 _static['node'] = _static['node'][_static['last_key']]
             elif _static['last_space'] > space:
@@ -221,7 +223,7 @@ class XenStore(object):
             _static['last_value'] = value
             _static['last_space'] = space
             return
-                
+
         reg_key_value = re.compile(r"^(\s*)([\w\-]+)\s*=\s*\"(.*)\".*$")
         for line in lines:
             om = re.match(reg_key_value, line)
@@ -233,11 +235,10 @@ class XenStore(object):
             __process(space, key, value)
         __process(0, None, None)
         return _static['node']
-        
 
     @classmethod
     def domain_name_id_map(cls):
-        domain_list = cls._list("/local/domain") 
+        domain_list = cls._list("/local/domain")
         result_dict = {}
         for domain_id in domain_list:
             try:
@@ -251,12 +252,13 @@ class XenStore(object):
     @classmethod
     def get_vif_by_domain_id(cls, domain_id):
         return cls._get_tree("/local/domain/0/backend/vif/%s" % (domain_id))
-        
+
 
 _xentool = _get_xen_inf()  # check xen tools and setup
 
 if __name__ == '__main__':
     import unittest
+
     class TestXenInf(unittest.TestCase):
 
         def setUp(self):
@@ -266,6 +268,4 @@ if __name__ == '__main__':
         def test_uptime(self):
             self.assertEqual(self.xeninf.uptime("nonexistvps"), None)
 
-    
     unittest.main()
-

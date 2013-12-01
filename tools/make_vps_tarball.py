@@ -5,30 +5,29 @@ import os
 import _env
 import ops.os_init as os_init
 import conf
-assert conf.OS_IMAGE_DIR and os.path.isdir (conf.OS_IMAGE_DIR)
+assert conf.OS_IMAGE_DIR and os.path.isdir(conf.OS_IMAGE_DIR)
 
 
-def usage ():
+def usage():
     print """usage: \n%s [image_path/partion_path] [tarball_dir]
 """ % (sys.argv[0])
 
 
 def main():
     if len(sys.argv) < 3:
-        usage ()
-        os._exit (0)
+        usage()
+        os._exit(0)
     img_path = sys.argv[1]
     tarball_dir = sys.argv[2]
 
-    if not os.path.exists (img_path):
+    if not os.path.exists(img_path):
         print "%s not exists" % (img_path)
-        os._exit (1)
-    if not os.path.isdir (tarball_dir):
+        os._exit(1)
+    if not os.path.isdir(tarball_dir):
         print '%s is not a directory' % (tarball_dir)
-        os._exit (1)
-    tarball_path = os_init.pack_vps_fs_tarball (img_path, tarball_dir)
+        os._exit(1)
+    tarball_path = os_init.pack_vps_fs_tarball(img_path, tarball_dir)
     print "%s packed in %s" % (img_path, tarball_path)
-    
+
 if "__main__" == __name__:
     main()
-

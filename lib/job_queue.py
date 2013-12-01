@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 #
-# @file job_queue.py 
+# @file job_queue.py
 # @author frostyplanet@gmail.com
 # @version $Id$
 # @brief
@@ -9,13 +9,14 @@
 import threading
 import random
 
+
 class Job(object):
 
     jobQ = None
 
     def get_tag(self):
         return ""
-    
+
     def _set_active(self):
         assert self.jobQ
         self.jobQ.activate_job(self)
@@ -25,8 +26,9 @@ class Job(object):
         return False to indicate done """
         raise Exception, "not implemented"
 
+
 class JobQueue(object):
-    
+
     _lock = None
     _active_jobs = None
     _slept_jobs = None
@@ -43,12 +45,12 @@ class JobQueue(object):
         self._workers = list()
         self._logger = logger
         self._stopping = False
-        
+
     def _add_pending(self, job):
-        #the _lock shall be acquire before calling this
+        # the _lock shall be acquire before calling this
         tag = job.get_tag()
         if not self._pending_jobs.has_key(tag):
-            self._pending_jobs[tag] = list() 
+            self._pending_jobs[tag] = list()
         self._pending_jobs[tag].append(job)
         self._cond.notifyAll()
 
@@ -65,12 +67,12 @@ class JobQueue(object):
                 q_size = len(q)
                 if q_size:
                     l.append((q_size, q))
-            l.sort(lambda x, y:cmp(x[0], y[0]))
+            l.sort(lambda x, y: cmp(x[0], y[0]))
             if len(l):
                 rand1 = random.randint(0, len(l) - 1)
                 rand2 = random.randint(0, len(l) - 1)
                 if rand2 < len(l) / 2:
-                    rand1 = 0 
+                    rand1 = 0
                 q = l[rand1][1]
         if q and len(q):
             job = q[0]
@@ -89,8 +91,8 @@ class JobQueue(object):
     def activate_job(self, job):
         """ put slept job into pending """
         self._lock.acquire()
-        #chances are the job has been reactived during job.do() in active_jobs,
-        #or in slept_jobs,
+        # chances are the job has been reactived during job.do() in active_jobs,
+        # or in slept_jobs,
         # we must guarantee they are put to pending.
         if self._slept_jobs.has_key(id(job)):
             del self._slept_jobs[id(job)]
@@ -98,14 +100,14 @@ class JobQueue(object):
         elif self._active_jobs.has_key(id(job)):
             del self._active_jobs[id(job)]
             self._add_pending(job)  # do the job again
-        else: #it's in pending or never be put in the queue
+        else:  # it's in pending or never be put in the queue
             pass
         self._lock.release()
 
     def __str__(self):
         msg = "=========Job Queue Status============\n"
         self._lock.acquire()
-        msg += "--------pending------\n" 
+        msg += "--------pending------\n"
         for tag, q in self._pending_jobs.iteritems():
             msg += "tag: '%s' %d\n" % (tag, len(q))
             for job in q:
@@ -113,7 +115,7 @@ class JobQueue(object):
         msg += "--------active(%d) -------\n" % (len(self._active_jobs))
         for job in self._active_jobs.itervalues():
             msg += "%s\n" % (str(job))
-        msg += "--------slept(%d) --------\n" % (len(self._slept_jobs)) 
+        msg += "--------slept(%d) --------\n" % (len(self._slept_jobs))
         for job in self._slept_jobs.itervalues():
             msg += "%s\n" % (str(job))
         self._lock.release()
@@ -121,7 +123,7 @@ class JobQueue(object):
         return msg
 
     def get_jobs_count(self):
-        #return job counts in(pending_count, active_count, slept_count)
+        # return job counts in(pending_count, active_count, slept_count)
         slept = 0
         pending = 0
         active = 0
@@ -134,13 +136,12 @@ class JobQueue(object):
         return(pending, active, slept)
 
     def get_slept_jobs(self):
-        #return slept job in a list
+        # return slept job in a list
         slept_jobs = None
         self._lock.acquire()
         slept_jobs = self._slept_jobs.values()
         self._lock.release()
         return slept_jobs
-        
 
     def _worker_thread(self):
         self._cond.acquire()
@@ -164,24 +165,23 @@ class JobQueue(object):
                 del self._active_jobs[id(job)]
                 if job_res:
                     self._slept_jobs[id(job)] = job
-            else: #the job has been reactived during job.do()
+            else:  # the job has been reactived during job.do()
             # we must guarantee they are put to pending.
                 pass
         self._cond.release()
         return
-        
+
     def start_worker(self, th_num):
         for i in xrange(0, th_num):
             th = threading.Thread(target=self._worker_thread, args=())
             self._workers.append(th)
             th.setDaemon(1)
             th.start()
-   
+
     def stop(self):
-        self._stopping = True 
+        self._stopping = True
         self._cond.acquire()
-        self._cond.notifyAll() # get all sleeping worker up
+        self._cond.notifyAll()  # get all sleeping worker up
         self._cond.release()
         for th in self._workers:
             th.join()
-
