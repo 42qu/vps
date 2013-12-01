@@ -62,7 +62,7 @@ def prepare(o):
     o.DEFAULT_FS_TYPE = 'ext4'
     o.CLOSE_EXPIRE_DAYS = 0.8
     o.CGROUP_SCRIPT_DIR = "/data/vps/cgroup/"
-    o.BLK_READ_IOPS = 1000
+    o.BLK_READ_IOPS = 800
     o.BLK_WRITE_IOPS = 800
     o.BLK_READ_BPS = 12 * 1000 * 1000
     o.BLK_WRITE_BPS = 7 * 1000 * 1000
