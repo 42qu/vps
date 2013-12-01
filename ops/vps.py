@@ -11,11 +11,6 @@ import ops.ixen as ixen
 import lib.diff as diff
 import ops._env
 import conf
-assert conf.XEN_CONFIG_DIR
-assert conf.XEN_AUTO_DIR
-assert conf.DEFAULT_FS_TYPE
-assert conf.VPS_METADATA_DIR
-assert conf.MOUNT_POINT_DIR
 
 default_read_iops = 'BLK_READ_IOPS' in dir(conf) and conf.BLK_READ_IOPS or 0
 default_write_iops = 'BLK_WRITE_IOPS' in dir(conf) and conf.BLK_WRITE_IOPS or 0
@@ -62,6 +57,12 @@ class XenVPS(object):
         self.vcpu = None
         self.mem_m = None
         self.disk_g = None
+        assert conf.XEN_CONFIG_DIR
+        assert conf.XEN_AUTO_DIR
+        assert conf.DEFAULT_FS_TYPE
+        assert conf.VPS_METADATA_DIR
+        assert conf.MOUNT_POINT_DIR
+
 
     vif_ext = property(lambda self: self.vifs.get(self.vif_ext_name))
 

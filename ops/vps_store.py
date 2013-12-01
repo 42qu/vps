@@ -8,7 +8,6 @@ import time
 import re
 import ops._env
 import conf
-assert conf.MOUNT_POINT_DIR and os.path.isdir(conf.MOUNT_POINT_DIR)
 from lib.command import CommandException, call_cmd
 
 
@@ -44,6 +43,7 @@ class VPSStoreBase (object):
         self.xen_dev = xen_dev
         self.xen_path = xen_path
         self.mount_point = mount_point
+        assert conf.MOUNT_POINT_DIR and os.path.isdir(conf.MOUNT_POINT_DIR)
 
     def set_cgroup_limit(self, read_iops, write_iops, read_bps, write_bps):
         self.cgroup_limit = (read_iops, write_iops, read_bps, write_bps)
