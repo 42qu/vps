@@ -9,7 +9,6 @@ import _env
 import conf
 from vps_mgr import VPSMgr
 from ops.ixen import XenStore
-from ops.vps import set_disk_cgroup_default, set_disk_cgroup_below_default
 
 
 def _set_cgroup(client, vps_id, mode):
@@ -20,9 +19,9 @@ def _set_cgroup(client, vps_id, mode):
     xv = client.vpsops._load_vps_meta(meta)
     for disk in xv.data_disks.values():
         if mode == 'reset':
-            disk.set_disk_cgroup_default()
-        elif mode == 'below':
-            disk.set_disk_cgroup_below_default()
+            disk.set_cgroup_limit_default()
+        elif mode == 'down':
+            disk.set_cgroup_limit_below_default()
         print str(disk), disk.cgroup_limit
         disk.create_limit()
     xv.swap_store.create_limit()
@@ -32,14 +31,14 @@ def usage():
     pg_name = sys.argv[0]
     print "%s           # reapply setting" % (pg_name)
     print "%s --reset   # reset all individual setting to default" % (pg_name)
-    print "%s --below   # change set setting down to default, (if it was higher before)" % (pg_name)
+    print "%s --down   # change set setting down to default, (if it was higher before)" % (pg_name)
 
 
 def check_all():
     import getopt
     mode = None
     pretend = False
-    opt_list, args = getopt.gnu_getopt("", ["down", "reset", "help"])
+    opt_list, args = getopt.gnu_getopt(sys.argv, "", ["down", "reset", "help"])
     for opt, v in opt_list:
         if opt == '--help':
             usage()
