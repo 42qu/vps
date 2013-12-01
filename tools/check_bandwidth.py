@@ -48,7 +48,7 @@ def check_all():
     client = VPSMgr()
     all_ids = client.vpsops.all_vpsid_from_config()
     print ""
-    print "xen_config: %d, running: %d" % (len(all_ids), len(client.vpsops.running_count))
+    print "xen_config: %d, running: %d" % (len(all_ids), client.vpsops.running_count)
     for vps_id in all_ids:
         print "vps", vps_id
         _check_bandwidth(client, vps_id)

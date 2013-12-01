@@ -18,13 +18,13 @@ def check_via_meta(client, vps_id, vps_info):
         xv = client.vpsops._load_vps_meta(meta)
         is_running = xv.is_running() and "(running)" or "(not running)"
         ip_ok = "ip %s " % (xv.ip)
-        if vps_common.ping(ip):
-            is_ok += "reachable "
+        if vps_common.ping(xv.ip):
+            ip_ok += "reachable "
         else:
-            if scan_port_open(ip):
-                is_ok += "filtered icmp"
+            if scan_port_open(xv.ip):
+                ip_ok += "filtered icmp"
             else:
-                is_ok ++ "timeout (filtered all port?)"
+                ip_ok += "timeout (filtered all port?)"
         print "vps %s %s %s" % (vps_id, is_running, ip_ok)
         return
     else:
@@ -65,7 +65,7 @@ def check_via_backend(client, vps_id):
 def check_all_vps():
     client = VPSMgr()
     all_ids = client.vpsops.all_vpsid_from_config()
-    print "xen_config: %d, running: %d" % (len(all_ids), len(client.vpsops.running_count))
+    print "xen_config: %d, running: %d" % (len(all_ids), client.vpsops.running_count)
     for vps_id in all_ids:
         checked, vps_info = check_via_backend(client, vps_id)
         if checked:
