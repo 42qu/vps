@@ -9,6 +9,7 @@ try:
 except ImportError:
     import simplejson as json
 
+import conf
 import ovs.dirs
 from ovs.db import error
 from ovs.db import types
@@ -19,7 +20,6 @@ class OVSDB(object):
 
     def __init__(self, sock):
         self.sock = sock
-        import conf
         assert conf.OVS_DB_SOCK
 
     def _get_row_val(self, row, column_name):
