@@ -117,15 +117,8 @@ def _check_disk(client, vps_id, dry=True):
 def check_all(dry=True):
     assert conf.XEN_CONFIG_DIR and os.path.isdir(conf.XEN_CONFIG_DIR)
     assert conf.VPS_METADATA_DIR and os.path.isdir(conf.VPS_METADATA_DIR)
-    all_ids = set()
     client = VPSMgr()
-    configs = glob.glob(os.path.join(conf.VPS_METADATA_DIR, "*.json*"))
-    for config in configs:
-        om = re.match(r'^vps(\d+)\.[\.\w]+$', os.path.basename(config))
-        if not om:
-            continue
-        vps_id = int(om.group(1))
-        all_ids.add(vps_id)
+    all_ids = client.vpsops.all_vpsid_from_config()
     print "meta %d" % (len(all_ids))
     client.logger.info("----check expired images---")
     for vps_id in all_ids:

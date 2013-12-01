@@ -7,6 +7,7 @@ import _env
 import conf
 from vps_mgr import VPSMgr
 from ops.vps import XenVPS
+from ops.vps_scan import scan_port_open
 import ops.vps_common as vps_common
 from ops.saas_rpc import VM_STATE, VM_STATE_CN
 
@@ -16,9 +17,14 @@ def check_via_meta(client, vps_id, vps_info):
     if os.path.exists(meta):
         xv = client.vpsops._load_vps_meta(meta)
         is_running = xv.is_running() and "(running)" or "(not running)"
-        ip_ok = "ip %s " % (xv.ip) + \
-            (vps_common.ping(xv.ip)
-             and "reachable" or "timeout")
+        ip_ok = "ip %s " % (xv.ip)
+        if vps_common.ping(ip):
+            is_ok += "reachable "
+        else:
+            if scan_port_open(ip):
+                is_ok += "filtered icmp"
+            else:
+                is_ok ++ "timeout (filtered all port?)"
         print "vps %s %s %s" % (vps_id, is_running, ip_ok)
         return
     else:
