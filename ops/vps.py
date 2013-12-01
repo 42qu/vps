@@ -12,10 +12,6 @@ import lib.diff as diff
 import ops._env
 import conf
 
-default_read_iops = 'BLK_READ_IOPS' in dir(conf) and conf.BLK_READ_IOPS or 0
-default_write_iops = 'BLK_WRITE_IOPS' in dir(conf) and conf.BLK_WRITE_IOPS or 0
-default_read_bps = 'BLK_READ_BPS' in dir(conf) and conf.BLK_READ_BPS or 0
-default_write_bps = 'BLK_WRITE_BPS' in dir(conf) and conf.BLK_WRITE_BPS or 0
 default_swap_iops = 'BLK_SWAP_IOPS' in dir(conf) and conf.BLK_SWAP_IOPS or 0
 default_swap_bps = 'BLK_SWAP_BPS' in dir(conf) and conf.BLK_SWAP_BPS or 0
 
@@ -131,8 +127,7 @@ class XenVPS(object):
                 for _disk in data['data_disks']:
                     disk = VPSStoreBase.from_meta(_disk)
                     if not disk.cgroup_limit:
-                        disk.set_cgroup_limit(
-                            default_read_iops, default_write_iops, default_read_bps, default_write_bps)
+                        disk.set_cgroup_limit_default()
                     assert disk
                     self.data_disks[disk.xen_dev] = disk
             if data.has_key('trash_disks'):
@@ -164,8 +159,7 @@ class XenVPS(object):
         self.gateway = gateway
         self.root_store = vps_store_new("%s_root" %
                                         self.name, "xvda1", None, '/', disk_g)
-        self.root_store.set_cgroup_limit(
-            default_read_iops, default_write_iops, default_read_bps, default_write_bps)
+        self.root_store.set_cgroup_limit_default()
         self.data_disks[self.root_store.xen_dev] = self.root_store
         if swp_g:
             self.swap_store = vps_store_new(
@@ -185,8 +179,7 @@ class XenVPS(object):
         partition_name = "%s_data%s" % (self.name, disk_id)
         storage = vps_store_new(
             partition_name, xen_dev, fs_type, mount_point, size_g)
-        storage.set_cgroup_limit(
-            default_read_iops, default_write_iops, default_read_bps, default_write_bps)
+        storage.set_cgroup_limit_default()
         self.data_disks[xen_dev] = storage
 
     def delete_trash(self, disk):

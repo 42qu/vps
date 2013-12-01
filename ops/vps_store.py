@@ -10,6 +10,11 @@ import ops._env
 import conf
 from lib.command import CommandException, call_cmd
 
+default_read_iops = 'BLK_READ_IOPS' in dir(conf) and conf.BLK_READ_IOPS or 0
+default_write_iops = 'BLK_WRITE_IOPS' in dir(conf) and conf.BLK_WRITE_IOPS or 0
+default_read_bps = 'BLK_READ_BPS' in dir(conf) and conf.BLK_READ_BPS or 0
+default_write_bps = 'BLK_WRITE_BPS' in dir(conf) and conf.BLK_WRITE_BPS or 0
+
 
 def _parse_date(s):
     if s is None:
@@ -47,6 +52,30 @@ class VPSStoreBase (object):
 
     def set_cgroup_limit(self, read_iops, write_iops, read_bps, write_bps):
         self.cgroup_limit = (read_iops, write_iops, read_bps, write_bps)
+
+    def set_cgroup_limit_below_default(self):
+
+        if self.cgroup_limit:
+            read_iops, write_iops, read_bps, write_bps = self.cgroup_limit
+        else:
+            read_iops, write_iops, read_bps, write_bps = (0, 0, 0, 0)
+        if default_read_iops:
+            if read_iops <= 0 or read_iops > default_read_iops:
+                read_iops = default_read_iops
+        if default_write_iops:
+            if write_iops <= 0 or write_iops > default_write_iops:
+                write_iops = default_write_iops
+        if default_read_bps:
+            if read_bps <= 0 or read_bps > default_read_bps:
+                read_bps = default_read_bps
+        if default_write_bps:
+            if write_bps <= 0 or write_bps > default_write_bps:
+                write_bps = default_write_bps
+        self.cgroup_limit = (read_iops, write_iops, read_bps, write_bps)
+
+    def set_cgroup_limit_default(self):
+        self.cgroup_limit = (default_read_iops, default_write_iops, default_read_bps, default_write_bps)
+
 
     def can_resize(self):
         raise NotImplementedError()
