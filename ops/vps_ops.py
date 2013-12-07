@@ -130,7 +130,7 @@ class VPSOps(object):
         xv.start()
         if not xv.wait_until_reachable(120):
             if not is_new:
-                if not scan_port_open(xv.vif_ext.ip or xv.vif_int.ip):
+                if not scan_port_open(xv.ip):
                     raise Exception("the vps started, seems not reachable")
             else:
                 raise Exception("the vps started, seems not reachable")
