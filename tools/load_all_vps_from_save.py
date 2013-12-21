@@ -21,6 +21,7 @@ def _load(file_path):
     client = VPSMgr()
     xen.restore(file_path)
     client.logger.info("restore %s" % (file_path))
+    os.unlink(file_path)
 
 
 def load_all(proc_num):
