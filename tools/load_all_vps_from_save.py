@@ -18,13 +18,14 @@ import ops.vps_common as vps_common
 
 def _load(file_path):
     xen = get_xen_inf()
+    client = VPSMgr()
     xen.restore(file_path)
     client.logger.info("restore %s" % (file_path))
 
 
 def load_all(proc_num):
     assert os.path.isdir(conf.SAVE_PATH)
-    files = glob.glob(os.path.join(conf.SAVE_PATH, '*')
+    files = glob.glob(os.path.join(conf.SAVE_PATH, '*'))
     pool = multiprocessing.Pool(proc_num)
     for file_ in files:
         pool.map(_load, file_)
