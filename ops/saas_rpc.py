@@ -67,6 +67,9 @@ class SAAS_Client(object):
     def todo(self, cmd):
         return self.rpc.call("todo", self.host_id, cmd)
 
+    def alarm(self, msg):
+        self.rpc.call('alarm', msg)
+
     def host_list(self):
         return AttrWrapper.wrap(self.rpc.call("host_list"))
 
