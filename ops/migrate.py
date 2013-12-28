@@ -204,7 +204,7 @@ class MigrateClient(SyncClientBase):
                 self.logger.info("rsync %s to %s error, ret=%s, err=%s" %
                                  (dev, self.server_ip, ret, err))
             time.sleep(3)
-            self.rpc.call("umount", remote_mount_point)
+            self.rpc.call("umount", remote_mount_point, _retry=1) # possible after a long time socket is closed by server
             print "remote umounted %s" % (partition_name)
             self.logger.info("remote(%s) umounted" % (remote_mount_point))
         finally:

@@ -122,10 +122,12 @@ class RPC_Client(object):
         self.connected = False
         self.logger = logger
         self.timeout = 10
+        self.addr = None
 
     def connect(self, addr):
         if self.connected:
             return
+        self.addr = addr
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(addr)
         self.connected = True
@@ -139,31 +141,41 @@ class RPC_Client(object):
     def call(self, func_name, *args, **k_args):
         if not self.connected:
             raise RPC_Exception("not connected")
-        try:
-            start_ts = time.time()
-            req = RPC_Req(func_name, args, k_args)
-            data = req.serialize()
-            head = NetHead()
-            head.write_msg(self.sock, data)
-            resp = None
-            resp_head = NetHead.read_head(self.sock)
-            if not resp_head.body_len:
-                raise RPC_Exception(
-                    "rpc call %s, server-side return empty head" % (str(req)))
-            buf = resp_head.read_data(self.sock)
-            resp = RPC_Resp.deserialize(buf)
-            end_ts = time.time()
-            timespan = end_ts - start_ts
-            if resp.error is not None:
-                raise RPC_Exception(
-                    "rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
-            if self.logger:
-                self.logger.info(
-                    "rpc call %s returned  [%s sec]" % (str(req), timespan))
-            return resp.retval
-        except socket.error, e:
-            self.close()
-            raise e
+        if k_args.has_key('_retry'):
+            retry = k_args['_retry']
+        else:
+            retry = 0
+        i = 0
+        while True:
+            try:
+                start_ts = time.time()
+                req = RPC_Req(func_name, args, k_args)
+                data = req.serialize()
+                head = NetHead()
+                head.write_msg(self.sock, data)
+                resp = None
+                resp_head = NetHead.read_head(self.sock)
+                if not resp_head.body_len:
+                    raise RPC_Exception(
+                        "rpc call %s, server-side return empty head" % (str(req)))
+                buf = resp_head.read_data(self.sock)
+                resp = RPC_Resp.deserialize(buf)
+                end_ts = time.time()
+                timespan = end_ts - start_ts
+                if resp.error is not None:
+                    raise RPC_Exception(
+                        "rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
+                if self.logger:
+                    self.logger.info(
+                        "rpc call %s returned  [%s sec]" % (str(req), timespan))
+                return resp.retval
+            except socket.error, e:
+                self.close()
+                if e.args[0] == 0 and retry > 0 and i < retry: # peer close
+                    self.connect(self.addr)
+                    i += 1
+                    continue
+                raise
 
     def close(self):
         if self.connected:
@@ -185,36 +197,46 @@ try:
         def call(self, func_name, *args, **k_args):
             if not self.connected:
                 raise RPC_Exception("not connected")
-            try:
-                start_ts = time.time()
-                iv = random_string(self.block_size)
-                crypter_r = AESCryptor(self.key, iv, self.block_size)
-                crypter_w = AESCryptor(self.key, iv, self.block_size)
-                req = RPC_Req(func_name, args, k_args)
-                data = req.serialize()
-                head = NetHead()
-                buf = iv + crypter_w.encrypt(data)
-                head.write_msg(self.sock, buf)
-                resp = None
-                resp_head = NetHead.read_head(self.sock)
-                if not resp_head.body_len:
-                    raise RPC_Exception(
-                        "rpc call %s, server-side return empty head" % (str(req)))
-                buf = resp_head.read_data(self.sock)
-                buf = crypter_r.decrypt(buf)
-                resp = RPC_Resp.deserialize(buf)
-                end_ts = time.time()
-                timespan = end_ts - start_ts
-                if resp.error is not None:
-                    raise RPC_Exception(
-                        "rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
-                if self.logger:
-                    self.logger.info(
-                        "rpc call %s returned  [%s sec]" % (str(req), timespan))
-                return resp.retval
-            except socket.error, e:
-                self.close()
-                raise e
+            if k_args.has_key('_retry'):
+                retry = k_args['_retry']
+            else:
+                retry = 0
+            i = 0
+            while True:
+                try:
+                    start_ts = time.time()
+                    iv = random_string(self.block_size)
+                    crypter_r = AESCryptor(self.key, iv, self.block_size)
+                    crypter_w = AESCryptor(self.key, iv, self.block_size)
+                    req = RPC_Req(func_name, args, k_args)
+                    data = req.serialize()
+                    head = NetHead()
+                    buf = iv + crypter_w.encrypt(data)
+                    head.write_msg(self.sock, buf)
+                    resp = None
+                    resp_head = NetHead.read_head(self.sock)
+                    if not resp_head.body_len:
+                        raise RPC_Exception(
+                            "rpc call %s, server-side return empty head" % (str(req)))
+                    buf = resp_head.read_data(self.sock)
+                    buf = crypter_r.decrypt(buf)
+                    resp = RPC_Resp.deserialize(buf)
+                    end_ts = time.time()
+                    timespan = end_ts - start_ts
+                    if resp.error is not None:
+                        raise RPC_Exception(
+                            "rpc call %s return error: %s [%s sec]" % (str(req), str(resp.error), timespan))
+                    if self.logger:
+                        self.logger.info(
+                            "rpc call %s returned  [%s sec]" % (str(req), timespan))
+                    return resp.retval
+                except socket.error, e:
+                    self.close()
+                    if e.args[0] == 0 and retry > 0 and i < retry: # peer close
+                        self.connect(self.addr)
+                        i += 1
+                        continue
+                    raise
 
 
 except ImportError, e:
