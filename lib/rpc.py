@@ -143,6 +143,7 @@ class RPC_Client(object):
             raise RPC_Exception("not connected")
         if k_args.has_key('_retry'):
             retry = k_args['_retry']
+            del k_args['_retry']
         else:
             retry = 0
         i = 0
@@ -199,6 +200,7 @@ try:
                 raise RPC_Exception("not connected")
             if k_args.has_key('_retry'):
                 retry = k_args['_retry']
+                del k_args['_retry']
             else:
                 retry = 0
             i = 0
