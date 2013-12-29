@@ -35,12 +35,12 @@ class RaidMonitor(object):
     def send_alarm(self, msg):
         rpc = self.vps_mgr.rpc_connect()
         try:
-            rpc.alarm("%s: %s" % (self.hostname, msg))
+            rpc.alarm("%s: raid_mon: %s" % (self.hostname, msg))
         finally:
             rpc.close()
 
     def check(self):
-        cmd = """MegaCli64 -pdlist -aall | grep -i 'firmware state:' | grep -P -v -i "online|Unconfigured\(good\) """
+        cmd = """MegaCli64 -pdlist -aall | grep -i 'firmware state:' | grep -P -v -i "online|Unconfigured\(good\)" """
         try:
             out, err = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
             msg = out + err
