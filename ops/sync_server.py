@@ -1,30 +1,20 @@
 #!/usr/bin/env python
 
 import os
-import socket
-import ssl
-import subprocess
-from lib.command import Command, search_path
+from lib.command import Command
 
 import time
 import signal
-try:
-    import json
-except ImportError:
-    import simplejson as json
 
 
-import ops.vps_common as vps_common
 import ops._env
-from lib.job_queue import JobQueue, Job
 from lib.rpc_server import AES_RPC_Server
-import lib.io_poll as io_poll
-from lib.net_io import NetHead
 import conf
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
 import errno
+import subprocess
 
 
 RSYNC_SERVER_NAME = "sync_server"
@@ -105,7 +95,7 @@ og file=/dev/null
             raise
         self.logger.info("rsync stopped")
 
-from lib.rpc import AES_RPC_Client, RPC_Exception
+from lib.rpc import AES_RPC_Client
 
 
 class SyncClientBase(object):

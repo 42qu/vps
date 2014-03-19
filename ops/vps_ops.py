@@ -17,7 +17,7 @@ import ops.vps_common as vps_common
 import ops.os_image as os_image
 from ops.vps import XenVPS
 import ops.os_init as os_init
-from ops.vps_netinf import VPSNet, VPSNetExt, VPSNetInt
+from ops.vps_netinf import VPSNetExt
 from ops.ixen import XenStore
 
 import ops._env
@@ -285,7 +285,6 @@ class VPSOps(object):
         return False
 
     def reopen_vps(self, vps_id, _xv=None):
-        meta_path = self._meta_path(vps_id)
         trash_meta_path = self._meta_path(vps_id, is_trash=True)
         xv_old = None
         if os.path.exists(trash_meta_path):
