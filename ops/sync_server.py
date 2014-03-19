@@ -24,6 +24,7 @@ import conf
 assert conf.RSYNC_CONF_PATH
 assert conf.RSYNC_PORT
 assert conf.MOUNT_POINT_DIR
+import errno
 
 
 RSYNC_SERVER_NAME = "sync_server"
@@ -123,7 +124,7 @@ class SyncClientBase(object):
     def close(self):
         self.rpc.close()
 
-    def rsync(self, source, dest=None, speed=None, use_zip=False):
+    def rsync(self, source, dest=None, speed=None, use_zip=False, log_file=None):
         """ speed is in Mbit/s """
         options = ("-avW", "--inplace", )
         if os.path.isdir(source):
@@ -133,6 +134,8 @@ class SyncClientBase(object):
                 dest += "/"
             if dest:
                 options += ("--delete", )
+        if log_file:
+            options += ('--log-file', log_file)
         if not dest:
             dest = ""
         if speed:

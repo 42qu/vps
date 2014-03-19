@@ -804,13 +804,18 @@ class VPSOps(object):
             xv.destroy()
             self.loginfo(xv, "vps cannot shutdown, destroyed it")
         self.loginfo(xv, "going to be migrated to %s" % (dest_ip))
+        log_file = os.path.join(conf.MOUNT_POINT_DIR, "vps_%s.log" % (vps_id))
         for disk in xv.data_disks.values():
             migclient.sync_partition(
-                disk.file_path, partition_name=disk.partition_name, speed=speed)
+                disk.file_path, partition_name=disk.partition_name, speed=speed, 
+                log_file=log_file)
         self.loginfo(xv, "partition synced, going to boot vps remotely")
         migclient.create_vps(xv)
         self.loginfo(xv, "remote vps started, going to close local vps")
         self.close_vps(vps_id)
+        if os.path.isfile(log_file):
+            # after sync is done clean log
+            os.remove(log_file)
 
     def migrate_closed_vps(self, migclient, vps_id, dest_ip, speed=None, _xv=None):
         """client side """
@@ -829,8 +834,12 @@ class VPSOps(object):
         if not conf.USE_LVM:
             raise Exception("only lvm host support hotsync")
         xv = self.load_vps_meta(vps_id)
+        log_file = os.path.join(conf.MOUNT_POINT_DIR, "vps_%s.log" % (vps_id))
         for disk in xv.data_disks.values():
-            migclient.snapshot_sync(disk.dev, speed=speed)
+            migclient.snapshot_sync(disk.dev, speed=speed, log_file=log_file)
+        if os.path.isfile(log_file):
+            # after sync is done clean log
+            os.remove(log_file)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :

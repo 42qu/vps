@@ -132,15 +132,17 @@ class MigrateClient(SyncClientBase):
     def __init__(self, logger, server_ip):
         SyncClientBase.__init__(self, logger, server_ip)
 
-    def snapshot_sync(self, dev, speed=None):
+    def snapshot_sync(self, dev, speed=None, log_file=None):
         snapshot_name = "sync_%s" % (os.path.basename(dev))
         snapshot_dev = "/dev/%s/%s" % (conf.VPS_LVM_VGNAME, snapshot_name)
+
         if not os.path.exists(snapshot_dev):
             vps_common.lv_snapshot(dev, snapshot_name, conf.VPS_LVM_VGNAME)
         self.logger.info("made snapshot %s for %s" % (snapshot_dev, dev))
         try:
             self.sync_partition(
-                snapshot_dev, partition_name=os.path.basename(dev), speed=speed)
+                snapshot_dev, partition_name=os.path.basename(dev), speed=speed,
+                log_file=log_file)
         finally:
             vps_common.lv_delete(snapshot_dev)
             self.logger.info("delete snapshot %s" % (snapshot_dev))
@@ -179,7 +181,7 @@ class MigrateClient(SyncClientBase):
             self.logger.info("%s mounted on %s" % (dev, mount_point))
         return mount_point, size_g, partition_name
 
-    def sync_partition(self, dev, partition_name=None, speed=None):
+    def sync_partition(self, dev, partition_name=None, speed=None, log_file=None):
         """ when you sync a snapshot lv to remote, you'll need to specify partition_name
         """
         arr = dev.split("/")
@@ -195,7 +197,7 @@ class MigrateClient(SyncClientBase):
             remote_mount_point = self.rpc.call(
                 "alloc_partition", partition_name, size_g, fs_type)
             self.logger.info("remote(%s) mounted" % (remote_mount_point))
-            ret, err = self.rsync(mount_point, remote_mount_point, speed=speed)
+            ret, err = self.rsync(mount_point, remote_mount_point, speed=speed, log_file=log_file)
             if ret == 0:
                 print "rsync ok"
                 self.logger.info("rsync %s to %s ok" % (dev, self.server_ip))

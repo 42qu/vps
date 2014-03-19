@@ -91,10 +91,6 @@ def prepare(o):
         100001: {'os':'NetBSD'},
     }
 
-    o.SMS_NUMBER_LIST = (
-        "13693622296",
-    )
-
     return o
 
 
