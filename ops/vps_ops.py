@@ -835,11 +835,13 @@ class VPSOps(object):
             raise Exception("only lvm host support hotsync")
         xv = self.load_vps_meta(vps_id)
         log_file = os.path.join(conf.MOUNT_POINT_DIR, "vps_%s.log" % (vps_id))
-        for disk in xv.data_disks.values():
-            migclient.snapshot_sync(disk.dev, speed=speed, log_file=log_file)
-        if os.path.isfile(log_file):
-            # after sync is done clean log
-            os.remove(log_file)
+        try:
+            for disk in xv.data_disks.values():
+                migclient.snapshot_sync(disk.dev, speed=speed, log_file=log_file)
+        finally:
+            if os.path.isfile(log_file):
+                # after sync is done clean log
+                os.remove(log_file)
 
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
