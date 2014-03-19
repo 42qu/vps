@@ -9,10 +9,14 @@ from lib.log import Log
 import conf
 import re
 from vps_mgr import VPSMgr
+from ops.saas_rpc import MIGRATE_STATE
 
 
 def hotsync_vps(vps_id, dest_ip, speed=None, force=False):
     client = VPSMgr()
+    task = client.query_migrate_task(vps_id)
+    if task is not None and task.state == MIGRATE_STATE.NEW:
+        force = True
     if client._vps_hot_sync(vps_id, to_host_ip=dest_ip, speed=speed, force=force):
         print "%s ok" % (vps_id)
     else:
