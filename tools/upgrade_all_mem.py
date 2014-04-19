@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import _env
 import os
 from vps_mgr import VPSMgr
 
