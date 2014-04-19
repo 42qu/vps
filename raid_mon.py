@@ -48,7 +48,7 @@ class RaidMonitor(object):
                 self.logger.error(msg)
                 if self.last_state:
                     self.last_state = False
-                    self.send_alarm("error")
+                    self.send_alarm("error, %s" % (out))
                     self.logger.error("alarm sent")
             else:
                 self.logger.info("ok")
