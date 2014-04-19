@@ -21,5 +21,7 @@ def main():
     for vps_id in all_ids:
         change_meta(client, vps_id)
 
+if __name__ == '__main__':
+    main()
 
 # vim: tabstop=4 expandtab shiftwidth=4 softtabstop=4 :
