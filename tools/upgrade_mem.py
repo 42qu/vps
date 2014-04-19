@@ -1,10 +1,12 @@
 #!/usr/bin/env python
 # coding:utf-8
 
+import os
+from vps_mgr import VPSMgr
 
 def change_meta(client, vps_id):
     meta = client.vpsops._meta_path(vps_id, is_trash=False)
-    if os.path.exists(meta)
+    if os.path.exists(meta):
         xv = client.vpsops._load_vps_meta(meta)
         if xv.mem_m == 512:
             xv.mem_m = 768
@@ -13,6 +15,7 @@ def change_meta(client, vps_id):
         
 
 def main():
+    client = VPSMgr()
     all_ids = client.vpsops.all_vpsid_from_config()
     for vps_id in all_ids:
         change_meta(client, vps_id)
