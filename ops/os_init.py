@@ -69,6 +69,9 @@ def clean_up_img(vps_mountpoint):
         "tmp/.*",
         "var/tmp/*",
         "usr/portage/distfiles/*",
+        "etc/shadow-",
+        "etc/passwd-",
+        "etc/group-",
     ]
     for file_path in files:
         a_path = os.path.join(vps_mountpoint, file_path)
@@ -244,7 +247,7 @@ echo 'root:%s' | /usr/sbin/chpasswd
 
 
 def generate_shadow_hash(passwd):
-    return crypt.crypt(passwd, '\$5\$SA213LTsalt\$')
+    return crypt.crypt(passwd, '$5$' + vps_common.random_string(16) + '$')
 
 
 def set_root_passwd_2(xv, vps_mountpoint):

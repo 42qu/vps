@@ -80,7 +80,7 @@ class TestVPSOPS (unittest.TestCase):
         vpsops = VPSOps (logger)
         xv = XenVPS (0)
         try:
-            xv.setup (os_id=10001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd", gateway="10.10.2.1")
+            xv.setup (os_id=1, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfd", gateway="10.10.2.1")
             xv.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
             xv.add_netinf_ext ({"10.10.2.2": "255.255.255.0"})
             print xv.gen_xenpv_config ()
@@ -109,6 +109,7 @@ class TestVPSOPS (unittest.TestCase):
         try:
             logger.debug ("reopen vps0")
             vpsops.reopen_vps (xv.vps_id, xv)
+            time.sleep(20)
             status, out, err = vps_common.call_cmd_via_ssh (xv.ip, user="root", password=xv.root_pw, cmd="free|grep Swap")
             if status == 0:
                 if xv.swap_store.size_g > 0:

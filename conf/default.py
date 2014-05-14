@@ -77,6 +77,7 @@ def prepare(o):
             3: {'os':'CentOS', 'version': '5.9-i386', 'image': 'centos-5.9-i386.tar.gz'},
             2: {'os':'CentOS', 'version':'6.2-amd64', 'image': 'centos-6.2-amd64.tar.gz'},
             1: {'os':'CentOS', 'version': '5.8-i386', 'image': 'centos-5.8-i386.tar.gz'},
+        10004: {'os': 'Ubuntu', 'version': '14.04-amd64', 'image': 'ubuntu-14.04-amd64.tar.gz'},
         10003: {'os': 'Ubuntu', 'version': '12.04-amd64', 'image': 'ubuntu-12.04-amd64.tar.gz'},
         10002: {'os': 'Ubuntu', 'version': '11.10-amd64', 'image': 'ubuntu-11.10-amd64.tar.gz'},
         10001: {'os': 'Ubuntu', 'version': '10.04-amd64', 'image': 'ubuntu-10.04-amd64.tar.gz'},

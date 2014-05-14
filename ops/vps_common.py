@@ -18,6 +18,13 @@ assert search_path("file")
 #    if res != 0:
 #        raise Exception("%s exit with %d" % (cmd, res))
 
+def random_string(n):
+    s = string.ascii_letters + string.digits
+    result = ""
+    for i in xrange(n):
+        result += random.choice(s)
+    return result
+
 
 def ping(ip):
     return 0 == os.system("ping -i0.3 -c2 -W1 %s >/dev/null" % (ip))

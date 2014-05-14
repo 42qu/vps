@@ -25,7 +25,7 @@ class TestVPSCreate (unittest.TestCase):
         vpsops = VPSOps (logger)
         vps = XenVPS (0)
         try:
-            vps.setup (os_id=20001, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfdsss", gateway="113.11.199.1")
+            vps.setup (os_id=10004, vcpu=1, mem_m=512, disk_g=7, root_pw="fdfdfdsss", gateway="113.11.199.1")
             vps.add_netinf_ext ({"113.11.199.18": "255.255.255.0"})
             vps.add_netinf_int ({"10.10.2.20": '255.255.255.0'})
             #vps.add_extra_storage (disk_id=1, size_g=1, fs_type='ext3')
